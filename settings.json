@@ -1,0 +1,5 @@
+{
+  "path_to_allowlist": "ipallowist.conf",
+  "plaintext_password": "",
+  "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$7HEBDXGP96RmzAY7Irc2Tw$JqiMWBUx8yZAEnUG73V99Uy5Ibl7eHZ72XPQeabtBYs"
+}

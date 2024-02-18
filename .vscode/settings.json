@@ -1,0 +1,6 @@
+{
+    "Lua.diagnostics.globals": ["emu", "socket", "console", "callbacks"],
+    "prettier.printWidth": 120,
+    "prettier.tabWidth": 4,
+    "ansible.python.interpreterPath": "/Users/kism/.local/share/virtualenvs/whitelistwebapp-yH4h5jp9/bin/python"
+}
