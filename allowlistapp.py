@@ -106,7 +106,7 @@ def check_allowlist(conf):
     # print("Lines: \n" + str(lines))
 
     for line in lines:
-        words = line.lower().split()
+        words = line.split()
         if words[0] not in ["allow", "deny"]:
             print("First word in line isn't allow or deny")
             errors_occurred = True
