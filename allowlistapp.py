@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
-"""Flask webapp that interfaces with mGBA with _emulator/gba_grabwebinput.lua"""
-
-# pylint: disable=global-statement
+"""Flask webapp to control a nginx allowlist"""
 
 import argparse
-
-# import time
-# import socket
-# import threading
 import logging
 import os
 import json
+import subprocess
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -21,12 +16,6 @@ app = Flask(__name__)  # Flask app object
 args = None
 settings = None
 
-defauilt_settings = """
-
-
-
-"""
-
 
 @app.route("/")
 def home():
@@ -34,10 +23,10 @@ def home():
     return render_template("home.html.j2")
 
 
-@app.route("/", methods=["POST"])
+@app.route("/authenticate/", methods=["POST"])
 def my_form_post():
     """Post da password"""
-    text = request.form["text"]
+    text = request.form["password"]
     result = check_password(text)
     out_text = "Validation Failed"
 
@@ -132,6 +121,11 @@ def check_allowlist(conf):
     return conf
 
 
+def reload_nginx():
+    """Reload nginx"""
+    subprocess.run(["systemctl", "reload", "nginx"], check=True)
+
+
 def main():
     """Start Flask webapp"""
     app.run(host=args.WEBADDRESS, port=args.WEBPORT)
@@ -175,7 +169,9 @@ if __name__ == "__main__":
         log.setLevel(logging.DEBUG)
 
     # Settings File
+    errors_loading = False
     if not os.path.exists(args.settingspath):
+        errors_loading = True
         with open(args.settingspath, "w", encoding="utf8") as json_file:
             settings = {
                 "path_to_allowlist": "ipallowist.conf",
@@ -197,4 +193,12 @@ if __name__ == "__main__":
                 settings, json_file, indent=2
             )  # indent parameter is optional for pretty formatting
 
+    if not errors_loading:
+        if settings["plaintext_password"] == "" and settings["hashed_password"] == "":
+            errors_loading = True
+            print("Please set password in: " + args.settingspath)
+
+    if not errors_loading:
         main()
+
+    print("Exiting")

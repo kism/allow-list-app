@@ -4,16 +4,14 @@
     <title>Allowlist App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
-    {#
-    <link rel="stylesheet" href="static/normalise.css" />
-    <link rel="stylesheet" href="static/zy.css" /> #}
+    <link rel="stylesheet" href="static/allowlist.css" />
 </head>
 
 <body>
     <main>
         <h1 id="TITLE">Allowlist App</h1>
-        <form method="POST">
-            <input name="text">
+        <form action="/authenticate/" method="POST">
+              <input type="password" name="password">
             <input type="submit">
         </form>
 
