@@ -6,6 +6,8 @@ import logging
 import os
 import json
 import subprocess
+import threading
+import time
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -15,7 +17,7 @@ ph = PasswordHasher()
 app = Flask(__name__)  # Flask app object
 args = None
 settings = None
-
+reload_nginx_pending = False
 
 @app.route("/")
 def home():
@@ -26,9 +28,12 @@ def home():
 @app.route("/authenticate/", methods=["POST"])
 def my_form_post():
     """Post da password"""
+    global reload_nginx_pending
+
     text = request.form["password"]
     result = check_password(text)
     out_text = "Validation Failed"
+    status = 403
 
     # Get IP
     if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
@@ -37,19 +42,20 @@ def my_form_post():
         ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
     if result:
+        status = 200
         out_text = "Success!"
         write_allowlist_file(ip)
+        reload_nginx_pending = True
 
     print(ip + " " + out_text)
-    return str(out_text)
+    return render_template("result.html.j2", out_text=out_text, status=status)
 
 
 def write_allowlist_file(ip):
     """Write to the nginx allowlist conf file"""
     allowlistpath = settings["path_to_allowlist"]
 
-    # Settings File
-    if not os.path.exists(allowlistpath):
+    if not os.path.exists(allowlistpath): # Create if file doesn't exist
         with open(allowlistpath, "w", encoding="utf8") as conf_file:
             conf_file.write("")
 
@@ -80,10 +86,13 @@ def process_password(in_settings):
     """Hash Password"""
     # Hash password if there is a plaintext password set
     if settings["plaintext_password"] != "":
+        print("Plaintext password set, hashing and removing from config file")
         plaintext = settings["plaintext_password"]
         hashed = ph.hash(plaintext)
         settings["hashed_password"] = hashed
         settings["plaintext_password"] = ""
+    else:
+        print("Found hashed password")
 
     return in_settings
 
@@ -123,12 +132,29 @@ def check_allowlist(conf):
 
 def reload_nginx():
     """Reload nginx"""
-    subprocess.run(["systemctl", "reload", "nginx"], check=True)
+    global reload_nginx_pending
+
+    while True:
+        time.sleep(1)
+        if reload_nginx_pending:
+            print("Reloading nginx... ", end="")
+            time.sleep(1)
+            print("now!")
+            subprocess.run(["systemctl", "reload", "nginx"], check=True)
+            reload_nginx_pending = False
 
 
 def main():
     """Start Flask webapp"""
+
+    # Start thread: restart handler
+    thread = threading.Thread(target=reload_nginx, daemon=True)
+    thread.start()
+
     app.run(host=args.WEBADDRESS, port=args.WEBPORT)
+
+    # Cleanup
+    thread.join()
 
 
 if __name__ == "__main__":
