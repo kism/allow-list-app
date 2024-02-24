@@ -60,7 +60,7 @@ def write_allowlist_file(ip):
         content = conf_file.read()
 
     with open(settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
-        content = "Allow " + ip + ";\n" + content
+        content = "allow " + ip + ";\n" + content
         content = check_allowlist(content)
         # print("Content to write: \n" + content)
         conf_file.write(content)
