@@ -20,6 +20,7 @@ args = None
 settings = None
 reload_nginx_pending = False
 
+
 @app.route("/")
 def home():
     """Flask Home"""
@@ -54,16 +55,11 @@ def my_form_post():
 
 def write_allowlist_file(ip):
     """Write to the nginx allowlist conf file"""
-    allowlistpath = settings["path_to_allowlist"]
 
-    if not os.path.exists(allowlistpath): # Create if file doesn't exist
-        with open(allowlistpath, "w", encoding="utf8") as conf_file:
-            conf_file.write("")
-
-    with open(allowlistpath, "r", encoding="utf8") as conf_file:
+    with open(settings["path_to_allowlist"], "r", encoding="utf8") as conf_file:
         content = conf_file.read()
 
-    with open(allowlistpath, "w", encoding="utf8") as conf_file:
+    with open(settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
         content = "Allow " + ip + ";\n" + content
         content = check_allowlist(content)
         # print("Content to write: \n" + content)
@@ -151,17 +147,25 @@ def reload_nginx():
                 print("Couldnt restart nginx, either: ")
                 print("Nginx isnt installed")
                 print("or")
-                print("Sudoers rule not created for this user (" + user_account + ")" )
+                print("Sudoers rule not created for this user (" + user_account + ")")
                 print("Create and edit a sudoers file")
                 print(" visudo /etc/sudoers.d/" + user_account)
                 print("And insert the text:")
-                print(" " + user_account + " ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx")
+                print(
+                    " "
+                    + user_account
+                    + " ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx"
+                )
 
             reload_nginx_pending = False
 
 
 def main():
     """Start Flask webapp"""
+
+    if not os.path.exists(settings["path_to_allowlist"]): # Create if file doesn't exist
+        with open(settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+            conf_file.write("deny all;")
 
     # Start thread: restart handler
     thread = threading.Thread(target=reload_nginx, daemon=True)
