@@ -4,61 +4,74 @@
 # pylint: disable=global-statement
 
 import argparse
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
-import time
-import socket
-import threading
+
+# import time
+# import socket
+# import threading
 import logging
 import os
 import json
 
-from flask import Flask, render_template, request, jsonify
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+from flask import Flask, render_template, request  # , jsonify
 
 ph = PasswordHasher()
 app = Flask(__name__)  # Flask app object
 args = None
 settings = None
 
+defauilt_settings = """
+
+
+
+"""
+
+
 @app.route("/")
 def home():
     """Flask Home"""
     return render_template("home.html.j2")
 
-@app.route('/', methods=['POST'])
+
+@app.route("/", methods=["POST"])
 def my_form_post():
     """Post da password"""
-    text = request.form['text']
+    text = request.form["text"]
     result = check_password(text)
-    if result:
-        if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
-            ip = request.environ['REMOTE_ADDR']
-        else:
-            ip = request.environ['HTTP_X_FORWARDED_FOR']
+    out_text = "Validation Failed"
 
+    # Get IP
+    if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
+        ip = request.environ["REMOTE_ADDR"]
+    else:
+        ip = request.environ["HTTP_X_FORWARDED_FOR"]
+
+    if result:
+        out_text = "Success!"
         write_allowlist_file(ip)
 
-    return str(result)
+    print(ip + " " + out_text)
+    return str(out_text)
+
 
 def write_allowlist_file(ip):
+    """Write to the nginx allowlist conf file"""
     allowlistpath = settings["path_to_allowlist"]
 
     # Settings File
     if not os.path.exists(allowlistpath):
-        with open(allowlistpath, 'w') as conf_file:
-            conf_file.write("deny all;")
+        with open(allowlistpath, "w", encoding="utf8") as conf_file:
+            conf_file.write("")
 
-    with open(allowlistpath, 'r+') as conf_file:
+    with open(allowlistpath, "r", encoding="utf8") as conf_file:
         content = conf_file.read()
-        conf_file.seek(0, 0)
-        conf_file.write("Allow " + ip + ';\n' + content)
 
-
-    # with open(args.settingspath, 'r') as conf_file:
-
-
-    # with open(args.settingspath, 'w') as conf_file:
-
+    with open(allowlistpath, "w", encoding="utf8") as conf_file:
+        content = "Allow " + ip + ";\n" + content
+        content = check_allowlist(content)
+        print("Content to write: \n" + content)
+        conf_file.write(content)
 
 
 def check_password(text):
@@ -74,10 +87,8 @@ def check_password(text):
     return passwordcorrect
 
 
-
-def process_password(settings):
+def process_password(in_settings):
     """Hash Password"""
-
     # Hash password if there is a plaintext password set
     if settings["plaintext_password"] != "":
         plaintext = settings["plaintext_password"]
@@ -85,9 +96,40 @@ def process_password(settings):
         settings["hashed_password"] = hashed
         settings["plaintext_password"] = ""
 
-    return settings
+    return in_settings
 
 
+def check_allowlist(conf):
+    """Validate the list"""
+    errors_occurred = False
+
+    lines = conf.splitlines()
+    lines.append("deny all;")
+    lines = list(set(lines))
+    lines.sort()
+
+    # print("Lines: \n" + str(lines))
+
+    for line in lines:
+        words = line.lower().split()
+        if words[0] not in ["allow", "deny"]:
+            print("First word in line isn't allow or deny")
+            errors_occurred = True
+
+        if line[-1] != ";":
+            print("No ';' at end of line")
+            errors_occurred = True
+
+        if len(words) != 2:
+            print("Word count validation failed for line: " + line)
+            errors_occurred = True
+
+    conf = "\n".join(lines)
+
+    if errors_occurred:
+        conf = "deny all;"
+
+    return conf
 
 
 def main():
@@ -119,7 +161,7 @@ if __name__ == "__main__":
         type=str,
         dest="settingspath",
         help="Config path /path/to/settings.json",
-        default="settings.json"
+        default="settings.json",
     )
     parser.add_argument(
         "--debug", dest="debug", action="store_true", help="Show debug output"
@@ -134,15 +176,25 @@ if __name__ == "__main__":
 
     # Settings File
     if not os.path.exists(args.settingspath):
-        raise FileNotFoundError(f"The file '{args.settingspath}' does not exist.")
+        with open(args.settingspath, "w", encoding="utf8") as json_file:
+            settings = {
+                "path_to_allowlist": "ipallowist.conf",
+                "plaintext_password": "",
+                "hashed_password": "",
+            }
+            json.dump(
+                settings, json_file, indent=2
+            )  # indent parameter is optional for pretty formatting
+        print("No config file found, creating default")
+    else:
+        with open(args.settingspath, "r", encoding="utf8") as json_file:
+            settings = json.load(json_file)
 
-    with open(args.settingspath, 'r') as json_file:
-        settings = json.load(json_file)
+        settings = process_password(settings)
 
-    settings = process_password(settings)
+        with open(args.settingspath, "w", encoding="utf8") as json_file:
+            json.dump(
+                settings, json_file, indent=2
+            )  # indent parameter is optional for pretty formatting
 
-    with open(args.settingspath, 'w') as json_file:
-        json.dump(settings, json_file, indent=2)  # indent parameter is optional for pretty formatting
-
-
-    main()
+        main()
