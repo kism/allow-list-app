@@ -8,6 +8,7 @@ import json
 import subprocess
 import threading
 import time
+import pwd
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -65,7 +66,7 @@ def write_allowlist_file(ip):
     with open(allowlistpath, "w", encoding="utf8") as conf_file:
         content = "Allow " + ip + ";\n" + content
         content = check_allowlist(content)
-        print("Content to write: \n" + content)
+        # print("Content to write: \n" + content)
         conf_file.write(content)
 
 
@@ -133,14 +134,29 @@ def check_allowlist(conf):
 def reload_nginx():
     """Reload nginx"""
     global reload_nginx_pending
+    user_account = pwd.getpwuid(os.getuid())[0]
+
+    reload_nginx_command = ["systemctl", "reload", "nginx"]
+    if user_account != "root":
+        reload_nginx_command = ["sudo", "systemctl", "reload", "nginx"]
 
     while True:
         time.sleep(1)
         if reload_nginx_pending:
-            print("Reloading nginx... ", end="")
+            print("Reloading nginx")
             time.sleep(1)
-            print("now!")
-            subprocess.run(["systemctl", "reload", "nginx"], check=True)
+            try:
+                subprocess.run(reload_nginx_command, check=True)
+            except subprocess.CalledProcessError:
+                print("Couldnt restart nginx, either: ")
+                print("Nginx isnt installed")
+                print("or")
+                print("Sudoers rule not created for this user (" + user_account + ")" )
+                print("Create and edit a sudoers file")
+                print(" visudo /etc/sudoers.d/" + user_account)
+                print("And insert the text:")
+                print(" " + user_account + " ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx")
+
             reload_nginx_pending = False
 
 
