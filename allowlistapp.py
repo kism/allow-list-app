@@ -136,18 +136,18 @@ def check_allowlist(conf):
     # print("Lines: \n" + str(lines))
 
     for line in lines:
-        words = line.split()
+        words = line.split(" ")
         if words[0] not in ["allow", "deny"]:
-            print("First word in line isn't allow or deny")
+            print("First word in line isn't allow or deny: " + line)
             errors_occurred = True
 
         if words[0] == "allow": # TODO, this needs fixing to include ipv6, networks
             if not check_ip(words[1]):
-                print("Invalid IP address/network")
+                print("Invalid IP address/network: " + line)
                 errors_occurred = True
 
         if line[-1] != ";":
-            print("No ';' at end of line")
+            print("No ';' at end of line: " + line)
             errors_occurred = True
 
         if len(words) != 2:
