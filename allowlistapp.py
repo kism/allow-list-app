@@ -9,6 +9,7 @@ import subprocess
 import threading
 import time
 import pwd
+import ipaddress
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -93,6 +94,35 @@ def process_password(in_settings):
 
     return in_settings
 
+def check_ip(in_ip_or_network):
+    """Check if string is valid IP or Network"""
+    valid_ip_or_network = False
+    try:
+        ipaddress.IPv4Address(in_ip_or_network)
+        valid_ip_or_network = True
+    except ipaddress.AddressValueError:
+        errors_occurred = True
+
+    try:
+        ipaddress.IPv4Network(in_ip_or_network)
+        valid_ip_or_network = True
+    except ipaddress.AddressValueError:
+        errors_occurred = True
+
+    try:
+        ipaddress.IPv6Address(in_ip_or_network)
+        valid_ip_or_network = True
+    except ipaddress.AddressValueError:
+        errors_occurred = True
+
+    try:
+        ipaddress.IPv6Network(in_ip_or_network)
+        valid_ip_or_network = True
+    except ipaddress.AddressValueError:
+        errors_occurred = True
+
+    return valid_ip_or_network
+
 
 def check_allowlist(conf):
     """Validate the list"""
@@ -110,6 +140,11 @@ def check_allowlist(conf):
         if words[0] not in ["allow", "deny"]:
             print("First word in line isn't allow or deny")
             errors_occurred = True
+
+        if words[0] == "allow": # TODO, this needs fixing to include ipv6, networks
+            if not check_ip(words[1]):
+                print("Invalid IP address/network")
+                errors_occurred = True
 
         if line[-1] != ";":
             print("No ';' at end of line")
