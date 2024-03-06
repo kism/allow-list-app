@@ -39,7 +39,7 @@ def my_form_post():
 
     text = request.form["password"]
     result = check_password(text)
-    out_text = "Validation Failed"
+    out_text = "Validation Failed: "
     status = 403
 
     # Get IP
@@ -50,11 +50,11 @@ def my_form_post():
 
     if result:
         status = 200
-        out_text = "Successful Auth!"
+        out_text = "Successful Auth!: "
         write_allowlist_file(ip)
         reload_nginx_pending = True
 
-    logging.info("%s %s", ip, out_text)
+    logging.info("%s %s", out_text, ip)
     return render_template("result.html.j2", out_text=out_text, status=status)
 
 
