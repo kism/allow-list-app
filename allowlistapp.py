@@ -10,16 +10,19 @@ import threading
 import time
 import pwd
 import ipaddress
+import datetime
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Flask, render_template, request  # , jsonify
+from waitress import serve
 
 ph = PasswordHasher()
 app = Flask(__name__)  # Flask app object
 args = None
 settings = None
 reload_nginx_pending = False
+LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 @app.route("/")
@@ -50,7 +53,7 @@ def my_form_post():
         write_allowlist_file(ip)
         reload_nginx_pending = True
 
-    print(ip + " " + out_text)
+    logging.info("%s %s", ip, out_text)
     return render_template("result.html.j2", out_text=out_text, status=status)
 
 
@@ -63,7 +66,7 @@ def write_allowlist_file(ip):
     with open(settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
         content = "allow " + ip + ";\n" + content
         content = check_allowlist(content)
-        # print("Content to write: \n" + content)
+        # logging.info("Content to write: \n" + content)
         conf_file.write(content)
 
 
@@ -84,44 +87,51 @@ def process_password(in_settings):
     """Hash Password"""
     # Hash password if there is a plaintext password set
     if settings["plaintext_password"] != "":
-        print("Plaintext password set, hashing and removing from config file")
+        logging.info("Plaintext password set, hashing and removing from config file")
         plaintext = settings["plaintext_password"]
         hashed = ph.hash(plaintext)
         settings["hashed_password"] = hashed
         settings["plaintext_password"] = ""
+    elif settings["hashed_password"] == "":
+        logging.info("No hashed password")
     else:
-        print("Found hashed password")
+        logging.info("Found hashed password, probably")
 
     return in_settings
 
+
 def check_ip(in_ip_or_network):
     """Check if string is valid IP or Network"""
-    valid_ip_or_network = False
+    one_success = False
     try:
         ipaddress.IPv4Address(in_ip_or_network)
-        valid_ip_or_network = True
+        one_success = True
+    except ipaddress.NetmaskValueError:
+        pass
     except ipaddress.AddressValueError:
-        errors_occurred = True
+        pass
 
     try:
         ipaddress.IPv4Network(in_ip_or_network)
-        valid_ip_or_network = True
-    except ipaddress.AddressValueError:
-        errors_occurred = True
+        one_success = True
+    except ipaddress.NetmaskValueError:
+        pass
 
     try:
         ipaddress.IPv6Address(in_ip_or_network)
-        valid_ip_or_network = True
+        one_success = True
     except ipaddress.AddressValueError:
-        errors_occurred = True
+        pass
 
     try:
         ipaddress.IPv6Network(in_ip_or_network)
-        valid_ip_or_network = True
+        one_success = True
+    except ipaddress.NetmaskValueError:
+        pass
     except ipaddress.AddressValueError:
-        errors_occurred = True
+        pass
 
-    return valid_ip_or_network
+    return one_success
 
 
 def check_allowlist(conf):
@@ -133,25 +143,25 @@ def check_allowlist(conf):
     lines = list(set(lines))
     lines.sort()
 
-    # print("Lines: \n" + str(lines))
+    # logging.info("Lines: \n" + str(lines))
 
     for line in lines:
         words = line.split(" ")
         if words[0] not in ["allow", "deny"]:
-            print("First word in line isn't allow or deny: " + line)
+            logging.info("First word in line isn't allow or deny: %s", line)
             errors_occurred = True
 
-        if words[0] == "allow": # TODO, this needs fixing to include ipv6, networks
+        if words[0] == "allow":  # TODO, this needs fixing to include ipv6, networks
             if not check_ip(words[1]):
-                print("Invalid IP address/network: " + line)
+                logging.info("Invalid IP address/network: %s", line)
                 errors_occurred = True
 
         if line[-1] != ";":
-            print("No ';' at end of line: " + line)
+            logging.info("No ';' at end of line: %s", line)
             errors_occurred = True
 
         if len(words) != 2:
-            print("Word count validation failed for line: " + line)
+            logging.info("Word count validation failed for line: %s", line)
             errors_occurred = True
 
     conf = "\n".join(lines)
@@ -174,31 +184,94 @@ def reload_nginx():
     while True:
         time.sleep(1)
         if reload_nginx_pending:
-            print("Reloading nginx")
+            logging.info("Reloading nginx")
             time.sleep(1)
             try:
                 subprocess.run(reload_nginx_command, check=True)
             except subprocess.CalledProcessError:
-                print("Couldnt restart nginx, either: ")
-                print("Nginx isnt installed")
-                print("or")
-                print("Sudoers rule not created for this user (" + user_account + ")")
-                print("Create and edit a sudoers file")
-                print(" visudo /etc/sudoers.d/" + user_account)
-                print("And insert the text:")
-                print(
-                    " "
-                    + user_account
-                    + " ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx"
+                logging.info("Couldnt restart nginx, either: ")
+                logging.info("Nginx isnt installed")
+                logging.info("or")
+                logging.info(
+                    "Sudoers rule not created for this user (%s)", user_account
+                )
+                logging.info("Create and edit a sudoers file")
+                logging.info(" visudo /etc/sudoers.d/%s", user_account)
+                logging.info("And insert the text:")
+                logging.info(
+                    " %s ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx",
+                    user_account,
                 )
 
             reload_nginx_pending = False
 
 
+def revert_list_daily():
+    """Reset list at 4am"""
+    while True:
+        # logging.info("It's 4am, reloading IP list")
+
+        for subnet in settings["allowed_subnets"]:
+            write_allowlist_file(subnet)
+
+        # Calculate time until next run
+        now = datetime.datetime.now()
+        seconds_until_next_run = (86400 + 14400) - ((now.minute * 60) + now.second)
+        if seconds_until_next_run > 86400:
+            seconds_until_next_run -= 86400
+
+        # logging.info("🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
+        time.sleep(seconds_until_next_run)
+
+
+def setup_logger(args):
+    """APP LOGGING"""
+    invalid_log_level = False
+    loglevel = logging.INFO
+    if args.loglevel:
+        args.loglevel = args.loglevel.upper()
+        if args.loglevel in LOGLEVELS:
+            loglevel = args.loglevel
+        else:
+            invalid_log_level = True
+
+    logging.basicConfig(
+        format="%(asctime)s:%(levelname)s:%(name)s:%(message)s", level=loglevel
+    )
+
+    logging.getLogger("waitress").setLevel(logging.INFO)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    logger = logging.getLogger()
+    formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s:%(message)s")
+
+    try:
+        if args.logfile:
+            filehandler = logging.FileHandler(args.logfile)
+            filehandler.setFormatter(formatter)
+            logger.addHandler(filehandler)
+    except IsADirectoryError as exc:
+        err = "You are trying to log to a directory, try a file"
+        raise IsADirectoryError(err) from exc
+
+    except PermissionError as exc:
+        err = "The user running this does not have access to the file: " + args.logfile
+        raise IsADirectoryError(err) from exc
+
+    logging.info(" ----------")
+    logging.info("🙋 Logger started")
+    if invalid_log_level:
+        logging.warning(
+            "❗ Invalid logging level: %s, defaulting to INFO", {args.loglevel}
+        )
+
+
 def main():
     """Start Flask webapp"""
 
-    if not os.path.exists(settings["path_to_allowlist"]): # Create if file doesn't exist
+    if not os.path.exists(
+        settings["path_to_allowlist"]
+    ):  # Create if file doesn't exist
         with open(settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
             conf_file.write("deny all;")
 
@@ -206,7 +279,10 @@ def main():
     thread = threading.Thread(target=reload_nginx, daemon=True)
     thread.start()
 
-    app.run(host=args.WEBADDRESS, port=args.WEBPORT)
+    thread = threading.Thread(target=revert_list_daily, daemon=True)
+    thread.start()
+
+    serve(app, host=args.WEBADDRESS, port=args.WEBPORT, threads=2)
 
     # Cleanup
     thread.join()
@@ -239,15 +315,21 @@ if __name__ == "__main__":
         default="settings.json",
     )
     parser.add_argument(
-        "--debug", dest="debug", action="store_true", help="Show debug output"
+        "--loglevel",
+        type=str,
+        dest="loglevel",
+        help="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+    parser.add_argument(
+        "-lf",
+        "--logfile",
+        type=str,
+        dest="logfile",
+        help="Log file full path",
     )
     args = parser.parse_args()
 
-    # Flask Logger
-    log = logging.getLogger("werkzeug")
-    log.setLevel(logging.ERROR)
-    if args.debug:
-        log.setLevel(logging.DEBUG)
+    setup_logger(args)
 
     # Settings File
     errors_loading = False
@@ -258,11 +340,12 @@ if __name__ == "__main__":
                 "path_to_allowlist": "ipallowist.conf",
                 "plaintext_password": "",
                 "hashed_password": "",
+                "allowed_subnets": ["127.0.0.1/32"],
             }
             json.dump(
                 settings, json_file, indent=2
             )  # indent parameter is optional for pretty formatting
-        print("No config file found, creating default")
+        logging.info("No config file found, creating default")
     else:
         with open(args.settingspath, "r", encoding="utf8") as json_file:
             settings = json.load(json_file)
@@ -277,9 +360,9 @@ if __name__ == "__main__":
     if not errors_loading:
         if settings["plaintext_password"] == "" and settings["hashed_password"] == "":
             errors_loading = True
-            print("Please set password in: " + args.settingspath)
+            logging.info("Please set password in: %s", args.settingspath)
 
     if not errors_loading:
         main()
 
-    print("Exiting")
+    logging.info("Exiting")
