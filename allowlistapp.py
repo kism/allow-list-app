@@ -93,7 +93,7 @@ def process_password(in_settings):
         settings["hashed_password"] = hashed
         settings["plaintext_password"] = ""
     elif settings["hashed_password"] == "":
-        logging.info("No hashed password")
+        logging.error("❌ No hashed password")
     else:
         logging.info("Found hashed password, probably")
 
@@ -115,6 +115,8 @@ def check_ip(in_ip_or_network):
         ipaddress.IPv4Network(in_ip_or_network)
         one_success = True
     except ipaddress.NetmaskValueError:
+        pass
+    except ipaddress.AddressValueError:
         pass
 
     try:
@@ -148,20 +150,21 @@ def check_allowlist(conf):
     for line in lines:
         words = line.split(" ")
         if words[0] not in ["allow", "deny"]:
-            logging.info("First word in line isn't allow or deny: %s", line)
+            logging.error("❌ First word in line isn't allow or deny: %s", line)
             errors_occurred = True
 
         if words[0] == "allow":  # TODO, this needs fixing to include ipv6, networks
-            if not check_ip(words[1]):
-                logging.info("Invalid IP address/network: %s", line)
+            ip_to_check = words[1].replace(";","")
+            if not check_ip(ip_to_check):
+                logging.error("❌ Invalid IP address/network: %s", line)
                 errors_occurred = True
 
         if line[-1] != ";":
-            logging.info("No ';' at end of line: %s", line)
+            logging.error("❌ No ';' at end of line: %s", line)
             errors_occurred = True
 
         if len(words) != 2:
-            logging.info("Word count validation failed for line: %s", line)
+            logging.error("❌ Word count validation failed for line: %s", line)
             errors_occurred = True
 
     conf = "\n".join(lines)
@@ -189,16 +192,16 @@ def reload_nginx():
             try:
                 subprocess.run(reload_nginx_command, check=True)
             except subprocess.CalledProcessError:
-                logging.info("Couldnt restart nginx, either: ")
-                logging.info("Nginx isnt installed")
-                logging.info("or")
-                logging.info(
+                logging.error("❌ Couldnt restart nginx, either: ")
+                logging.error("Nginx isnt installed")
+                logging.error("or")
+                logging.error(
                     "Sudoers rule not created for this user (%s)", user_account
                 )
-                logging.info("Create and edit a sudoers file")
-                logging.info(" visudo /etc/sudoers.d/%s", user_account)
-                logging.info("And insert the text:")
-                logging.info(
+                logging.error("Create and edit a sudoers file")
+                logging.error(" visudo /etc/sudoers.d/%s", user_account)
+                logging.error("And insert the text:")
+                logging.error(
                     " %s ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx",
                     user_account,
                 )
@@ -365,4 +368,4 @@ if __name__ == "__main__":
     if not errors_loading:
         main()
 
-    logging.info("Exiting")
+    logging.info("Exiting 👋")
