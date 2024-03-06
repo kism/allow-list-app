@@ -50,7 +50,7 @@ def my_form_post():
 
     if result:
         status = 200
-        out_text = "Success!"
+        out_text = "Successful Auth!"
         write_allowlist_file(ip)
         reload_nginx_pending = True
 
@@ -171,6 +171,7 @@ def check_allowlist(conf):
     conf = "\n".join(lines)
 
     if errors_occurred:
+        logging.error('❌ Line validation failed, reverting to "deny all;" ')
         conf = "deny all;"
 
     return conf
@@ -240,7 +241,8 @@ def revert_list_daily():
         seconds_until_next_run = time_difference.total_seconds()
 
         logging.info(
-            "🛌 Reverting allowlist in ~%s minutes", str(int(seconds_until_next_run / 60))
+            "🛌 Reverting allowlist in ~%s minutes",
+            str(int(seconds_until_next_run / 60)),
         )
 
         # Sleep until the target time
