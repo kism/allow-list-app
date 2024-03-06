@@ -11,6 +11,7 @@ import time
 import pwd
 import ipaddress
 import datetime
+import sys
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -154,7 +155,7 @@ def check_allowlist(conf):
             errors_occurred = True
 
         if words[0] == "allow":  # TODO, this needs fixing to include ipv6, networks
-            ip_to_check = words[1].replace(";","")
+            ip_to_check = words[1].replace(";", "")
             if not check_ip(ip_to_check):
                 logging.error("❌ Invalid IP address/network: %s", line)
                 errors_occurred = True
@@ -212,19 +213,40 @@ def reload_nginx():
 def revert_list_daily():
     """Reset list at 4am"""
     while True:
-        # logging.info("It's 4am, reloading IP list")
+        logging.info("Adding subnets/ips from config file")
+
+        # Revert list
+        with open(settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+            conf_file.write("deny all;")
 
         for subnet in settings["allowed_subnets"]:
             write_allowlist_file(subnet)
 
-        # Calculate time until next run
-        now = datetime.datetime.now()
-        seconds_until_next_run = (86400 + 14400) - ((now.minute * 60) + now.second)
-        if seconds_until_next_run > 86400:
-            seconds_until_next_run -= 86400
+        # Get the current time
+        current_time = datetime.datetime.now().time()
 
-        # logging.info("🛌 Sleeping for ~%s minutes", str(int(seconds_until_next_run / 60)))
+        # Set the target time (4 AM)
+        target_time = datetime.time(4, 0)
+
+        # Calculate the time difference
+        time_difference = datetime.datetime.combine(
+            datetime.date.today(), target_time
+        ) - datetime.datetime.combine(datetime.date.today(), current_time)
+
+        # If the target time is already passed for today, add 1 day
+        if time_difference.total_seconds() < 0:
+            time_difference += datetime.timedelta(days=1)
+
+        seconds_until_next_run = time_difference.total_seconds()
+
+        logging.info(
+            "🛌 Reverting allowlist in ~%s minutes", str(int(seconds_until_next_run / 60))
+        )
+
+        # Sleep until the target time
         time.sleep(seconds_until_next_run)
+
+        logging.info("It's 4am, reverting IP list to default")
 
 
 def setup_logger(args):
@@ -366,6 +388,11 @@ if __name__ == "__main__":
             logging.info("Please set password in: %s", args.settingspath)
 
     if not errors_loading:
-        main()
+        try:
+            main()
+        except KeyboardInterrupt:
+            print("\nExiting due to KeyboardInterrupt! 👋")
+            sys.exit(130)
 
     logging.info("Exiting 👋")
+    sys.exit(1)
