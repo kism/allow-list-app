@@ -69,6 +69,7 @@ def write_allowlist_file(ip):
         content = check_allowlist(content)
         # logging.info("Content to write: \n" + content)
         conf_file.write(content)
+        logging.info("Wrote config, allowing: %s", ip)
 
 
 def check_password(text):
