@@ -15,11 +15,12 @@ import sys
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from flask import Flask, render_template, request  # , jsonify
+from flask import Flask, render_template, request, Blueprint  # , jsonify
 from waitress import serve
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-ph = PasswordHasher()
 app = Flask(__name__)  # Flask app object
+ph = PasswordHasher()
 args = None
 settings = None
 reload_nginx_pending = False
@@ -47,6 +48,9 @@ def my_form_post():
         ip = request.environ["REMOTE_ADDR"]
     else:
         ip = request.environ["HTTP_X_FORWARDED_FOR"]
+
+    # for thing in enumerate(request.environ):
+    #     print(thing)
 
     if result:
         status = 200
@@ -310,7 +314,8 @@ def main():
     thread = threading.Thread(target=revert_list_daily, daemon=True)
     thread.start()
 
-    serve(app, host=args.WEBADDRESS, port=args.WEBPORT, threads=2)
+    # serve(app, host=args.WEBADDRESS, port=args.WEBPORT, threads=2)
+    app.run(host=args.WEBADDRESS, port=args.WEBPORT)
 
     # Cleanup
     thread.join()
