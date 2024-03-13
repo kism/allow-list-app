@@ -37,7 +37,6 @@ def home():
 @app.route("/authenticate/", methods=["POST"])
 def my_form_post():
     """Post da password"""
-    global reload_nginx_pending
 
     text = request.form["password"]
     result = check_password(text)
@@ -57,7 +56,6 @@ def my_form_post():
         status = 200
         out_text = "Successful Auth!"
         write_allowlist_file(ip)
-        reload_nginx_pending = True
 
     logging.info("%s: %s", out_text, ip)
     return render_template("result.html.j2", out_text=out_text, status=status)
@@ -65,6 +63,7 @@ def my_form_post():
 
 def write_allowlist_file(ip):
     """Write to the nginx allowlist conf file"""
+    global reload_nginx_pending
     global write_file_in_progress
     write_file_in_progress = True
 
@@ -79,6 +78,7 @@ def write_allowlist_file(ip):
         logging.info("Wrote config, allowing: %s", ip)
 
     write_file_in_progress = False
+    reload_nginx_pending = True
 
 
 def check_password(text):
@@ -200,7 +200,7 @@ def reload_nginx():
         time.sleep(1)
         if reload_nginx_pending:
             logging.info("Reloading nginx")
-            while write_file_in_progress: # TODO this is unsafe
+            while write_file_in_progress:  # TODO this is unsafe
                 time.sleep(1)
 
             try:
