@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "eamodio.gitlens",
+        "ms-python.black-formatter",
+        "ms-python.pylint",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "samuelcolvin.jinjahtml",
+        "yile-ou.paddy-color-theme"
+    ]
+}

@@ -24,6 +24,7 @@ ph = PasswordHasher()
 args = None
 settings = None
 reload_nginx_pending = False
+write_file_in_progress = False
 LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
@@ -64,6 +65,8 @@ def my_form_post():
 
 def write_allowlist_file(ip):
     """Write to the nginx allowlist conf file"""
+    global write_file_in_progress
+    write_file_in_progress = True
 
     with open(settings["path_to_allowlist"], "r", encoding="utf8") as conf_file:
         content = conf_file.read()
@@ -74,6 +77,8 @@ def write_allowlist_file(ip):
         # logging.info("Content to write: \n" + content)
         conf_file.write(content)
         logging.info("Wrote config, allowing: %s", ip)
+
+    write_file_in_progress = False
 
 
 def check_password(text):
@@ -195,7 +200,9 @@ def reload_nginx():
         time.sleep(1)
         if reload_nginx_pending:
             logging.info("Reloading nginx")
-            time.sleep(1)
+            while write_file_in_progress: # TODO this is unsafe
+                time.sleep(1)
+
             try:
                 subprocess.run(reload_nginx_command, check=True)
             except subprocess.CalledProcessError:
