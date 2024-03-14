@@ -279,6 +279,7 @@ def setup_logger(args):
     )
 
     logging.getLogger("waitress").setLevel(logging.INFO)
+    logging.getLogger("werkzeug").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     logger = logging.getLogger()
