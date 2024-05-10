@@ -15,9 +15,9 @@ import sys
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from flask import Flask, render_template, request, Blueprint  # , jsonify
-from waitress import serve
-from werkzeug.middleware.proxy_fix import ProxyFix
+from flask import Flask, render_template, request # , Blueprint  # , jsonify
+# from waitress import serve
+# from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)  # Flask app object
 ph = PasswordHasher()

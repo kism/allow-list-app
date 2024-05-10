@@ -1,6 +1,8 @@
 {
-    "Lua.diagnostics.globals": ["emu", "socket", "console", "callbacks"],
-    "prettier.printWidth": 120,
-    "prettier.tabWidth": 4,
-    "ansible.python.interpreterPath": "/home/kism/.local/share/virtualenvs/allowlistapp-IXoG9w_n/bin/python"
-}
+    "[python]": {
+      "editor.formatOnType": true,
+      "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.languageServer": "Pylance",
+    "python.terminal.activateEnvInCurrentTerminal": true
+  }

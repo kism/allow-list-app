@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "allowlistapp"
+version = "0.1.0"
+description = "Flask webapp to allowlist IPs on nginx"
+authors = ["Kieran Gee <kieran.lost.the.game@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+flask = "^3.0.3"
+argon2-cffi = "^23.1.0"
+waitress = "^3.0.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+pylance = "^0.10.18"
+ruff = "^0.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+
+[tool.ruff]
+line-length = 120
