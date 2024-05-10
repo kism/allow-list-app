@@ -1,27 +1,40 @@
 #!/usr/bin/env python3
 """Flask webapp to control a nginx allowlist"""
 
-import argparse
 import os
 import threading
+import tomllib
 
 from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
 
-# from waitress import serve
-# from werkzeug.middleware.proxy_fix import ProxyFix
-
-from . import logger
+app_settings = None
 
 
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
+    global app_settings
     app = Flask(__name__, instance_relative_config=True)
+
+    app.config.from_file("config.toml", load=tomllib.load, text=False)
+
+    with open("instance/config.toml", "rb") as f:
+        app_settings = tomllib.load(f)
+
+    from . import settings
+
+    app_settings = settings.check(app_settings)
+
+    for k, v in app.config.items():
+        print(f"{k}: {v}")
+
+    for k, v in app_settings.items():
+        print(f"{k}: {v}")
 
     # Register my libraries
     from . import allowlist
-    from .settings import get_settings
+    from . import logger
 
-    settings = get_settings()
+    logger.setup_logger(app_settings["loglevel"], app_settings["logpath"])
 
     # Blueprints
     from . import auth
@@ -33,15 +46,15 @@ def create_app(test_config=None):
         """Flask Home"""
         return render_template("home.html.j2")
 
-    if not os.path.exists(settings["path_to_allowlist"]):  # Create if file doesn't exist
-        with open(settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+    if not os.path.exists(app_settings["path_to_allowlist"]):  # Create if file doesn't exist
+        with open(app_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
             conf_file.write("deny all;")
 
     # Start thread: restart handler
     thread = threading.Thread(target=allowlist.reload_nginx, daemon=True)
     thread.start()
 
-    thread = threading.Thread(target=allowlist.revert_list_daily, daemon=True)
+    thread = threading.Thread(target=allowlist.revert_list_daily, args=(app_settings,), daemon=True)
     thread.start()
 
     # serve(app, host=args.WEBADDRESS, port=args.WEBPORT, threads=2)
@@ -51,49 +64,5 @@ def create_app(test_config=None):
     return app
 
 
-def get_args():
-    return args
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Flask WebUI, Socket Sender for mGBA")
-    parser.add_argument(
-        "-wa",
-        "--webaddress",
-        type=str,
-        dest="WEBADDRESS",
-        help="(WebUI) Web address to listen on, default is 0.0.0.0",
-        default="0.0.0.0",
-    )
-    parser.add_argument(
-        "-wp",
-        "--webport",
-        type=int,
-        dest="WEBPORT",
-        help="(WebUI) Web port to listen on, default is 5000",
-        default=5000,
-    )
-    parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        dest="settingspath",
-        help="Config path /path/to/settings.json",
-        default="settings.json",
-    )
-    parser.add_argument(
-        "--loglevel",
-        type=str,
-        dest="loglevel",
-        help="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-    )
-    parser.add_argument(
-        "-lf",
-        "--logfile",
-        type=str,
-        dest="logfile",
-        help="Log file full path",
-    )
-    args = parser.parse_args()
-
-    logger.setup_logger(args)
+def get_app_settings():
+    return app_settings

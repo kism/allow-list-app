@@ -7,16 +7,17 @@ import logging
 LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
-def setup_logger(args):
+def setup_logger(config_loglevel, logpath):
     """APP LOGGING"""
+
     invalid_log_level = False
     loglevel = logging.INFO
-    if args.loglevel:
-        args.loglevel = args.loglevel.upper()
-        if args.loglevel in LOGLEVELS:
-            loglevel = args.loglevel
-        else:
+    if config_loglevel:
+        config_loglevel = config_loglevel.upper()
+        if config_loglevel not in LOGLEVELS:
             invalid_log_level = True
+        else:
+            loglevel = config_loglevel
 
     logging.basicConfig(format="%(asctime)s:%(levelname)s:%(name)s:%(message)s", level=loglevel)
 
@@ -28,8 +29,8 @@ def setup_logger(args):
     formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(name)s:%(message)s")
 
     try:
-        if args.logfile:
-            filehandler = logging.FileHandler(args.logfile)
+        if logpath:
+            filehandler = logging.FileHandler(logpath)
             filehandler.setFormatter(formatter)
             logger.addHandler(filehandler)
     except IsADirectoryError as exc:
@@ -37,10 +38,10 @@ def setup_logger(args):
         raise IsADirectoryError(err) from exc
 
     except PermissionError as exc:
-        err = "The user running this does not have access to the file: " + args.logfile
+        err = "The user running this does not have access to the file: " + logpath
         raise IsADirectoryError(err) from exc
 
     logging.info(" ----------")
     logging.info("🙋 Logger started")
     if invalid_log_level:
-        logging.warning("❗ Invalid logging level: %s, defaulting to INFO", {args.loglevel})
+        logging.warning("❗ Invalid logging level: %s, defaulting to INFO", {loglevel})

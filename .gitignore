@@ -1,9 +1,11 @@
 settings.json
-ipallowist.conf
+ipallowlist.conf
 
-.venv/
+*.log
+
 
 # Python
+.venv/
 
 *.pyc
 __pycache__/
