@@ -7,34 +7,35 @@ import tomllib
 
 from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
 
-app_settings = None
-
+ala_settings = None
 
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
-    global app_settings
-    app = Flask(__name__, instance_relative_config=True)
-
-    app.config.from_file("config.toml", load=tomllib.load, text=False)
-
-    with open("instance/config.toml", "rb") as f:
-        app_settings = tomllib.load(f)
-
     from . import settings
+    global ala_settings
+    ala_settings = settings.AllowListAppSettings()
 
-    app_settings = settings.check(app_settings)
+    app = Flask(__name__, instance_relative_config=True)
+    try:
+        app.config.from_file("aflask.toml", load=tomllib.load, text=False)
+    except FileNotFoundError:
+        print("No flask configuration file found at:", app.instance_path + '/flask.toml')
+        print("Using defaults (this is not a problem)")
 
-    for k, v in app.config.items():
-        print(f"{k}: {v}")
 
-    for k, v in app_settings.items():
-        print(f"{k}: {v}")
+
+
+    # for k, v in app.config.items():
+    #     print(f"{k}: {v}")
+
+    # for k, v in ala_settings.items():
+    #     print(f"{k}: {v}")
 
     # Register my libraries
     from . import allowlist
     from . import logger
 
-    logger.setup_logger(app_settings["loglevel"], app_settings["logpath"])
+    logger.setup_logger(ala_settings.log_level, ala_settings.log_path)
 
     # Blueprints
     from . import auth
@@ -46,15 +47,15 @@ def create_app(test_config=None):
         """Flask Home"""
         return render_template("home.html.j2")
 
-    if not os.path.exists(app_settings["path_to_allowlist"]):  # Create if file doesn't exist
-        with open(app_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+    if not os.path.exists(ala_settings.allowlist_path):  # Create if file doesn't exist
+        with open(ala_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
             conf_file.write("deny all;")
 
     # Start thread: restart handler
     thread = threading.Thread(target=allowlist.reload_nginx, daemon=True)
     thread.start()
 
-    thread = threading.Thread(target=allowlist.revert_list_daily, args=(app_settings,), daemon=True)
+    thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
     thread.start()
 
     # serve(app, host=args.WEBADDRESS, port=args.WEBPORT, threads=2)
@@ -64,5 +65,5 @@ def create_app(test_config=None):
     return app
 
 
-def get_app_settings():
-    return app_settings
+def get_ala_settings():
+    return ala_settings

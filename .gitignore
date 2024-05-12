@@ -6,6 +6,7 @@ ipallowlist.conf
 
 # Python
 .venv/
+.ruff_cache
 
 *.pyc
 __pycache__/

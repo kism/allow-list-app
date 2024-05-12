@@ -20,16 +20,16 @@ reload_nginx_pending = False
 write_file_in_progress = False
 
 
-def write_allowlist_file(app_settings, ip):
+def write_allowlist_file(ala_settings, ip):
     """Write to the nginx allowlist conf file"""
     global reload_nginx_pending
     global write_file_in_progress
     write_file_in_progress = True
 
-    with open(app_settings["path_to_allowlist"], "r", encoding="utf8") as conf_file:
+    with open(ala_settings["path_to_allowlist"], "r", encoding="utf8") as conf_file:
         content = conf_file.read()
 
-    with open(app_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+    with open(ala_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
         content = "allow " + ip + ";\n" + content
         content = check_allowlist(content)
         # logging.info("Content to write: \n" + content)
@@ -150,17 +150,17 @@ def reload_nginx():
             reload_nginx_pending = False
 
 
-def revert_list_daily(app_settings):
+def revert_list_daily(ala_settings):
     """Reset list at 4am"""
     while True:
         logging.info("Adding subnets/ips from config file")
 
         # Revert list
-        with open(app_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+        with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
             conf_file.write("deny all;")
 
-        for subnet in app_settings["allowed_subnets"]:
-            write_allowlist_file(app_settings, subnet)
+        for subnet in ala_settings.allowed_subnets:
+            write_allowlist_file(ala_settings, subnet)
 
         # Get the current time
         current_time = datetime.datetime.now().time()

@@ -8,14 +8,15 @@ from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, render_template, request, current_app
 
 from . import allowlist
-from . import get_app_settings
+from . import get_ala_settings
 
 # from .settings import get_settings
 
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
 
-app_settings = get_app_settings()
+app_settings = get_ala_settings()
+
 
 @bp.route("/authenticate/", methods=["POST"])
 def my_form_post():
@@ -55,19 +56,3 @@ def check_password(text):
         pass
 
     return passwordcorrect
-
-
-def process_password():
-    """Hash Password"""
-    # Hash password if there is a plaintext password set
-    if current_app.config["plaintext_password"] != "":
-        logging.info("Plaintext password set, hashing and removing from config file")
-        plaintext = current_app.config["plaintext_password"]
-        hashed = ph.hash(plaintext)
-        current_app.config["hashed_password"] = hashed
-        current_app.config["plaintext_password"] = ""
-    elif current_app.config["hashed_password"] == "":
-        logging.error("❌ No hashed password")
-    else:
-        logging.info("Found hashed password, probably")
-
