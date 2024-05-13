@@ -26,10 +26,10 @@ def write_allowlist_file(ala_settings, ip):
     global write_file_in_progress
     write_file_in_progress = True
 
-    with open(ala_settings["path_to_allowlist"], "r", encoding="utf8") as conf_file:
+    with open(ala_settings.allowlist_path, "r", encoding="utf8") as conf_file:
         content = conf_file.read()
 
-    with open(ala_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+    with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
         content = "allow " + ip + ";\n" + content
         content = check_allowlist(content)
         # logging.info("Content to write: \n" + content)

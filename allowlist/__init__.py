@@ -9,27 +9,20 @@ from flask import Flask, render_template  # , request  # , Blueprint  # , jsonif
 
 ala_settings = None
 
+
 def create_app(test_config=None):
     """Create and configure an instance of the Flask application."""
     from . import settings
+
     global ala_settings
     ala_settings = settings.AllowListAppSettings()
 
     app = Flask(__name__, instance_relative_config=True)
     try:
-        app.config.from_file("aflask.toml", load=tomllib.load, text=False)
+        app.config.from_file("flask.toml", load=tomllib.load, text=False)
     except FileNotFoundError:
-        print("No flask configuration file found at:", app.instance_path + '/flask.toml')
+        print(f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml")
         print("Using defaults (this is not a problem)")
-
-
-
-
-    # for k, v in app.config.items():
-    #     print(f"{k}: {v}")
-
-    # for k, v in ala_settings.items():
-    #     print(f"{k}: {v}")
 
     # Register my libraries
     from . import allowlist
@@ -48,7 +41,7 @@ def create_app(test_config=None):
         return render_template("home.html.j2")
 
     if not os.path.exists(ala_settings.allowlist_path):  # Create if file doesn't exist
-        with open(ala_settings["path_to_allowlist"], "w", encoding="utf8") as conf_file:
+        with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
             conf_file.write("deny all;")
 
     # Start thread: restart handler

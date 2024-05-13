@@ -3,4 +3,4 @@ allowlist_path: ipallowlist.conf
 log_level: INFO
 log_path: allowlistapp.log
 password_cleartext: ''
-password_hashsed: $argon2id$v=19$m=65536,t=3,p=4$Igj6QsKO/b8cUqs/sYQwOw$KJt3a1J5gXwvHcfOptp0/TU1jqR0lONh88At12qPDks
+password_hashed: $argon2id$v=19$m=65536,t=3,p=4$Igj6QsKO/b8cUqs/sYQwOw$KJt3a1J5gXwvHcfOptp0/TU1jqR0lONh88At12qPDks
