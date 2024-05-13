@@ -91,4 +91,4 @@ def write_settings(ala_settings):
             yaml.safe_dump(settings_write_temp, yaml_file)
     except PermissionError:
         user_account = pwd.getpwuid(os.getuid())[0]
-        raise PermissionError(f"Fix permissions: chown {user_account} ala_settings.settings_path")
+        raise PermissionError(f"Fix permissions: chown {user_account} {ala_settings.settings_path}")
