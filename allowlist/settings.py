@@ -16,7 +16,7 @@ class AllowListAppSettings:
         self.allowlist_path = "ipallowlist.conf"
         self.password_hashed = ""
         self.password_cleartext = ""
-        self.log_path = "allowlistapp.log"
+        self.log_path = ""
         self.log_level = "INFO"
         self.settings_path = None
 
