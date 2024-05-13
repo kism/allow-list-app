@@ -1,2 +1,23 @@
 settings.json
-ipallowist.conf
+ipallowlist.conf
+
+*.log
+
+
+# Python
+.venv/
+.ruff_cache
+
+*.pyc
+__pycache__/
+
+instance/
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+dist/
+build/
+*.egg-info/
+settings.yml
