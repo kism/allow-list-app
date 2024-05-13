@@ -1,5 +1,4 @@
-settings.json
-settings.yml
+settings.*
 ipallowlist.conf
 
 *.log
