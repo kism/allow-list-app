@@ -130,8 +130,9 @@ def reload_nginx():
                 time.sleep(1)
 
             try:
+                result = None
                 result = subprocess.run(reload_nginx_command, check=True)
-            except subprocess.CalledProcessError as err:
+            except subprocess.CalledProcessError:
                 logging.error("❌ Couldnt restart nginx, either: ")
                 logging.error("Nginx isnt installed")
                 logging.error("or")
@@ -143,9 +144,12 @@ def reload_nginx():
                     " %s ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx",
                     user_account,
                 )
-                logging.error("Full error just in case:")
-                logging.error(result.stderr)
 
+                if result:
+                    logging.error("Full error just in case:")
+                    logging.error(result.stderr)
+                else:
+                    logging.error("Something seems quite wrong and i'm not sure what")
 
             reload_nginx_pending = False
 
