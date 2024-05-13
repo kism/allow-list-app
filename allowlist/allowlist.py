@@ -131,7 +131,7 @@ def reload_nginx():
 
             try:
                 result = None
-                result = subprocess.run(reload_nginx_command, check=True)
+                result = subprocess.run(reload_nginx_command, check=True, capture_output=True, text=True)
             except subprocess.CalledProcessError as err:
                 logging.error("❌ Couldnt restart nginx, either: ")
                 logging.error("Nginx isnt installed")
@@ -145,6 +145,7 @@ def reload_nginx():
                     user_account,
                 )
 
+                logging.error("")
                 if result:
                     logging.error("Full error just in case:")
                     logging.error(result.stderr)
