@@ -1,5 +1,6 @@
 import sys
 import yaml
+import pwd
 import os
 from os.path import expanduser
 
@@ -83,7 +84,11 @@ def check_password(ala_settings):
 
 
 def write_settings(ala_settings):
-    with open(ala_settings.settings_path, "w", encoding="utf8") as yaml_file:
-        settings_write_temp = vars(ala_settings)
-        del settings_write_temp["settings_path"]
-        yaml.safe_dump(settings_write_temp, yaml_file)
+    try:
+        with open(ala_settings.settings_path, "w", encoding="utf8") as yaml_file:
+            settings_write_temp = vars(ala_settings)
+            del settings_write_temp["settings_path"]
+            yaml.safe_dump(settings_write_temp, yaml_file)
+    except PermissionError:
+        user_account = pwd.getpwuid(os.getuid())[0]
+        raise PermissionError(f"Fix permissions: chown {user_account} ala_settings.settings_path")
