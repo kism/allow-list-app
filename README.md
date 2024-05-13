@@ -9,3 +9,4 @@
 * Start logging sooner
 * Template the allowlist
 * Tests
+* Make the threads kinda objects to track writing to the file

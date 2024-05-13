@@ -9,13 +9,10 @@ import pwd
 import ipaddress
 import datetime
 
-from flask import Flask  # , Blueprint  # , jsonify
 
 # from waitress import serve
 # from werkzeug.middleware.proxy_fix import ProxyFix
 
-app = Flask(__name__)  # Flask app object
-args = None
 reload_nginx_pending = False
 write_file_in_progress = False
 
@@ -134,7 +131,7 @@ def reload_nginx():
 
             try:
                 subprocess.run(reload_nginx_command, check=True)
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError as err:
                 logging.error("❌ Couldnt restart nginx, either: ")
                 logging.error("Nginx isnt installed")
                 logging.error("or")
@@ -146,6 +143,8 @@ def reload_nginx():
                     " %s ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx",
                     user_account,
                 )
+                logging.error("Full Error just in case:")
+                logging.error(err)
 
             reload_nginx_pending = False
 
