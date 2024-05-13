@@ -21,8 +21,7 @@ def create_app(test_config=None):
     try:
         app.config.from_file("flask.toml", load=tomllib.load, text=False)
     except FileNotFoundError:
-        print(f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml")
-        print("Using defaults (this is not a problem)")
+        print(f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml. Using defaults (this is not a problem)")
 
     # Register my libraries
     from . import allowlist
