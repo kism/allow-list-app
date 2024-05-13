@@ -143,8 +143,9 @@ def reload_nginx():
                     " %s ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx",
                     user_account,
                 )
-                logging.error("Full Error just in case:")
-                logging.error(err)
+                logging.error("Full error just in case:")
+                logging.error(subprocess.stderr)
+
 
             reload_nginx_pending = False
 
