@@ -6,6 +6,7 @@ import threading
 import tomllib
 
 from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import allowlist, logger, settings
 
@@ -15,6 +16,7 @@ ala_settings = None
 def create_app(test_config: dict | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
+
     if test_config:
         app.config.from_object(test_config)
     else:
@@ -40,12 +42,10 @@ def create_app(test_config: dict | None = None) -> Flask:
         with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
             conf_file.write("deny all;")
 
-    # Start thread: restart handler
-    thread = threading.Thread(target=allowlist.reload_nginx, daemon=True)
-    thread.start()
-
     thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
     thread.start()
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
 
     return app
 
@@ -56,7 +56,5 @@ def get_ala_settings() -> dict:
 
 
 if __name__ == "allowlist":  # Is this normal?
-    logger.init_logger()
-
     ala_settings = settings.AllowListAppSettings()
     logger.setup_logger(ala_settings.log_level, ala_settings.log_path)

@@ -9,6 +9,8 @@ from argon2 import PasswordHasher
 
 ph = PasswordHasher()
 
+logger = logging.getLogger("allowlist")
+
 
 class SettingsLoadError(Exception):
     """Custom exception for loading the config."""
@@ -49,18 +51,17 @@ class AllowListAppSettings:
 
         for path in paths:
             if os.path.exists(path):
-                logging.info("Found settings at path: %s", path)
+                logger.info("Found settings at path: %s", path)
                 if not self.settings_path:
-                    logging.info("Using this path as it's the first one that was found")
+                    logger.info("Using this path as it's the first one that was found")
                     self.settings_path = path
             else:
-                logging.info("No settings file found at: %s", path)
+                logger.info("No settings file found at: %s", path)
 
         if not self.settings_path:
             self.settings_path = paths[0]
-            logging.info("No configuration file found, creating at default location: %s", self.settings_path)
+            logger.info("No configuration file found, creating at default location: %s", self.settings_path)
             self.__write_settings()
-            self.settings_path = paths[0]  # TODO: FIXME WTF WHY IS THIS REQUIRED
 
         # Load from path
         with open(self.settings_path, encoding="utf8") as yaml_file:
@@ -81,10 +82,10 @@ class AllowListAppSettings:
             )
             raise SettingsLoadError(err_text) from exc
 
-        self.password_cleartext, self.password_hashed = self.__check_password()
+        self.password_cleartext, self.password_hashed = self.__check_settings_password()
         self.__write_settings()
 
-    def __check_password(self) -> str:
+    def __check_settings_password(self) -> str:
         """Check the password parameters in the settings."""
         if self.password_cleartext == "" and self.password_hashed == "":
             err_text = "Please set password in: %s", self.settings_path
@@ -92,15 +93,13 @@ class AllowListAppSettings:
 
         # Hash password if there is a plaintext password set
         if self.password_cleartext != "":
-            logging.info("Plaintext password set, hashing and removing from config file")
+            logger.info("Plaintext password set, hashing and removing from config file")
             plaintext = self.password_cleartext
             hashed = ph.hash(plaintext)
             self.password_hashed = hashed
             self.password_cleartext = ""
-        elif self.password_hashed == "":
-            logging.info("❌ No hashed password")  # TODO: This will never reach yeah?
         else:
-            logging.info("Found hashed password, probably")
+            logger.info("Found hashed password, probably")
 
         return self.password_cleartext, self.password_hashed
 

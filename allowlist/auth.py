@@ -12,6 +12,7 @@ bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
 
 ala_settings = get_ala_settings()
+logger = logging.getLogger("allowlist")
 
 
 @bp.route("/authenticate/", methods=["POST"])
@@ -28,12 +29,11 @@ def my_form_post() -> str:
     else:
         ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
+    logger.info("%s: %s", out_text, ip)
     if result:
         status = 200
-        out_text = "Successful Auth!"
         allowlist.write_allowlist_file(ala_settings, ip)
 
-    logging.info("%s: %s", out_text, ip)
     return render_template("result.html.j2", out_text=out_text, status=status)
 
 

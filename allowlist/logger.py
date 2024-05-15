@@ -6,40 +6,30 @@ LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 
 
-def init_logger() -> None:
-    """Set logger defaults, before the config is loaded."""
-    loglevel = logging.INFO
-    logging.basicConfig(format=LOG_FORMAT, level=loglevel)
-
-    logging.getLogger("waitress").setLevel(logging.INFO)
-    logging.getLogger("werkzeug").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-
-    logging.info(" ----------")
-    logging.info("🙋 Logger started")
-
-
 def setup_logger(config_loglevel: str, logpath: str) -> None:
     """APP LOGGING, set config."""
+    logger = logging.getLogger("allowlist")
+
     if config_loglevel:
         config_loglevel = config_loglevel.upper()
         if config_loglevel not in LOGLEVELS:
-            logging.warning(
+            logger.warning(
                 "❗ Invalid logging level: %s, defaulting to INFO",
-                {logging.getLogger().getEffectiveLevel()},
+                logger.getLogger("allowlist").getEffectiveLevel(),
             )
         else:
-            logging.basicConfig(format=LOG_FORMAT, level=config_loglevel)
+            logger.setLevel(config_loglevel)
+            logger.debug("Set log level: %s", config_loglevel)
 
     try:
         if logpath and logpath != "":  # If we are logging to a file
-            logger = logging.getLogger()
+            logger = logging.getLogger("allowlist")
             formatter = logging.Formatter(LOG_FORMAT)
 
             filehandler = logging.FileHandler(logpath)
             filehandler.setFormatter(formatter)
             logger.addHandler(filehandler)
-            logging.info("Logging to file: %s", logpath)
+            logger.info("Logging to file: %s", logpath)
     except IsADirectoryError as exc:
         err = "You are trying to log to a directory, try a file"
         raise IsADirectoryError(err) from exc
@@ -48,4 +38,15 @@ def setup_logger(config_loglevel: str, logpath: str) -> None:
         err = "The user running this does not have access to the file: " + logpath
         raise IsADirectoryError(err) from exc
 
-    logging.info("Logger settings configured")
+    logger.info("Logger settings configured")
+
+
+logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+logger = logging.getLogger("allowlist")
+
+logging.getLogger("waitress").setLevel(logging.INFO)
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+logger.info(" ----------")
+logger.info("🙋 Logger started")
