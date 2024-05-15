@@ -45,7 +45,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
     thread.start()
 
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1)  # TODO: Test if needed
 
     return app
 
