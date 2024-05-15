@@ -42,7 +42,7 @@ class AllowListAppSettings:
         if not self.settings_path:
             self.settings_path = paths[0]
             logging.info("No configuration file found, creating at default location: %s", self.settings_path)
-            __write_settings(self)
+            self.__write_settings()
             self.settings_path = paths[0]  # TODO: FIXME WTF WHY IS THIS REQUIRED
 
         # Load from path
@@ -64,39 +64,37 @@ class AllowListAppSettings:
             )
             raise KeyError(err_text) from exc  # TODO: find a better error or make your own
 
-        self.password_cleartext, self.password_hashed = __check_password(self)
-        __write_settings(self)
+        self.password_cleartext, self.password_hashed = self.__check_password()
+        self.__write_settings()
 
+    def __check_password(self: "AllowListAppSettings") -> str:
+        """Check the password parameters in the settings."""
+        if self.password_cleartext == "" and self.password_hashed == "":
+            logging.info("Please set password in: %s", self.settings_path)
+            sys.exit(1)  # TODO: find a better error or make your own
 
-def __check_password(ala_settings: dict) -> str:
-    """Check the password parameters in the settings."""
-    if ala_settings.password_cleartext == "" and ala_settings.password_hashed == "":
-        logging.info("Please set password in: %s", ala_settings.settings_path)
-        sys.exit(1)  # TODO: find a better error or make your own
+        # Hash password if there is a plaintext password set
+        if self.password_cleartext != "":
+            logging.info("Plaintext password set, hashing and removing from config file")
+            plaintext = self.password_cleartext
+            hashed = ph.hash(plaintext)
+            self.password_hashed = hashed
+            self.password_cleartext = ""
+        elif self.password_hashed == "":
+            logging.info("❌ No hashed password")  # TODO: This will never reach yeah?
+        else:
+            logging.info("Found hashed password, probably")
 
-    # Hash password if there is a plaintext password set
-    if ala_settings.password_cleartext != "":
-        logging.info("Plaintext password set, hashing and removing from config file")
-        plaintext = ala_settings.password_cleartext
-        hashed = ph.hash(plaintext)
-        ala_settings.password_hashed = hashed
-        ala_settings.password_cleartext = ""
-    elif ala_settings.password_hashed == "":
-        logging.info("❌ No hashed password")  # TODO: This will never reach yeah?
-    else:
-        logging.info("Found hashed password, probably")
+        return self.password_cleartext, self.password_hashed
 
-    return ala_settings.password_cleartext, ala_settings.password_hashed
-
-
-def __write_settings(ala_settings: dict) -> None:
-    """Write settings file."""
-    try:
-        with open(ala_settings.settings_path, "w", encoding="utf8") as yaml_file:
-            settings_write_temp = vars(ala_settings)
-            del settings_write_temp["settings_path"]
-            yaml.safe_dump(settings_write_temp, yaml_file)
-    except PermissionError as exc:
-        user_account = pwd.getpwuid(os.getuid())[0]
-        err = f"Fix permissions: chown {user_account} {ala_settings.settings_path}"
-        raise PermissionError(err) from exc
+    def __write_settings(self: "AllowListAppSettings") -> None:
+        """Write settings file."""
+        try:
+            with open(self.settings_path, "w", encoding="utf8") as yaml_file:
+                settings_write_temp = vars(self)
+                del settings_write_temp["settings_path"]
+                yaml.safe_dump(settings_write_temp, yaml_file)
+        except PermissionError as exc:
+            user_account = pwd.getpwuid(os.getuid())[0]
+            err = f"Fix permissions: chown {user_account} {self.settings_path}"
+            raise PermissionError(err) from exc

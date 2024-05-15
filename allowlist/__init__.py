@@ -7,16 +7,13 @@ import tomllib
 
 from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
 
+from . import allowlist, logger, settings
+
 ala_settings = None
 
 
 def create_app(test_config: dict | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
-    from . import settings
-
-    global ala_settings
-    ala_settings = settings.AllowListAppSettings()
-
     app = Flask(__name__, instance_relative_config=True)
     if test_config:
         app.config.from_object(test_config)
@@ -24,16 +21,10 @@ def create_app(test_config: dict | None = None) -> Flask:
         try:
             app.config.from_file("flask.toml", load=tomllib.load, text=False)
         except FileNotFoundError:
-            err = (
-                f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml."
-                "Using defaults (this is not a problem)."
-            )
+            err = f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml. "
+
             logging.info(err)
-
-    # Register my libraries
-    from . import allowlist, logger
-
-    logger.setup_logger(ala_settings.log_level, ala_settings.log_path)
+            logging.info("Using flask app.config defaults (this is not a problem).")
 
     # Blueprints
     from . import auth
@@ -53,7 +44,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     thread = threading.Thread(target=allowlist.reload_nginx, daemon=True)
     thread.start()
 
-    thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings), daemon=True)
+    thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
     thread.start()
 
     return app
@@ -62,3 +53,10 @@ def create_app(test_config: dict | None = None) -> Flask:
 def get_ala_settings() -> dict:
     """Return the settings."""
     return ala_settings
+
+
+if __name__ == "allowlist":  # Is this normal?
+    logger.init_logger()
+
+    ala_settings = settings.AllowListAppSettings()
+    logger.setup_logger(ala_settings.log_level, ala_settings.log_path)

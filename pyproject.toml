@@ -45,7 +45,6 @@ ignore = [
     "DTZ011", # KG no need to specify timezone
     "TD002", # KG only I work on this project
     "TD003", # KG only I work on this project
-    "PLW0603", # KG globals are fine for this scale
 ]
 
 [tool.ruff.lint.pydocstyle]
