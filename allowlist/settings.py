@@ -1,5 +1,6 @@
 """Settings Processing."""
 
+import logging
 import os
 import pwd
 import sys
@@ -31,18 +32,16 @@ class AllowListAppSettings:
 
         for path in paths:
             if os.path.exists(path):
-                print(f"Found settings at path: {path}", end="")
+                logging.info("Found settings at path: %s", path)
                 if not self.settings_path:
-                    print(", Using this path as it's the first one that was found")
+                    logging.info("Using this path as it's the first one that was found")
                     self.settings_path = path
-                else:
-                    print()
             else:
-                print("No settings file found at: " + path)
+                logging.info("No settings file found at: %s", path)
 
         if not self.settings_path:
             self.settings_path = paths[0]
-            print("No configuration file found, creating at default location: " + self.settings_path)
+            logging.info("No configuration file found, creating at default location: %s", self.settings_path)
             __write_settings(self)
             self.settings_path = paths[0]  # TODO: FIXME WTF WHY IS THIS REQUIRED
 
@@ -72,20 +71,20 @@ class AllowListAppSettings:
 def __check_password(ala_settings: dict) -> str:
     """Check the password parameters in the settings."""
     if ala_settings.password_cleartext == "" and ala_settings.password_hashed == "":
-        print("Please set password in: " + ala_settings.settings_path)
+        logging.info("Please set password in: %s", ala_settings.settings_path)
         sys.exit(1)  # TODO: find a better error or make your own
 
     # Hash password if there is a plaintext password set
     if ala_settings.password_cleartext != "":
-        print("Plaintext password set, hashing and removing from config file")
+        logging.info("Plaintext password set, hashing and removing from config file")
         plaintext = ala_settings.password_cleartext
         hashed = ph.hash(plaintext)
         ala_settings.password_hashed = hashed
         ala_settings.password_cleartext = ""
     elif ala_settings.password_hashed == "":
-        print("❌ No hashed password")  # TODO: This will never reach yeah?
+        logging.info("❌ No hashed password")  # TODO: This will never reach yeah?
     else:
-        print("Found hashed password, probably")
+        logging.info("Found hashed password, probably")
 
     return ala_settings.password_cleartext, ala_settings.password_hashed
 

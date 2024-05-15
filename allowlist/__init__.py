@@ -1,5 +1,6 @@
 """Flask webapp to control a nginx allowlist."""
 
+import logging
 import os
 import threading
 import tomllib
@@ -23,10 +24,11 @@ def create_app(test_config: dict | None = None) -> Flask:
         try:
             app.config.from_file("flask.toml", load=tomllib.load, text=False)
         except FileNotFoundError:
-            print(
+            err = (
                 f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml."
-                "Using defaults (this is not a problem).",
+                "Using defaults (this is not a problem)."
             )
+            logging.info(err)
 
     # Register my libraries
     from . import allowlist, logger
