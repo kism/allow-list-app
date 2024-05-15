@@ -3,7 +3,6 @@
 import logging
 import os
 import pwd
-import sys
 
 import yaml
 from argon2 import PasswordHasher
@@ -11,10 +10,28 @@ from argon2 import PasswordHasher
 ph = PasswordHasher()
 
 
+class SettingsLoadError(Exception):
+    """Custom exception for loading the config."""
+
+    def __init__(self, message: str) -> None:
+        """Exception code."""
+        super().__init__(message)
+        self.message = message
+
+
+class SettingsPasswordError(Exception):
+    """Custom exception for password issues."""
+
+    def __init__(self, message: str) -> None:
+        """Exception code."""
+        super().__init__(message)
+        self.message = message
+
+
 class AllowListAppSettings:
     """Object Definition for the settings of the app."""
 
-    def __init__(self: "AllowListAppSettings") -> None:
+    def __init__(self) -> None:
         """Initiate settings object, get settings from file."""
         # Set default values
         self.allowed_subnets = []
@@ -62,16 +79,16 @@ class AllowListAppSettings:
                 f"Error loading settings from: {self.settings_path}, "
                 "remove: {self.settings_path} and run the app again to generate a new one"
             )
-            raise KeyError(err_text) from exc  # TODO: find a better error or make your own
+            raise SettingsLoadError(err_text) from exc
 
         self.password_cleartext, self.password_hashed = self.__check_password()
         self.__write_settings()
 
-    def __check_password(self: "AllowListAppSettings") -> str:
+    def __check_password(self) -> str:
         """Check the password parameters in the settings."""
         if self.password_cleartext == "" and self.password_hashed == "":
-            logging.info("Please set password in: %s", self.settings_path)
-            sys.exit(1)  # TODO: find a better error or make your own
+            err_text = "Please set password in: %s", self.settings_path
+            raise SettingsPasswordError(err_text)
 
         # Hash password if there is a plaintext password set
         if self.password_cleartext != "":
@@ -87,7 +104,7 @@ class AllowListAppSettings:
 
         return self.password_cleartext, self.password_hashed
 
-    def __write_settings(self: "AllowListAppSettings") -> None:
+    def __write_settings(self) -> None:
         """Write settings file."""
         try:
             with open(self.settings_path, "w", encoding="utf8") as yaml_file:

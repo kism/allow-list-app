@@ -31,10 +31,6 @@ def setup_logger(config_loglevel: str, logpath: str) -> None:
         else:
             logging.basicConfig(format=LOG_FORMAT, level=config_loglevel)
 
-    # logging.getLogger("waitress").setLevel(logging.INFO)
-    # logging.getLogger("werkzeug").setLevel(logging.WARNING)
-    # logging.getLogger("urllib3").setLevel(logging.WARNING)
-
     try:
         if logpath and logpath != "":  # If we are logging to a file
             logger = logging.getLogger()

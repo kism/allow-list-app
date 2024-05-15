@@ -41,6 +41,7 @@ ignore = [
     # "E402",   # false positives for local imports
     # "TRY003", # external messages in exceptions are too verbose
     # "FIX002", # too verbose descriptions of todos
+    "ANN101", # KG Why define self...
     "DTZ005", # KG no need to specify timezone
     "DTZ011", # KG no need to specify timezone
     "TD002", # KG only I work on this project
