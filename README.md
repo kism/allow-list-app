@@ -20,7 +20,7 @@ Complex
 
 ```bash
 waitress-serve \
-    --listen "*:$PORT" \
+    --listen "127.0.0.1:8080" \
     --trusted-proxy '*' \
     --trusted-proxy-headers 'x-forwarded-for x-forwarded-proto x-forwarded-port' \
     --log-untrusted-proxy-headers \
