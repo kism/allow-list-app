@@ -1,7 +1,6 @@
 {
     "[python]": {
       "editor.formatOnType": true,
-      "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "python.languageServer": "Pylance",
     "python.terminal.activateEnvInCurrentTerminal": true

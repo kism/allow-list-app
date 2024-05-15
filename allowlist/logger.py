@@ -3,13 +3,11 @@
 
 import logging
 
-
 LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 def setup_logger(config_loglevel, logpath):
     """APP LOGGING"""
-
     invalid_log_level = False
     loglevel = logging.INFO
     if config_loglevel:

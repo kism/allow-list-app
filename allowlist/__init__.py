@@ -22,12 +22,11 @@ def create_app(test_config=None):
         app.config.from_file("flask.toml", load=tomllib.load, text=False)
     except FileNotFoundError:
         print(
-            f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml. Using defaults (this is not a problem)."
+            f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml. Using defaults (this is not a problem).",
         )
 
     # Register my libraries
-    from . import allowlist
-    from . import logger
+    from . import allowlist, logger
 
     logger.setup_logger(ala_settings.log_level, ala_settings.log_path)
 
@@ -49,7 +48,7 @@ def create_app(test_config=None):
     thread = threading.Thread(target=allowlist.reload_nginx, daemon=True)
     thread.start()
 
-    thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
+    thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings: dict,), daemon=True)
     thread.start()
 
     # serve(app, host=args.WEBADDRESS, port=args.WEBPORT, threads=2)

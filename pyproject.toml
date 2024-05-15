@@ -15,16 +15,43 @@ waitress = "^3.0.0"
 pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.4.2"
-pylance = "^0.10.18"
-ruff = "^0.4.4"
+pylance = "^0.10.15"
+ruff = "^0.4.3"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
+cache-dir = "~/.cache/ruff"
+target-version = "py311"
 line-length = 120
 
-[tool.ruff]
-line-length = 120
+[tool.ruff.lint]
+extend-fixable = ["B"]
+select = [
+    "ALL", # include all the rules, including new ones
+]
+ignore = [
+    #### modules
+    "DJ",  # django
+    "PTH", # KG builtin-open is fine
+
+    #### specific rules
+    # "E402",   # false positives for local imports
+    # "TRY003", # external messages in exceptions are too verbose
+    # "FIX002", # too verbose descriptions of todos
+    "TD002", # KG only I work on this project
+    "TD003", # KG only I work on this project
+    "T201", # KG print is fine for this scale
+    "PLW0603", # KG globals are fine for this scale
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 40

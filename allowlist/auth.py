@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""Flask webapp to control a nginx allowlist"""
+"""Flask webapp to control a nginx allowlist."""
 
 import logging
 
@@ -7,10 +6,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, render_template, request
 
-from . import allowlist
-from . import get_ala_settings
-
-# from .settings import get_settings
+from . import allowlist, get_ala_settings
 
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
@@ -19,9 +15,8 @@ ala_settings = get_ala_settings()
 
 
 @bp.route("/authenticate/", methods=["POST"])
-def my_form_post():
-    """Post da password"""
-
+def my_form_post() -> str:
+    """Post da password."""
     text = request.form["password"]
     result = check_password(text)
     out_text = "Validation Failed"
@@ -33,9 +28,6 @@ def my_form_post():
     else:
         ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
-    # for thing in enumerate(request.environ):
-    #     print(thing)
-
     if result:
         status = 200
         out_text = "Successful Auth!"
@@ -45,8 +37,8 @@ def my_form_post():
     return render_template("result.html.j2", out_text=out_text, status=status)
 
 
-def check_password(text):
-    """Check password (secure) (I hope)"""
+def check_password(text: str) -> bool:
+    """Check password (secure) (I hope)."""
     passwordcorrect = False
     hashed = ala_settings.password_hashed
     try:

@@ -1,35 +1,34 @@
 #!/usr/bin/env python3
-"""Flask webapp to control a nginx allowlist"""
+"""Flask webapp to control a nginx allowlist."""
 
+import datetime
+import ipaddress
 import logging
 import os
+import pwd
 import subprocess
 import time
-import pwd
-import ipaddress
-import datetime
 
-
-# from waitress import serve
-# from werkzeug.middleware.proxy_fix import ProxyFix
+# TODO: from waitress import serve
+# TODO: from werkzeug.middleware.proxy_fix import ProxyFix
 
 reload_nginx_pending = False
 write_file_in_progress = False
 
 
-def write_allowlist_file(ala_settings, ip):
-    """Write to the nginx allowlist conf file"""
+def write_allowlist_file(ala_settings: dict, ip: str):
+    """Write to the nginx allowlist conf file."""
     global reload_nginx_pending
     global write_file_in_progress
     write_file_in_progress = True
 
-    with open(ala_settings.allowlist_path, "r", encoding="utf8") as conf_file:
+    with open(ala_settings.allowlist_path, encoding="utf8") as conf_file:
         content = conf_file.read()
 
     with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
         content = "allow " + ip + ";\n" + content
         content = check_allowlist(content)
-        # logging.info("Content to write: \n" + content)
+        logging.debug("Content to write: \n" + content)
         conf_file.write(content)
         logging.info("Wrote config, allowing: %s", ip)
 
@@ -38,7 +37,7 @@ def write_allowlist_file(ala_settings, ip):
 
 
 def check_ip(in_ip_or_network):
-    """Check if string is valid IP or Network"""
+    """Check if string is valid IP or Network."""
     one_success = False
     try:
         ipaddress.IPv4Address(in_ip_or_network)
@@ -73,8 +72,8 @@ def check_ip(in_ip_or_network):
     return one_success
 
 
-def check_allowlist(conf):
-    """Validate the list"""
+def check_allowlist(conf: str) -> str:
+    """Validate the list."""
     errors_occurred = False
 
     lines = conf.splitlines()
@@ -82,15 +81,13 @@ def check_allowlist(conf):
     lines = list(set(lines))
     lines.sort()
 
-    # logging.info("Lines: \n" + str(lines))
-
     for line in lines:
         words = line.split(" ")
         if words[0] not in ["allow", "deny"]:
             logging.error("❌ First word in line isn't allow or deny: %s", line)
             errors_occurred = True
 
-        if words[0] == "allow":  # TODO, this needs fixing to include ipv6, networks
+        if words[0] == "allow":  # TODO: this needs fixing to include ipv6, networks
             ip_to_check = words[1].replace(";", "")
             if not check_ip(ip_to_check):
                 logging.error("❌ Invalid IP address/network: %s", line)
@@ -113,8 +110,8 @@ def check_allowlist(conf):
     return conf
 
 
-def reload_nginx():
-    """Reload nginx"""
+def reload_nginx() -> None:
+    """Reload nginx."""
     global reload_nginx_pending
     user_account = pwd.getpwuid(os.getuid())[0]
 
@@ -126,38 +123,38 @@ def reload_nginx():
         time.sleep(1)
         if reload_nginx_pending:
             logging.info("Reloading nginx")
-            while write_file_in_progress:  # TODO this is unsafe
+            while write_file_in_progress:  # TODO: this is unsafe
                 time.sleep(1)
 
             try:
                 result = None
                 result = subprocess.run(reload_nginx_command, check=True, capture_output=True, text=True)
             except subprocess.CalledProcessError as err:
-                logging.error("❌ Couldnt restart nginx, either: ")
-                logging.error("Nginx isnt installed")
-                logging.error("or")
-                logging.error("Sudoers rule not created for this user (%s)", user_account)
-                logging.error("Create and edit a sudoers file")
-                logging.error(" visudo /etc/sudoers.d/%s", user_account)
-                logging.error("And insert the text:")
-                logging.error(
+                logging.exception("❌ Couldnt restart nginx, either: ")
+                logging.exception("Nginx isnt installed")
+                logging.exception("or")
+                logging.exception("Sudoers rule not created for this user (%s)", user_account)
+                logging.exception("Create and edit a sudoers file")
+                logging.exception(" visudo /etc/sudoers.d/%s", user_account)
+                logging.exception("And insert the text:")
+                logging.exception(
                     " %s ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx",
                     user_account,
                 )
 
-                logging.error("")
+                logging.exception("")
                 if result:
-                    logging.error("Full error just in case:")
-                    logging.error(result.stderr)
+                    logging.exception("Full error just in case:")
+                    logging.exception(result.stderr)
                 else:
-                    logging.error("No stderr, not looking good, here is what Python says:")
-                    logging.error(err)
+                    logging.exception("No stderr, not looking good, here is what Python says:")
+                    logging.exception(err)
 
             reload_nginx_pending = False
 
 
-def revert_list_daily(ala_settings):
-    """Reset list at 4am"""
+def revert_list_daily(ala_settings: dict) -> None:
+    """Reset list at 4am."""
     while True:
         logging.info("Adding subnets/ips from config file")
 
@@ -176,7 +173,8 @@ def revert_list_daily(ala_settings):
 
         # Calculate the time difference
         time_difference = datetime.datetime.combine(datetime.date.today(), target_time) - datetime.datetime.combine(
-            datetime.date.today(), current_time
+            datetime.date.today(),
+            current_time,
         )
 
         # If the target time is already passed for today, add 1 day
