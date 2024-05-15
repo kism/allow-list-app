@@ -1,18 +1,19 @@
 """Settings Processing."""
 
-import sys
-import yaml
-import pwd
 import os
-from os.path import expanduser
+import pwd
+import sys
 
+import yaml
 from argon2 import PasswordHasher
 
 ph = PasswordHasher()
 
 
 class AllowListAppSettings:
-    def __init__(self) -> None:
+    """Object Definition for the settings of the app."""
+
+    def __init__(self: "AllowListAppSettings") -> None:
         """Initiate settings object, get settings from file."""
         # Set default values
         self.allowed_subnets = []
@@ -25,7 +26,7 @@ class AllowListAppSettings:
 
         paths = []
         paths.append(os.getcwd() + os.sep + "settings.yml")
-        paths.append(expanduser("~/.config/allowlistapp/settings.yml"))
+        paths.append(os.path.expanduser("~/.config/allowlistapp/settings.yml"))
         paths.append("/etc/allowlistapp/settings.yml")
 
         for path in paths:
@@ -42,11 +43,11 @@ class AllowListAppSettings:
         if not self.settings_path:
             self.settings_path = paths[0]
             print("No configuration file found, creating at default location: " + self.settings_path)
-            write_settings(self)
+            __write_settings(self)
             self.settings_path = paths[0]  # TODO: FIXME WTF WHY IS THIS REQUIRED
 
         # Load from path
-        with open(self.settings_path, "r", encoding="utf8") as yaml_file:
+        with open(self.settings_path, encoding="utf8") as yaml_file:
             settings_temp = yaml.safe_load(yaml_file)
 
         # Get Real Values
@@ -57,19 +58,22 @@ class AllowListAppSettings:
             self.log_path = settings_temp["log_path"]
             self.password_cleartext = settings_temp["password_cleartext"]
             self.password_hashed = settings_temp["password_hashed"]
-        except (KeyError, TypeError):
-            err_text = f"Error loading settings from: {self.settings_path}, remove: {self.settings_path} and run the app again to generate a new one"
-            raise KeyError(err_text)  # TODO, find a better error or make your own
+        except (KeyError, TypeError) as exc:
+            err_text = (
+                f"Error loading settings from: {self.settings_path}, "
+                "remove: {self.settings_path} and run the app again to generate a new one"
+            )
+            raise KeyError(err_text) from exc  # TODO: find a better error or make your own
 
-        self.password_cleartext, self.password_hashed = check_password(self)
-        write_settings(self)
+        self.password_cleartext, self.password_hashed = __check_password(self)
+        __write_settings(self)
 
 
-def check_password(ala_settings):
-    # Settings File
+def __check_password(ala_settings: dict) -> str:
+    """Check the password parameters in the settings."""
     if ala_settings.password_cleartext == "" and ala_settings.password_hashed == "":
         print("Please set password in: " + ala_settings.settings_path)
-        sys.exit(1)  # TODO, find a better error or make your own
+        sys.exit(1)  # TODO: find a better error or make your own
 
     # Hash password if there is a plaintext password set
     if ala_settings.password_cleartext != "":
@@ -86,14 +90,14 @@ def check_password(ala_settings):
     return ala_settings.password_cleartext, ala_settings.password_hashed
 
 
-def write_settings(ala_settings: dict) -> None:
+def __write_settings(ala_settings: dict) -> None:
     """Write settings file."""
     try:
         with open(ala_settings.settings_path, "w", encoding="utf8") as yaml_file:
             settings_write_temp = vars(ala_settings)
             del settings_write_temp["settings_path"]
             yaml.safe_dump(settings_write_temp, yaml_file)
-    except PermissionError:
+    except PermissionError as exc:
         user_account = pwd.getpwuid(os.getuid())[0]
         err = f"Fix permissions: chown {user_account} {ala_settings.settings_path}"
-        raise PermissionError(err)
+        raise PermissionError(err) from exc

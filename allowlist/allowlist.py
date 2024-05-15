@@ -80,6 +80,7 @@ def check_allowlist(conf: str) -> str:
     lines.append("deny all;")
     lines = list(set(lines))
     lines.sort()
+    words_per_line = 2
 
     for line in lines:
         words = line.split(" ")
@@ -97,7 +98,7 @@ def check_allowlist(conf: str) -> str:
             logging.error("❌ No ';' at end of line: %s", line)
             errors_occurred = True
 
-        if len(words) != 2:
+        if len(words) != words_per_line:
             logging.error("❌ Word count validation failed for line: %s", line)
             errors_occurred = True
 
@@ -129,7 +130,7 @@ def reload_nginx() -> None:
             try:
                 result = None
                 result = subprocess.run(reload_nginx_command, check=True, capture_output=True, text=True)  # noqa: S603 Input has been validated
-            except subprocess.CalledProcessError as err:
+            except subprocess.CalledProcessError:
                 logging.exception("❌ Couldnt restart nginx, either: ")
                 logging.exception("Nginx isnt installed")
                 logging.exception("or")
@@ -148,7 +149,6 @@ def reload_nginx() -> None:
                     logging.exception(result.stderr)
                 else:
                     logging.exception("No stderr, not looking good, here is what Python says:")
-                    logging.exception(err)
 
             reload_nginx_pending = False
 
