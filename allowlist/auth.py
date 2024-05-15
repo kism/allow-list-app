@@ -20,7 +20,7 @@ def my_form_post() -> str:
     """Post da password."""
     text = request.form["password"]
     result = check_password(text)
-    out_text = "Validation Failed"
+    out_text = "Authentication Failed!"
     status = 403
 
     # Get IP
@@ -29,10 +29,13 @@ def my_form_post() -> str:
     else:
         ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
-    logger.info("%s: %s", out_text, ip)
     if result:
+        out_text = "Authentication Success!"
+        logger.info("%s: %s", out_text, ip)
         status = 200
         allowlist.write_allowlist_file(ala_settings, ip)
+    else:
+        logger.info("%s: %s", out_text, ip)
 
     return render_template("result.html.j2", out_text=out_text, status=status)
 
