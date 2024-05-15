@@ -16,7 +16,7 @@ reload_nginx_pending = False
 write_file_in_progress = False
 
 
-def write_allowlist_file(ala_settings: dict, ip: str):
+def write_allowlist_file(ala_settings: dict, ip: str) -> None:
     """Write to the nginx allowlist conf file."""
     global reload_nginx_pending
     global write_file_in_progress
@@ -28,7 +28,7 @@ def write_allowlist_file(ala_settings: dict, ip: str):
     with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
         content = "allow " + ip + ";\n" + content
         content = check_allowlist(content)
-        logging.debug("Content to write: \n" + content)
+        logging.debug("Content to write: \n", extra=content)
         conf_file.write(content)
         logging.info("Wrote config, allowing: %s", ip)
 
@@ -36,7 +36,7 @@ def write_allowlist_file(ala_settings: dict, ip: str):
     reload_nginx_pending = True
 
 
-def check_ip(in_ip_or_network):
+def check_ip(in_ip_or_network: str) -> bool:
     """Check if string is valid IP or Network."""
     one_success = False
     try:
@@ -128,7 +128,7 @@ def reload_nginx() -> None:
 
             try:
                 result = None
-                result = subprocess.run(reload_nginx_command, check=True, capture_output=True, text=True)
+                result = subprocess.run(reload_nginx_command, check=True, capture_output=True, text=True)  # noqa: S603 Input has been validated
             except subprocess.CalledProcessError as err:
                 logging.exception("❌ Couldnt restart nginx, either: ")
                 logging.exception("Nginx isnt installed")

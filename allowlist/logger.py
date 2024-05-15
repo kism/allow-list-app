@@ -1,13 +1,12 @@
-#!/usr/bin/env python3
-"""Flask webapp to control a nginx allowlist"""
+"""Flask webapp to control a nginx allowlist."""
 
 import logging
 
 LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
-def setup_logger(config_loglevel, logpath):
-    """APP LOGGING"""
+def setup_logger(config_loglevel: str, logpath: str) -> None:
+    """APP LOGGING."""
     invalid_log_level = False
     loglevel = logging.INFO
     if config_loglevel:

@@ -41,6 +41,8 @@ ignore = [
     # "E402",   # false positives for local imports
     # "TRY003", # external messages in exceptions are too verbose
     # "FIX002", # too verbose descriptions of todos
+    "DTZ005", # KG no need to specify timezone
+    "DTZ011", # KG no need to specify timezone
     "TD002", # KG only I work on this project
     "TD003", # KG only I work on this project
     "T201", # KG print is fine for this scale

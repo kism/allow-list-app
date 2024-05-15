@@ -1,3 +1,5 @@
+"""Settings Processing."""
+
 import sys
 import yaml
 import pwd
@@ -10,7 +12,8 @@ ph = PasswordHasher()
 
 
 class AllowListAppSettings:
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initiate settings object, get settings from file."""
         # Set default values
         self.allowed_subnets = []
         self.allowlist_path = "ipallowlist.conf"
@@ -40,7 +43,7 @@ class AllowListAppSettings:
             self.settings_path = paths[0]
             print("No configuration file found, creating at default location: " + self.settings_path)
             write_settings(self)
-            self.settings_path = paths[0]  # TODO FIXME WTF WHY IS THIS REQUIRED
+            self.settings_path = paths[0]  # TODO: FIXME WTF WHY IS THIS REQUIRED
 
         # Load from path
         with open(self.settings_path, "r", encoding="utf8") as yaml_file:
@@ -76,14 +79,15 @@ def check_password(ala_settings):
         ala_settings.password_hashed = hashed
         ala_settings.password_cleartext = ""
     elif ala_settings.password_hashed == "":
-        print("❌ No hashed password")  # TODO This will never reach yeah?
+        print("❌ No hashed password")  # TODO: This will never reach yeah?
     else:
         print("Found hashed password, probably")
 
     return ala_settings.password_cleartext, ala_settings.password_hashed
 
 
-def write_settings(ala_settings):
+def write_settings(ala_settings: dict) -> None:
+    """Write settings file."""
     try:
         with open(ala_settings.settings_path, "w", encoding="utf8") as yaml_file:
             settings_write_temp = vars(ala_settings)
@@ -91,4 +95,5 @@ def write_settings(ala_settings):
             yaml.safe_dump(settings_write_temp, yaml_file)
     except PermissionError:
         user_account = pwd.getpwuid(os.getuid())[0]
-        raise PermissionError(f"Fix permissions: chown {user_account} {ala_settings.settings_path}")
+        err = f"Fix permissions: chown {user_account} {ala_settings.settings_path}"
+        raise PermissionError(err)
