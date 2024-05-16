@@ -22,13 +22,12 @@ Complex
 waitress-serve \
     --listen "127.0.0.1:8080" \
     --trusted-proxy '*' \
-    --trusted-proxy-headers 'x-forwarded-for x-forwarded-proto x-forwarded-port' \
+    --trusted-proxy-headers 'x-forwarded-for' \
     --log-untrusted-proxy-headers \
     --clear-untrusted-proxy-headers \
     --threads 4 \
     --call allowlist:create_app
 ```
-
 
 ## TODO
 

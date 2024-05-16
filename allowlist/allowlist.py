@@ -115,12 +115,15 @@ class NGINXAllowlistWriter:
     def revert(self, ala_settings: dict) -> None:
         """Write NGINX allowlist."""
         # Revert list
+        while self.writing:
+            time.sleep(1)
+        self.writing = True
         with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
             conf_file.write("deny all;")
+        self.writing = False
 
         for subnet in ala_settings.allowed_subnets:
             write_allowlist_file(ala_settings, subnet)
-        nginx_reloader.reload()
 
 
 class NGINXReloader:
