@@ -29,9 +29,7 @@ line-length = 120
 
 [tool.ruff.lint]
 extend-fixable = ["B", "I001"]
-select = [
-    "ALL", # Include all the rules, including new ones
-]
+select = ["ALL"] # include all the rules, including new ones
 ignore = [
     # Modules
     "DJ",  # Django
