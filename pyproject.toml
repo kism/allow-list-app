@@ -15,8 +15,8 @@ waitress = "^3.0.0"
 pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
-pylance = "^0.10.15"
-ruff = "^0.4.3"
+pylance = "^0.10.18"
+ruff = "^0.4.4"
 
 [build-system]
 requires = ["poetry-core"]
