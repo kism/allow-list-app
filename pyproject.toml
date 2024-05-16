@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "allowlistapp"
-version = "0.1.0"
+name = "allowlist"
+version = "0.1.1"
 description = "Flask webapp to allowlist IPs on nginx"
 authors = ["Kieran Gee <kieran.lost.the.game@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-package-mode = false
+package-mode = true
 
 [tool.poetry.dependencies]
 python = "^3.11"

@@ -39,3 +39,4 @@ waitress-serve \
 * Template the allowlist
 * ipv6 support
 * Tests
+* publish whl
