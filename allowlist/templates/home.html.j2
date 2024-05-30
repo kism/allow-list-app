@@ -11,8 +11,11 @@
     <main>
         <h1 id="TITLE">Allowlist App</h1>
         <form action="/authenticate/" method="POST">
-              <input type="password" name="password">
-            <input type="submit">
+            <div>{% if hide_username %}style="display: none;"{% endif %}
+                Username:<br><input type="text" name="username">
+            </div>
+            Password:<br><input type="password" name="password">
+            <br><br><input type="submit" value="Authenticate">
         </form>
 
     </main>

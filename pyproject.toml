@@ -13,6 +13,7 @@ flask = "^3.0.3"
 argon2-cffi = "^23.1.0"
 waitress = "^3.0.0"
 pyyaml = "^6.0.1"
+requests = "^2.32.3"
 
 [tool.poetry.group.dev.dependencies]
 pylance = "^0.10.18"

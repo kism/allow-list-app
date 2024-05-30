@@ -156,7 +156,7 @@ class NGINXReloader:
                 f"Sudoers rule not created for this user ({self.user_account})\n"
                 "Create and edit a sudoers file\n"
                 f" visudo /etc/sudoers.d/{self.user_account}\n"
-                f"And insert the text: {self.user_account} ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx\n"
+                f"And insert the text: {self.user_account} ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx...\n\n"
             )
             if result:
                 err += f"stderr: \n{result.stderr}"

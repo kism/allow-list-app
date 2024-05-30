@@ -14,28 +14,32 @@ ala_settings = None
 
 def create_app(test_config: dict | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
+    logger = logging.getLogger("allowlist")
+
     app = Flask(__name__, instance_relative_config=True)
 
     if test_config:
         app.config.from_object(test_config)
     else:
+        flask_config_path = f"{app.instance_path}{os.sep}flask.toml"
         try:
             app.config.from_file("flask.toml", load=tomllib.load, text=False)
+            logger.warning("Loaded flask config from: %s, I'M NOT CONVINCED THIS WORKS", flask_config_path)
         except FileNotFoundError:
-            err = f"No flask configuration file found at: {app.instance_path}{os.sep}flask.toml. "
-
-            logging.info(err)
-            logging.info("Using flask app.config defaults (this is not a problem).")
+            logger.info("No flask configuration file found at: %s", flask_config_path)
+            logger.info("Using flask app.config defaults (this is not a problem).")
 
     # Blueprints
     from . import auth
 
     app.register_blueprint(auth.bp)
 
+    hide_username = ala_settings.auth_type_static()
+
     @app.route("/")
     def home() -> str:
         """Flask Home."""
-        return render_template("home.html.j2")
+        return render_template("home.html.j2", hide_username=hide_username)
 
     if not os.path.exists(ala_settings.allowlist_path):  # Create if file doesn't exist
         with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
