@@ -100,9 +100,17 @@ def check_password_url(username: str, password: str) -> bool:
     }
     json_data = json.dumps(data)
 
-    response = requests.post(url, headers=headers, data=json_data, timeout=5)
+    response = None
+    try:
+        response = requests.post(url, headers=headers, data=json_data, timeout=5)
+    except requests.exceptions.ConnectionError:
+        logger.error("Connection error for url: %s", url)  # noqa: TRY400 # We dont need to treat this as an exception
+    except requests.exceptions.Timeout:
+        logger.error("Timeout exception for url: %s", url)  # noqa: TRY400 # We dont need to treat this as an exception
+    except Exception:
+        logger.exception("Uncaught exception for url: %s", url)
 
-    if response.status_code == HTTPStatus.OK:
+    if response and response.status_code == HTTPStatus.OK:
         passwordcorrect = True
 
     return passwordcorrect

@@ -36,6 +36,8 @@ waitress-serve \
 * ~~Real logging~~
 * ~~Adopt the suggested Flask structure~~
 * ~~use waitress, set threads~~
+* jf login
+* better yaml
 * Template the allowlist
 * ipv6 support
 * Tests

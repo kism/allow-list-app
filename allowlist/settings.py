@@ -11,15 +11,16 @@ from argon2 import PasswordHasher
 VALID_URL_AUTH_TYPES = ["static", "jellyfin"]
 ph = PasswordHasher()
 logger = logging.getLogger("allowlist")
-
-
-class SettingsLoadError(Exception):
-    """Custom exception for loading the config."""
-
-    def __init__(self, message: str) -> None:
-        """Exception code."""
-        super().__init__(message)
-        self.message = message
+DEFAULT_SETTINGS = {
+    "allowlist_path": "ipallowlist.conf",
+    "allowed_subnets": [],
+    "auth_type": "static",
+    "log_level": "INFO",
+    "log_path": "",
+    "remote_auth_url": "",
+    "static_password_cleartext": "",
+    "static_password_hashed": "",
+}
 
 
 class SettingsPasswordError(Exception):
@@ -45,15 +46,7 @@ class AllowListAppSettings:
 
     def __init__(self) -> None:
         """Initiate settings object, get settings from file."""
-        # Set default values
-        self.allowed_subnets = []
-        self.allowlist_path = "ipallowlist.conf"
-        self.auth_type = "static"
-        self.remote_auth_url = ""
-        self.static_password_hashed = ""
-        self.static_password_cleartext = ""
-        self.log_path = ""
-        self.log_level = "INFO"
+        # Load the settings from one of the paths
         self.settings_path = None
 
         paths = []
@@ -77,32 +70,24 @@ class AllowListAppSettings:
             logger.critical("Exiting")
             sys.exit(1)
 
-        # Load from path
+        # Load settings file from path
         with open(self.settings_path, encoding="utf8") as yaml_file:
             settings_temp = yaml.safe_load(yaml_file)
 
-        # Get Real Values
-        try:
-            self.allowlist_path = settings_temp["allowlist_path"]
-            self.allowed_subnets = settings_temp["allowed_subnets"]
-            self.auth_type = settings_temp["auth_type"]
-            self.log_level = settings_temp["log_level"]
-            self.log_path = settings_temp["log_path"]
-            self.remote_auth_url = settings_temp["remote_auth_url"]
-            self.static_password_cleartext = settings_temp["static_password_cleartext"]
-            self.static_password_hashed = settings_temp["static_password_hashed"]
-        except (KeyError, TypeError) as exc:
-            err_text = (
-                f"Error loading settings from: {self.settings_path}, "
-                f"remove: {self.settings_path} and run the app again to generate a new one\n"
-                f"Problem: {exc}"
-            )
-            raise SettingsLoadError(err_text) from exc
+        # Set the variables of this object
+        for key, default_value in DEFAULT_SETTINGS.items():
+            try:
+                setattr(self, key, settings_temp[key])
+            except (KeyError, TypeError):
+                logging.info("%s not defined, using default", key)
+                setattr(self, key, default_value)
 
         self.__cleanup_config()
 
         logger.info("Using authentication type: %s", self.auth_type)
         logger.info("Checking config...")
+
+        self.__write_settings()
 
         if self.auth_type_static():
             self.static_password_cleartext, self.static_password_hashed = self.__check_settings_static_password()
@@ -110,6 +95,8 @@ class AllowListAppSettings:
             self.__check_settings_url_auth()
 
         self.__write_settings()
+
+        logger.info("Config looks all good!")
 
     def auth_type_static(self) -> bool:
         """Returns whether the auth type is 'static'."""
@@ -159,7 +146,7 @@ class AllowListAppSettings:
         """Write settings file."""
         try:
             with open(self.settings_path, "w", encoding="utf8") as yaml_file:
-                settings_write_temp = vars(self)
+                settings_write_temp = vars(self).copy()
                 del settings_write_temp["settings_path"]
                 yaml.safe_dump(settings_write_temp, yaml_file)
         except PermissionError as exc:
