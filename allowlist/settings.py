@@ -99,10 +99,7 @@ class AllowListAppSettings:
             )
             raise SettingsLoadError(err_text) from exc
 
-        # Cleanup to avoid headaches
-        self.auth_type = self.auth_type.lower()
-        if self.remote_auth_url.endswith("/"):
-            self.remote_auth_url = self.remote_auth_url[:-1]
+        self.__cleanup_config()
 
         logger.info("Using authentication type: %s", self.auth_type)
         logger.info("Checking config...")
@@ -121,6 +118,12 @@ class AllowListAppSettings:
             result = False
 
         return result
+
+    def __cleanup_config(self) -> True:
+        """Cleanup the config entries."""
+        self.auth_type = self.auth_type.lower()
+        if self.remote_auth_url.endswith("/"):
+            self.remote_auth_url = self.remote_auth_url[:-1]
 
     def __check_settings_url_auth(self) -> True:
         """Check the remote parameters in the settings."""

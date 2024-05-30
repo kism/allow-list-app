@@ -25,7 +25,13 @@ dynamic_auth_types = {
         "username_field": "Username",
         "password_field": "Pw",
         "headers": {
-            "Authorization": 'MediaBrowser Client="Allowlist App", Device="Python Flask", DeviceId="lmao", Version="0.0", Token="lmao"',
+            "Authorization": (
+                'MediaBrowser Client="Allowlist App", '
+                'Device="Python Flask", '
+                'DeviceId="lmao", '
+                'Version="0.0", '
+                'Token="lmao"'
+            ),
             "Content-Type": "application/json",
         },
     },
