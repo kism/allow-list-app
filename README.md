@@ -36,10 +36,13 @@ waitress-serve \
 * ~~Real logging~~
 * ~~Adopt the suggested Flask structure~~
 * ~~use waitress, set threads~~
-* jf login
+* ~~jf login~~
 * better yaml
-* Template the allowlist
+* ~~Template the allowlist~~
 * Log to different loggers
+* ~~js test to check if authed~~
+* ~~redirect when success~~
+* single page, only javascript
 
 ### Later
 
