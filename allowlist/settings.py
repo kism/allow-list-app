@@ -22,6 +22,7 @@ DEFAULT_SETTINGS = {
     "static_password_cleartext": "",
     "static_password_hashed": "",
     "revert_daily": True,
+    "redirect_url": "",
 }
 
 

@@ -88,7 +88,7 @@ def authenticate() -> str:
     if result:
         allowlist.add_to_allowlist(ala_settings, username, ip)
 
-    return render_template("result.html.j2", out_text=out_text, status=status)
+    return render_template("result.html.j2", out_text=out_text, status=status, redirect=ala_settings.redirect_url)
 
 
 def check_password_static(password: str) -> bool:
