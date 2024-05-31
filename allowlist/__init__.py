@@ -46,11 +46,12 @@ def create_app(test_config: dict | None = None) -> Flask:
         thread.start()
 
     hide_username = ala_settings.auth_type_static()
+    redirect_url = ala_settings.redirect_url
 
     @app.route("/")
     def home() -> str:
         """Flask Home."""
-        return render_template("home.html.j2", hide_username=hide_username)
+        return render_template("home.html.j2", hide_username=hide_username, redirect_url=redirect_url)
 
     return app
 
