@@ -13,7 +13,7 @@ function countdown() {
 }
 
 if (
-  document.getElementById("REDIRECT_TEXT").innerHTML ==
+  document.getElementById("TITLE").innerHTML ==
   "Authentication Success!"
 ) {
   countdown();
