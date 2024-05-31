@@ -24,22 +24,31 @@ def get_allowlist() -> list:
     return allowlist
 
 
-def insert_ip(username: str, ip: str) -> bool:
-    """Insert an IP into the allowlist, returns if an IP has been inserted."""
-    logger.debug("Trying to insert ip: %s for user: %s", ip, username)
+def is_in_allowlist(ip: str) -> bool:
+    """Check if ip addres is in the allowlist."""
     allowlist = get_allowlist()
-
-    __check_ip(ip)
 
     logger.debug("Checking if IP allready in allowlist...")
     auth_in_list = False
     for item in allowlist:
         if item["ip"] == ip:
-            logger.info("Duplicate auth! Not adding.")
             auth_in_list = True
             break
 
-    if not auth_in_list:
+    return auth_in_list
+
+
+def insert_ip(username: str, ip: str) -> bool:
+    """Insert an IP into the allowlist, returns if an IP has been inserted."""
+    logger.debug("Trying to insert ip: %s for user: %s", ip, username)
+
+    added = False
+    __check_ip(ip)
+
+    if is_in_allowlist(ip):
+        logger.info("Duplicate auth! Not adding.")
+    else:
+        allowlist = get_allowlist()
         new_item = {"username": username, "ip": ip, "date": str(datetime.now())}
 
         allowlist.append(new_item)
@@ -56,8 +65,9 @@ def insert_ip(username: str, ip: str) -> bool:
             for item in allowlist:
                 csv_writer.writerow(item)
         logger.info("Added ip: %s to allowlist", ip)
+        added = True
 
-    return not auth_in_list
+    return added
 
 
 def check_database() -> True:

@@ -29,9 +29,10 @@ def create_app(test_config: dict | None = None) -> Flask:
             logger.info("No flask configuration file found at: %s", flask_config_path)
             logger.info("Using flask app.config defaults (this is not a problem).")
 
-    # Allowlist object, Blueprints
+    # Now that we have loaded out configuration, we can import our modules
     from . import allowlist, auth, database
 
+    # Register the authentication endpoint
     app.register_blueprint(auth.bp)
 
     # Ensure the databse is ready

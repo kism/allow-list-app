@@ -7,7 +7,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, render_template, request
 
-from . import allowlist, get_ala_settings
+from . import allowlist, database, get_ala_settings
 
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
@@ -38,8 +38,25 @@ dynamic_auth_types = {
 }
 
 
+@bp.route("/checkauth/", methods=["GET"])
+def check_auth() -> int:
+    """Test Authenticate."""
+    if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
+        ip = request.environ["REMOTE_ADDR"]
+    else:
+        ip = request.environ["HTTP_X_FORWARDED_FOR"]
+
+    status = 401
+    message = "nope"
+    if database.is_in_allowlist(ip):
+        message = "yep"
+        status = 200
+
+    return message, status
+
+
 @bp.route("/authenticate/", methods=["POST"])
-def my_form_post() -> str:
+def authenticate() -> str:
     """Post da password."""
     username = request.form["username"]
     password = request.form["password"]
