@@ -39,6 +39,10 @@ waitress-serve \
 * jf login
 * better yaml
 * Template the allowlist
+* Log to different loggers
+
+### Later
+
 * ipv6 support
 * Tests
 * publish whl

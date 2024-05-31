@@ -7,7 +7,7 @@ import tomllib
 
 from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
 
-from . import allowlist, logger, settings
+from . import logger, settings
 
 ala_settings = None
 
@@ -29,10 +29,20 @@ def create_app(test_config: dict | None = None) -> Flask:
             logger.info("No flask configuration file found at: %s", flask_config_path)
             logger.info("Using flask app.config defaults (this is not a problem).")
 
-    # Blueprints
-    from . import auth
+    # Allowlist object, Blueprints
+    from . import allowlist, auth, database
 
     app.register_blueprint(auth.bp)
+
+    # Ensure the databse is ready
+    database.init_database(ala_settings)
+    # Write the allowlist
+    allowlist.write_allowlist_files(ala_settings)
+
+    # See if we need to revert the allowlist daily
+    if ala_settings.revert_daily:
+        thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
+        thread.start()
 
     hide_username = ala_settings.auth_type_static()
 
@@ -40,13 +50,6 @@ def create_app(test_config: dict | None = None) -> Flask:
     def home() -> str:
         """Flask Home."""
         return render_template("home.html.j2", hide_username=hide_username)
-
-    if not os.path.exists(ala_settings.allowlist_path):  # Create if file doesn't exist
-        with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
-            conf_file.write("deny all;")
-
-    thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
-    thread.start()
 
     return app
 

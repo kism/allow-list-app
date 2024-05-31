@@ -69,7 +69,7 @@ def my_form_post() -> str:
     logger.info("%s: %s%s", out_text, ip, username_text)
 
     if result:
-        allowlist.write_allowlist_file(ala_settings, ip)
+        allowlist.add_to_allowlist(ala_settings, username, ip)
 
     return render_template("result.html.j2", out_text=out_text, status=status)
 

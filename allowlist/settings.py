@@ -18,8 +18,10 @@ DEFAULT_SETTINGS = {
     "log_level": "INFO",
     "log_path": "",
     "remote_auth_url": "",
+    "services": ["nginx"],
     "static_password_cleartext": "",
     "static_password_hashed": "",
+    "revert_daily": True,
 }
 
 
@@ -109,6 +111,7 @@ class AllowListAppSettings:
     def __cleanup_config(self) -> True:
         """Cleanup the config entries."""
         self.auth_type = self.auth_type.lower()
+        self.services = [string.lower() for string in self.services]
         if self.remote_auth_url.endswith("/"):
             self.remote_auth_url = self.remote_auth_url[:-1]
 

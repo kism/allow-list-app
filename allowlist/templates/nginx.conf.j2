@@ -1,0 +1,3 @@
+{% for item in allowlist %}allow {{ item.ip }}; # {{ item.username }}, {{ item.date }}
+{% endfor -%}
+deny all;

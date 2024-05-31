@@ -6,6 +6,7 @@
         "ms-python.vscode-pylance",
         "vscode-icons-team.vscode-icons",
         "samuelcolvin.jinjahtml",
-        "charliermarsh.ruff"
+        "charliermarsh.ruff",
+        "mechatroner.rainbow-csv"
     ]
 }
