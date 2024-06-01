@@ -116,31 +116,25 @@ class AllowList:
         try:
             ipaddress.IPv4Address(in_ip_or_network)
             one_success = True
-        except ipaddress.NetmaskValueError:
-            pass
-        except ipaddress.AddressValueError:
+        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
             pass
 
         try:
             ipaddress.IPv4Network(in_ip_or_network)
             one_success = True
-        except ipaddress.NetmaskValueError:
-            pass
-        except ipaddress.AddressValueError:
+        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
             pass
 
         try:
             ipaddress.IPv6Address(in_ip_or_network)
             one_success = True
-        except ipaddress.AddressValueError:
+        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
             pass
 
         try:
             ipaddress.IPv6Network(in_ip_or_network)
             one_success = True
-        except ipaddress.NetmaskValueError:
-            pass
-        except ipaddress.AddressValueError:
+        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
             pass
 
         if not one_success:
