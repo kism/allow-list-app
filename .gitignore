@@ -3,6 +3,10 @@ ipallowlist.conf
 
 *.log
 
+# Javascript
+node_modules
+# package-lock.json
+# package.json
 
 # Python
 .venv/

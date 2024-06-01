@@ -5,7 +5,7 @@ import logging
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from flask import Blueprint, render_template, request
+from flask import Blueprint, request
 
 from . import allowlist_handler, get_ala_settings
 
@@ -67,12 +67,12 @@ def authenticate() -> str:
     else:
         result = check_password_url(username, password)
 
-    out_text = "Authentication Failed!"
+    message = "nope"
     status = 401
 
     if result:
         status = 200
-        out_text = "Authentication Success!"
+        message = "yep"
 
     # Get IP
     if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
@@ -84,12 +84,12 @@ def authenticate() -> str:
     if username != "":
         username_text = f", Username: {username}"
 
-    logger.info("%s: %s%s", out_text, ip, username_text)
+    logger.info("Authentication returned: %s for %s%s", message, ip, username_text)
 
     if result:
         al.add_to_allowlist(username, ip)
 
-    return render_template("result.html.j2", out_text=out_text, status=status, redirect=ala_settings.redirect_url)
+    return message, status
 
 
 def check_password_static(password: str) -> bool:
