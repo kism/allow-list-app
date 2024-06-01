@@ -7,11 +7,12 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, render_template, request
 
-from . import allowlist, database, get_ala_settings
+from . import allowlist_handler, get_ala_settings
 
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
 ala_settings = get_ala_settings()
+al = allowlist_handler.AllowList(ala_settings)
 logger = logging.getLogger("allowlist")
 
 if not ala_settings.auth_type_static():
@@ -48,7 +49,7 @@ def check_auth() -> int:
 
     status = 401
     message = "nope"
-    if database.is_in_allowlist(ip):
+    if al.is_in_allowlist(ip):
         message = "yep"
         status = 200
 
@@ -86,7 +87,7 @@ def authenticate() -> str:
     logger.info("%s: %s%s", out_text, ip, username_text)
 
     if result:
-        allowlist.add_to_allowlist(ala_settings, username, ip)
+        al.add_to_allowlist(username, ip)
 
     return render_template("result.html.j2", out_text=out_text, status=status, redirect=ala_settings.redirect_url)
 

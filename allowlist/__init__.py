@@ -2,7 +2,6 @@
 
 import logging
 import os
-import threading
 import tomllib
 
 from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
@@ -30,20 +29,10 @@ def create_app(test_config: dict | None = None) -> Flask:
             logger.info("Using flask app.config defaults (this is not a problem).")
 
     # Now that we have loaded out configuration, we can import our modules
-    from . import allowlist, auth, database
+    from . import auth
 
     # Register the authentication endpoint
     app.register_blueprint(auth.bp)
-
-    # Ensure the databse is ready
-    database.init_database(ala_settings)
-    # Write the allowlist
-    allowlist.write_allowlist_files(ala_settings)
-
-    # See if we need to revert the allowlist daily
-    if ala_settings.revert_daily:
-        thread = threading.Thread(target=allowlist.revert_list_daily, args=(ala_settings,), daemon=True)
-        thread.start()
 
     hide_username = ala_settings.auth_type_static()
     redirect_url = ala_settings.redirect_url
