@@ -5,9 +5,7 @@ import threading
 import time
 from datetime import datetime
 
-from . import ala_logger
-
-from . import database, get_ala_settings
+from . import ala_logger, database, get_ala_settings
 
 logger = ala_logger.setup_logger(__name__)
 

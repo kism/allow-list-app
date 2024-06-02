@@ -1,6 +1,5 @@
 """Flask webapp to control a nginx allowlist."""
 
-import logging
 import os
 import tomllib
 
