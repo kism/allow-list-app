@@ -25,10 +25,10 @@ def create_app(test_config: dict | None = None) -> Flask:
             logger.info("Using flask app.config defaults (this is not a problem).")
 
     # Now that we have loaded out configuration, we can import our modules
-    from . import auth
+    from . import ala_auth
 
     # Register the authentication endpoint
-    app.register_blueprint(auth.bp)
+    app.register_blueprint(ala_auth.bp)
 
     hide_username = ala_sett.auth_type_static()
     redirect_url = ala_sett.redirect_url
