@@ -52,13 +52,12 @@ def setup_logger(module_name: str) -> Logger:
 
 def setup_logger_initial(module_name: str) -> Logger:
     """Setup logging while not yet loading settings."""
-    for item in (module_name, __name__):  # Might be a hack
-        logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
-        logger = logging.getLogger(item)
+    logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
+    logger = logging.getLogger(module_name)
 
-        logging.getLogger("waitress").setLevel(logging.INFO)
-        logging.getLogger("werkzeug").setLevel(logging.WARNING)
-        logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("waitress").setLevel(logging.INFO)
+    logging.getLogger("werkzeug").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-        logger.info(" ----------")
-        logger.info("🙋 Logger started")
+    logger.info(" ----------")
+    logger.info("🙋 Logger started")
