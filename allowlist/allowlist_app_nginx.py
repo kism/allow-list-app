@@ -6,9 +6,8 @@ import subprocess
 import time
 
 from jinja2 import Environment, FileSystemLoader
-from . import ala_logger
 
-from . import get_ala_settings
+from . import ala_logger, get_ala_settings
 
 ala_settings = get_ala_settings()
 
