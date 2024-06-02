@@ -46,7 +46,7 @@ def get_ala_settings() -> dict:
     return ala_sett
 
 
-if __name__ == "allowlist":  # Is this normal?
+if __name__ == "allowlist":  # Is this normal? It might be, the linter doesnt complain about the imports being here.
     from . import ala_settings
 
     ala_sett = ala_settings.AllowListAppSettings()
