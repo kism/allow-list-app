@@ -47,9 +47,9 @@ def get_ala_settings() -> dict:
 
 
 if __name__ == "allowlist":  # Is this normal?
-    from . import settings
+    from . import ala_settings
 
-    ala_sett = settings.AllowListAppSettings()
+    ala_sett = ala_settings.AllowListAppSettings()
 
     from . import ala_logger
 
