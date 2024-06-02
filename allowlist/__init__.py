@@ -6,15 +6,11 @@ import tomllib
 
 from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
 
-from . import logger, settings
-
 ala_settings = None
 
 
 def create_app(test_config: dict | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
-    logger = logging.getLogger("allowlist")
-
     app = Flask(__name__, instance_relative_config=True)
 
     if test_config:
@@ -51,5 +47,10 @@ def get_ala_settings() -> dict:
 
 
 if __name__ == "allowlist":  # Is this normal?
+    from . import settings
+
     ala_settings = settings.AllowListAppSettings()
-    logger.setup_logger(ala_settings.log_level, ala_settings.log_path)
+
+    from . import ala_logger
+
+    logger = ala_logger.setup_logger(__name__)

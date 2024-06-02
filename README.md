@@ -42,8 +42,8 @@ waitress-serve \
 * Log to different loggers
 * ~~js test to check if authed~~
 * ~~redirect when success~~
-* single page, only javascript
-* check if ip in subnet for the auth check
+* ~~single page, only javascript~~
+* ~~check if ip in subnet for the auth check~~
 
 ### Later
 

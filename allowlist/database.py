@@ -1,11 +1,14 @@
 """Handles the Databse of the app."""
 
 import csv
-import logging
 import os
 
+from . import ala_logger
+
+logger = ala_logger.setup_logger(__name__)
+
+
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
-logger = logging.getLogger("allowlist")
 
 
 def db_get_allowlist() -> list:
@@ -54,7 +57,7 @@ def db_check() -> True:
 
 def db_reset() -> None:
     """Clear the database."""
-    logging.info("CLEARING THE DATABASE...")
+    logger.info("CLEARING THE DATABASE...")
     with open(database_path, "w", newline="") as csvfile:
         csv_writer = csv.DictWriter(csvfile, CSV_SCHEMA.keys(), delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
         csv_writer.writeheader()

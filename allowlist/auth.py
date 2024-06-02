@@ -1,19 +1,21 @@
 """Flask webapp to control a nginx allowlist."""
 
 import json
-import logging
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, request
 
-from . import allowlist_handler, get_ala_settings
+from . import ala_logger, allowlist_handler, get_ala_settings
 
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
 ala_settings = get_ala_settings()
 al = allowlist_handler.AllowList(ala_settings)
-logger = logging.getLogger("allowlist")
+
+
+logger = ala_logger.setup_logger(__name__)
+
 
 if not ala_settings.auth_type_static():
     from http import HTTPStatus

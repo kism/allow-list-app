@@ -8,9 +8,14 @@ import sys
 import yaml
 from argon2 import PasswordHasher
 
+from . import ala_logger
+
+ala_logger.setup_logger_initial(__name__)
+logger = logging.getLogger(__name__)
+
 VALID_URL_AUTH_TYPES = ["static", "jellyfin"]
 ph = PasswordHasher()
-logger = logging.getLogger("allowlist")
+
 DEFAULT_SETTINGS = {
     "allowlist_path": "ipallowlist.conf",
     "allowed_subnets": [],
@@ -82,7 +87,7 @@ class AllowListAppSettings:
             try:
                 setattr(self, key, settings_temp[key])
             except (KeyError, TypeError):
-                logging.info("%s not defined, using default", key)
+                logger.info("%s not defined, using default", key)
                 setattr(self, key, default_value)
 
         self.__cleanup_config()

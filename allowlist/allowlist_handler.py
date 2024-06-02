@@ -1,15 +1,18 @@
 """Allowlist object and its friends."""
 
 import ipaddress
-import logging
 import threading
 import time
 from datetime import datetime
 
+from . import ala_logger
+
 from . import database, get_ala_settings
 
+logger = ala_logger.setup_logger(__name__)
+
+
 ala_settings = get_ala_settings()
-logger = logging.getLogger("allowlist")
 
 
 nginx_allowlist = None
@@ -33,19 +36,39 @@ class AllowList:
             thread = threading.Thread(target=self.__revert_list_daily, args=(), daemon=True)
             thread.start()
 
-        logging.info("Initialising the database...")
+        logger.info("Initialising the database...")
         for subnet in self.ala_settings.allowed_subnets:
             self.add_to_allowlist("default", subnet)
-        logging.info("Done initialising the database")
+        logger.info("Done initialising the database")
 
     def is_in_allowlist(self, ip: str) -> bool:
         """Check if ip addres is in the allowlist."""
         logger.debug("Checking if IP allready in allowlist...")
         auth_in_list = False
+
         for item in self.allowlist:
-            if item["ip"] == ip:
-                auth_in_list = True
-                break
+            try:
+                ipaddress.IPv4Address(ip)
+                if ip == item["ip"]:
+                    auth_in_list = True
+                    break
+            except ValueError:
+                pass
+
+            try:
+                ipaddress.IPv4Network(ip)
+                if ip == item["ip"]:
+                    auth_in_list = True
+                    break
+            except ValueError:
+                pass
+
+            try:
+                if ipaddress.ip_address(ip) in ipaddress.ip_network(item["ip"]):
+                    auth_in_list = True
+                    break
+            except ValueError:
+                pass
 
         return auth_in_list
 
@@ -64,8 +87,8 @@ class AllowList:
             added = True
             logger.info("Added ip: %s to allowlist", ip)
 
-        database.db_write_allowlist(self.allowlist)
-        self.__write_allowlist_files()
+            database.db_write_allowlist(self.allowlist)
+            self.__write_app_allowlist_files()
 
         return added
 
@@ -105,38 +128,23 @@ class AllowList:
 
             logger.info("It's 4am, reverting IP list to default")
 
-    def __write_allowlist_files(self) -> None:
+    def __write_app_allowlist_files(self) -> None:
         """Write to the nginx allowlist conf file."""
         if nginx_allowlist:
             nginx_allowlist.write(self.ala_settings, self.allowlist)
 
-    def __check_ip(self, in_ip_or_network: str) -> True:
+    def __check_ip(self, in_ip_or_network: str) -> bool:
         """Check if string is valid IP or Network."""
-        one_success = False
-        try:
-            ipaddress.IPv4Address(in_ip_or_network)
-            one_success = True
-        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
-            pass
+        valid_ip = False
+        for ip_cls in [ipaddress.IPv4Address, ipaddress.IPv4Network, ipaddress.IPv6Address, ipaddress.IPv6Network]:
+            try:
+                ip_cls(in_ip_or_network)
+                valid_ip = True
+            except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
+                continue
 
-        try:
-            ipaddress.IPv4Network(in_ip_or_network)
-            one_success = True
-        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
-            pass
-
-        try:
-            ipaddress.IPv6Address(in_ip_or_network)
-            one_success = True
-        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
-            pass
-
-        try:
-            ipaddress.IPv6Network(in_ip_or_network)
-            one_success = True
-        except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
-            pass
-
-        if not one_success:
+        if not valid_ip:
             err = f"Invalid IP/network address: {in_ip_or_network}"
-            raise ValueError(err)
+            logger.error(err)
+
+        return valid_ip
