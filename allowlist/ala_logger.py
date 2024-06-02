@@ -13,36 +13,36 @@ def setup_logger(module_name: str) -> Logger:
 
     internal_logger = logging.getLogger(__name__)
 
-    ala_settings = get_ala_settings()
+    ala_sett = get_ala_settings()
 
     new_logger = logging.getLogger(module_name)
 
-    if ala_settings.log_level:
-        ala_settings.log_level = ala_settings.log_level.upper()
-        if ala_settings.log_level not in LOGLEVELS:
+    if ala_sett.log_level:
+        ala_sett.log_level = ala_sett.log_level.upper()
+        if ala_sett.log_level not in LOGLEVELS:
             internal_logger.warning(
                 "❗ Invalid logging level: %s, defaulting to INFO",
                 new_logger.getLogger(module_name).getEffectiveLevel(),
             )
         else:
-            new_logger.setLevel(ala_settings.log_level)
-            internal_logger.debug("Set log level: %s", ala_settings.log_level)
+            new_logger.setLevel(ala_sett.log_level)
+            internal_logger.debug("Set log level: %s", ala_sett.log_level)
 
     try:
-        if ala_settings.log_path and ala_settings.log_path != "":  # If we are logging to a file
+        if ala_sett.log_path and ala_sett.log_path != "":  # If we are logging to a file
             new_logger = logging.getLogger(module_name)
             formatter = logging.Formatter(LOG_FORMAT)
 
-            filehandler = logging.FileHandler(ala_settings.log_path)
+            filehandler = logging.FileHandler(ala_sett.log_path)
             filehandler.setFormatter(formatter)
             new_logger.addHandler(filehandler)
-            internal_logger.info("Logging to file: %s", ala_settings.log_path)
+            internal_logger.info("Logging to file: %s", ala_sett.log_path)
     except IsADirectoryError as exc:
         err = "You are trying to log to a directory, try a file"
         raise IsADirectoryError(err) from exc
 
     except PermissionError as exc:
-        err = "The user running this does not have access to the file: " + ala_settings.log_path
+        err = "The user running this does not have access to the file: " + ala_sett.log_path
         raise IsADirectoryError(err) from exc
 
     internal_logger.info("Logger settings configured")

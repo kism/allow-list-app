@@ -10,11 +10,11 @@ from . import ala_logger, database, get_ala_settings
 logger = ala_logger.setup_logger(__name__)
 
 
-ala_settings = get_ala_settings()
+ala_sett = get_ala_settings()
 
 
 nginx_allowlist = None
-if "nginx" in ala_settings.services:
+if "nginx" in ala_sett.services:
     from allowlist.allowlist_app_nginx import NGINXAllowlist
 
     nginx_allowlist = NGINXAllowlist()
@@ -23,19 +23,19 @@ if "nginx" in ala_settings.services:
 class AllowList:
     """This is the allowlist object, init from database, query from memory, write to database."""
 
-    def __init__(self, ala_settings: dict) -> None:
+    def __init__(self, ala_sett: dict) -> None:
         """Initialise the AllowList."""
         database.db_check()
-        self.ala_settings = ala_settings
+        self.ala_sett = ala_sett
         self.allowlist = database.db_get_allowlist()
 
         # See if we need to revert the allowlist daily
-        if self.ala_settings.revert_daily:
+        if self.ala_sett.revert_daily:
             thread = threading.Thread(target=self.__revert_list_daily, args=(), daemon=True)
             thread.start()
 
         logger.info("Initialising the database...")
-        for subnet in self.ala_settings.allowed_subnets:
+        for subnet in self.ala_sett.allowed_subnets:
             self.add_to_allowlist("default", subnet)
         logger.info("Done initialising the database")
 
@@ -96,7 +96,7 @@ class AllowList:
             logger.info("Adding subnets/ips from config file")
 
             database.reset_database()
-            database.init_database(ala_settings)
+            database.init_database(ala_sett)
 
             # Get the current time
             current_time = datetime.datetime.now().time()

@@ -10,14 +10,14 @@ from . import ala_logger, allowlist_handler, get_ala_settings
 
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
-ala_settings = get_ala_settings()
-al = allowlist_handler.AllowList(ala_settings)
+ala_sett = get_ala_settings()
+al = allowlist_handler.AllowList(ala_sett)
 
 
 logger = ala_logger.setup_logger(__name__)
 
 
-if not ala_settings.auth_type_static():
+if not ala_sett.auth_type_static():
     from http import HTTPStatus
 
     import requests
@@ -64,10 +64,8 @@ def authenticate() -> str:
     username = request.form["username"]
     password = request.form["password"]
 
-    if ala_settings.auth_type_static():
-        result = check_password_static(password)
-    else:
-        result = check_password_url(username, password)
+    # Check the auth depending on if we are using static auth, or checking via an external url
+    result = check_password_static(password) if ala_sett.auth_type_static() else check_password_url(username, password)
 
     message = "nope"
     status = 401
@@ -97,7 +95,7 @@ def authenticate() -> str:
 def check_password_static(password: str) -> bool:
     """Check password (secure) (I hope)."""
     passwordcorrect = False
-    hashed = ala_settings.static_password_hashed
+    hashed = ala_sett.static_password_hashed
     try:
         ph.verify(hashed, password)
         passwordcorrect = True
@@ -111,12 +109,12 @@ def check_password_url(username: str, password: str) -> bool:
     """Check password via Jellyfin (secure) (I hope)."""
     passwordcorrect = False
 
-    url = ala_settings.remote_auth_url + "/" + dynamic_auth_types[ala_settings.auth_type]["endpoint"]
-    headers = dynamic_auth_types[ala_settings.auth_type]["headers"]
+    url = ala_sett.remote_auth_url + "/" + dynamic_auth_types[ala_sett.auth_type]["endpoint"]
+    headers = dynamic_auth_types[ala_sett.auth_type]["headers"]
 
     data = {
-        dynamic_auth_types[ala_settings.auth_type]["username_field"]: username,
-        dynamic_auth_types[ala_settings.auth_type]["password_field"]: password,
+        dynamic_auth_types[ala_sett.auth_type]["username_field"]: username,
+        dynamic_auth_types[ala_sett.auth_type]["password_field"]: password,
     }
     json_data = json.dumps(data)
 

@@ -3,9 +3,9 @@
 import os
 import tomllib
 
-from flask import Flask, render_template  # , request  # , Blueprint  # , jsonify
+from flask import Flask, render_template
 
-ala_settings = None
+ala_sett = None
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -29,8 +29,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     # Register the authentication endpoint
     app.register_blueprint(auth.bp)
 
-    hide_username = ala_settings.auth_type_static()
-    redirect_url = ala_settings.redirect_url
+    hide_username = ala_sett.auth_type_static()
+    redirect_url = ala_sett.redirect_url
 
     @app.route("/")
     def home() -> str:
@@ -42,13 +42,13 @@ def create_app(test_config: dict | None = None) -> Flask:
 
 def get_ala_settings() -> dict:
     """Return the settings."""
-    return ala_settings
+    return ala_sett
 
 
 if __name__ == "allowlist":  # Is this normal?
     from . import settings
 
-    ala_settings = settings.AllowListAppSettings()
+    ala_sett = settings.AllowListAppSettings()
 
     from . import ala_logger
 

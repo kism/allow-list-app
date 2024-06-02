@@ -9,7 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from . import ala_logger, get_ala_settings
 
-ala_settings = get_ala_settings()
+ala_sett = get_ala_settings()
 
 logger = ala_logger.setup_logger(__name__)
 
@@ -30,9 +30,9 @@ class NGINXAllowlist:
         if self.user_account != "root":
             self.reload_nginx_command = ["sudo", "systemctl", "reload", "nginx"]
 
-    def write(self, ala_settings: dict, allowlist: list) -> None:
+    def write(self, ala_sett: dict, allowlist: list) -> None:
         """Write NGINX allowlist."""
-        logger.debug("Writing nginx allowlist: %s", ala_settings.allowlist_path)
+        logger.debug("Writing nginx allowlist: %s", ala_sett.allowlist_path)
         while self.writing:
             time.sleep(1)
 
@@ -40,7 +40,7 @@ class NGINXAllowlist:
         template = env.get_template("nginx.conf.j2")
         rendered_template = template.render(allowlist=allowlist)
 
-        with open(ala_settings.allowlist_path, "w", encoding="utf8") as conf_file:
+        with open(ala_sett.allowlist_path, "w", encoding="utf8") as conf_file:
             conf_file.write(rendered_template)
 
         self.writing = False
