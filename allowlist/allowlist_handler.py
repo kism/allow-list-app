@@ -5,7 +5,7 @@ import threading
 import time
 from datetime import datetime
 
-from . import ala_logger, database, get_ala_settings
+from . import ala_database, ala_logger, get_ala_settings
 
 logger = ala_logger.setup_logger(__name__)
 
@@ -25,9 +25,9 @@ class AllowList:
 
     def __init__(self, ala_sett: dict) -> None:
         """Initialise the AllowList."""
-        database.db_check()
+        ala_database.db_check()
         self.ala_sett = ala_sett
-        self.allowlist = database.db_get_allowlist()
+        self.allowlist = ala_database.db_get_allowlist()
 
         # See if we need to revert the allowlist daily
         if self.ala_sett.revert_daily:
@@ -85,7 +85,7 @@ class AllowList:
             added = True
             logger.info("Added ip: %s to allowlist", ip)
 
-            database.db_write_allowlist(self.allowlist)
+            ala_database.db_write_allowlist(self.allowlist)
             self.__write_app_allowlist_files()
 
         return added
@@ -95,8 +95,8 @@ class AllowList:
         while True:
             logger.info("Adding subnets/ips from config file")
 
-            database.reset_database()
-            database.init_database(ala_sett)
+            ala_database.reset_database()
+            ala_database.init_database(ala_sett)
 
             # Get the current time
             current_time = datetime.datetime.now().time()

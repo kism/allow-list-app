@@ -1,6 +1,5 @@
 """Settings Processing."""
 
-import logging
 import os
 import pwd
 import sys
@@ -10,8 +9,7 @@ from argon2 import PasswordHasher
 
 from . import ala_logger
 
-ala_logger.setup_logger_initial(__name__)
-logger = logging.getLogger(__name__)
+logger = ala_logger.setup_logger_initial(__name__)
 
 VALID_URL_AUTH_TYPES = ["static", "jellyfin"]
 ph = PasswordHasher()

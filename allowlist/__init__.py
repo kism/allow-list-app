@@ -6,6 +6,7 @@ import tomllib
 from flask import Flask, render_template
 
 ala_sett = None
+logger = None
 
 
 def create_app(test_config: dict | None = None) -> Flask:

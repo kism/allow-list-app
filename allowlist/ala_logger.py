@@ -61,3 +61,5 @@ def setup_logger_initial(module_name: str) -> Logger:
 
     logger.info(" ----------")
     logger.info("🙋 Logger started")
+
+    return logger
