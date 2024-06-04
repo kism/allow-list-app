@@ -129,7 +129,7 @@ class AllowList:
     def __write_app_allowlist_files(self) -> None:
         """Write to the nginx allowlist conf file."""
         if nginx_allowlist:
-            nginx_allowlist.write(self.ala_settings, self.allowlist)
+            nginx_allowlist.write(self.ala_sett, self.allowlist)
 
     def __check_ip(self, in_ip_or_network: str) -> bool:
         """Check if string is valid IP or Network."""
