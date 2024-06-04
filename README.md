@@ -44,6 +44,7 @@ waitress-serve \
 * ~~redirect when success~~
 * ~~single page, only javascript~~
 * ~~check if ip in subnet for the auth check~~
+* Fix logger to log per module
 
 ### Later
 

@@ -18,30 +18,10 @@ def setup_logger(ala_sett: dict) -> Logger:
     logger = __setup_logger()
 
     if ala_sett.log_level:
-        ala_sett.log_level = ala_sett.log_level.upper()
-        if ala_sett.log_level not in LOGLEVELS:
-            logger.warning(
-                "❗ Invalid logging level: %s, defaulting to INFO",
-                logger.getEffectiveLevel(),
-            )
-        else:
-            logger.setLevel(ala_sett.log_level)
-            logger.debug("Set log level: %s", ala_sett.log_level)
+        __set_log_level(logger, ala_sett.log_level)
 
-    try:
-        if ala_sett.log_path != "":  # If we are logging to a file
-            filehandler = RotatingFileHandler(ala_sett.log_path, maxBytes=1000000, backupCount=5)
-            formatter = logging.Formatter(LOG_FORMAT)
-            filehandler.setFormatter(formatter)
-            logger.addHandler(filehandler)
-            logger.info("Logging to file: %s", ala_sett.log_path)
-    except IsADirectoryError as exc:
-        err = "You are trying to log to a directory, try a file"
-        raise IsADirectoryError(err) from exc
-
-    except PermissionError as exc:
-        err = "The user running this does not have access to the file: " + ala_sett.log_path
-        raise IsADirectoryError(err) from exc
+    if ala_sett.log_path != "":  # If we are logging to a file
+        __set_file_handler(logger, ala_sett.log_path)
 
     logger.info("Logger settings configured!")
 
@@ -74,3 +54,33 @@ def __setup_logger(log_level: str = logging.INFO) -> Logger:
     logger.setLevel(log_level)
 
     return logger
+
+
+def __set_log_level(logger: Logger, log_level: str) -> True:
+    """Sets the log level."""
+    log_level = log_level.upper()
+    if log_level not in LOGLEVELS:
+        logger.warning(
+            "❗ Invalid logging level: %s, defaulting to INFO",
+            logger.getEffectiveLevel(),
+        )
+    else:
+        logger.setLevel(log_level)
+        logger.debug("Set log level: %s", log_level)
+
+
+def __set_file_handler(logger: Logger, log_path: str) -> True:
+    """Sets up the file handler."""
+    try:
+        filehandler = RotatingFileHandler(log_path, maxBytes=1000000, backupCount=5)
+        formatter = logging.Formatter(LOG_FORMAT)
+        filehandler.setFormatter(formatter)
+        logger.addHandler(filehandler)
+        logger.info("Logging to file: %s", log_path)
+    except IsADirectoryError as exc:
+        err = "You are trying to log to a directory, try a file"
+        raise IsADirectoryError(err) from exc
+
+    except PermissionError as exc:
+        err = "The user running this does not have access to the file: " + log_path
+        raise IsADirectoryError(err) from exc
