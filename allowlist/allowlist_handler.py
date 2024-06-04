@@ -1,13 +1,14 @@
 """Allowlist object and its friends."""
 
 import ipaddress
+import logging
 import threading
 import time
 from datetime import datetime
 
-from . import ala_database, ala_logger, get_ala_settings
+from . import ala_database, get_ala_settings
 
-logger = ala_logger.get_logger()
+logger = logging.getLogger(__name__)
 
 
 ala_sett = get_ala_settings()

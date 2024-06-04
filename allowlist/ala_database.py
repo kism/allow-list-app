@@ -1,11 +1,10 @@
 """Handles the Databse of the app."""
 
 import csv
+import logging
 import os
 
-from . import ala_logger
-
-logger = ala_logger.get_logger()
+logger = logging.getLogger(__name__)
 
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}

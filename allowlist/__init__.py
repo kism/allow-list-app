@@ -7,9 +7,7 @@ from flask import Flask, render_template
 
 from . import ala_logger
 
-ala_logger.setup_logger_initial()
-
-ala_sett = None
+ala_logger.setup_logger()
 
 
 def create_app(test_config: dict | None = None) -> Flask:

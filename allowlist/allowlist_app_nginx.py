@@ -1,5 +1,6 @@
 """Module to handle writing the nginx allowlist and reloading nginx."""
 
+import logging
 import os
 import pwd
 import subprocess
@@ -7,11 +8,11 @@ import time
 
 from jinja2 import Environment, FileSystemLoader
 
-from . import ala_logger, get_ala_settings
+from . import get_ala_settings
 
 ala_sett = get_ala_settings()
 
-logger = ala_logger.get_logger()
+logger = logging.getLogger(__name__)
 
 
 class NGINXAllowlist:
