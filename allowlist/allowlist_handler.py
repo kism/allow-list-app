@@ -50,27 +50,12 @@ class AllowList:
 
         for item in self.allowlist:
             try:
-                ipaddress.IPv4Address(ip)
-                if ip == item["ip"]:
+                # Check if the IP matches directly or is within the network
+                if ip == item["ip"] or ipaddress.ip_address(ip) in ipaddress.ip_network(item["ip"]):
                     auth_in_list = True
                     break
             except ValueError:
-                pass
-
-            try:
-                ipaddress.IPv4Network(ip)
-                if ip == item["ip"]:
-                    auth_in_list = True
-                    break
-            except ValueError:
-                pass
-
-            try:
-                if ipaddress.ip_address(ip) in ipaddress.ip_network(item["ip"]):
-                    auth_in_list = True
-                    break
-            except ValueError:
-                pass
+                continue
 
         return auth_in_list
 
