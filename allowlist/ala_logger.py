@@ -2,6 +2,7 @@
 
 import logging
 from logging import Logger
+from logging.handlers import RotatingFileHandler
 
 LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
@@ -29,7 +30,7 @@ def setup_logger(ala_sett: dict) -> Logger:
 
     try:
         if ala_sett.log_path != "":  # If we are logging to a file
-            filehandler = logging.FileHandler(ala_sett.log_path)
+            filehandler = logging.RotatingFileHandler(ala_sett.log_path, maxBytes=10000000, backupCount=5)
             formatter = logging.Formatter(LOG_FORMAT)
             filehandler.setFormatter(formatter)
             logger.addHandler(filehandler)
