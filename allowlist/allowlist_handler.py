@@ -40,6 +40,9 @@ class AllowList:
             self.add_to_allowlist("default", subnet)
         logger.info("Done initialising the database")
 
+        # For safety since in theory the file can be written to outside of this program
+        self.__write_app_allowlist_files()
+
     def is_in_allowlist(self, ip: str) -> bool:
         """Check if ip addres is in the allowlist."""
         logger.debug("Checking if IP allready in allowlist...")
