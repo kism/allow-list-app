@@ -37,14 +37,14 @@ waitress-serve \
 * ~~Adopt the suggested Flask structure~~
 * ~~use waitress, set threads~~
 * ~~jf login~~
-* better yaml
 * ~~Template the allowlist~~
-* Log to different loggers
+* ~~Log to different loggers~~
 * ~~js test to check if authed~~
 * ~~redirect when success~~
 * ~~single page, only javascript~~
 * ~~check if ip in subnet for the auth check~~
-* Fix logger to log per module
+* ~~Fix logger~~
+* better yaml
 
 ### Later
 
