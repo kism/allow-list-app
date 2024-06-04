@@ -7,36 +7,33 @@ LOGLEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
 
 
-def setup_logger(module_name: str) -> Logger:
-    """APP LOGGING, set config."""
-    from . import get_ala_settings
+def get_logger() -> Logger:
+    """Method to get the logger."""
+    return logging.getLogger()
 
-    internal_logger = logging.getLogger(__name__)
 
-    ala_sett = get_ala_settings()
-
-    new_logger = logging.getLogger(module_name)
+def setup_logger(ala_sett: dict) -> Logger:
+    """APP LOGGING, set config per ala_sett."""
+    logger = __setup_logger()
 
     if ala_sett.log_level:
         ala_sett.log_level = ala_sett.log_level.upper()
         if ala_sett.log_level not in LOGLEVELS:
-            internal_logger.warning(
+            logger.warning(
                 "❗ Invalid logging level: %s, defaulting to INFO",
-                new_logger.getLogger(module_name).getEffectiveLevel(),
+                logger.getEffectiveLevel(),
             )
         else:
-            new_logger.setLevel(ala_sett.log_level)
-            internal_logger.debug("Set log level: %s", ala_sett.log_level)
+            logger.setLevel(ala_sett.log_level)
+            logger.debug("Set log level: %s", ala_sett.log_level)
 
     try:
-        if ala_sett.log_path and ala_sett.log_path != "":  # If we are logging to a file
-            new_logger = logging.getLogger(module_name)
-            formatter = logging.Formatter(LOG_FORMAT)
-
+        if ala_sett.log_path != "":  # If we are logging to a file
             filehandler = logging.FileHandler(ala_sett.log_path)
+            formatter = logging.Formatter(LOG_FORMAT)
             filehandler.setFormatter(formatter)
-            new_logger.addHandler(filehandler)
-            internal_logger.info("Logging to file: %s", ala_sett.log_path)
+            logger.addHandler(filehandler)
+            logger.info("Logging to file: %s", ala_sett.log_path)
     except IsADirectoryError as exc:
         err = "You are trying to log to a directory, try a file"
         raise IsADirectoryError(err) from exc
@@ -45,15 +42,12 @@ def setup_logger(module_name: str) -> Logger:
         err = "The user running this does not have access to the file: " + ala_sett.log_path
         raise IsADirectoryError(err) from exc
 
-    internal_logger.info("Logger settings configured")
-
-    return new_logger
+    logger.info("Logger settings configured!")
 
 
-def setup_logger_initial(module_name: str) -> Logger:
+def setup_logger_initial() -> Logger:
     """Setup logging while not yet loading settings."""
-    logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
-    logger = logging.getLogger(module_name)
+    logger = __setup_logger(logging.INFO)
 
     logging.getLogger("waitress").setLevel(logging.INFO)
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
@@ -61,5 +55,21 @@ def setup_logger_initial(module_name: str) -> Logger:
 
     logger.info(" ----------")
     logger.info("🙋 Logger started")
+
+    return logger
+
+
+def __setup_logger(log_level: str = logging.INFO) -> Logger:
+    """Setup Default Console Handler."""
+    logger = logging.getLogger()
+
+    logger.handlers.clear()
+
+    formatter = logging.Formatter(LOG_FORMAT)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+    logger.setLevel(log_level)
 
     return logger

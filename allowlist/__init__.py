@@ -5,8 +5,11 @@ import tomllib
 
 from flask import Flask, render_template
 
+from . import ala_logger
+
+ala_logger.setup_logger_initial()
+
 ala_sett = None
-logger = None
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -19,10 +22,10 @@ def create_app(test_config: dict | None = None) -> Flask:
         flask_config_path = f"{app.instance_path}{os.sep}flask.toml"
         try:
             app.config.from_file("flask.toml", load=tomllib.load, text=False)
-            logger.warning("Loaded flask config from: %s, I'M NOT CONVINCED THIS WORKS", flask_config_path)
+            app.logger.warning("Loaded flask config from: %s, I'M NOT CONVINCED THIS WORKS", flask_config_path)
         except FileNotFoundError:
-            logger.info("No flask configuration file found at: %s", flask_config_path)
-            logger.info("Using flask app.config defaults (this is not a problem).")
+            app.logger.info("No flask configuration file found at: %s", flask_config_path)
+            app.logger.info("Using flask app.config defaults (this is not a problem).")
 
     # Now that we have loaded out configuration, we can import our modules
     from . import ala_auth
@@ -51,6 +54,4 @@ if __name__ == "allowlist":  # Is this normal? It might be, the linter doesnt co
 
     ala_sett = ala_settings.AllowListAppSettings()
 
-    from . import ala_logger
-
-    logger = ala_logger.setup_logger(__name__)
+    ala_logger.setup_logger(ala_sett)

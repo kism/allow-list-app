@@ -7,7 +7,7 @@ from datetime import datetime
 
 from . import ala_database, ala_logger, get_ala_settings
 
-logger = ala_logger.setup_logger(__name__)
+logger = ala_logger.get_logger()
 
 
 ala_sett = get_ala_settings()

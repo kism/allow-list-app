@@ -14,7 +14,7 @@ ala_sett = get_ala_settings()
 al = allowlist_handler.AllowList(ala_sett)
 
 
-logger = ala_logger.setup_logger(__name__)
+logger = ala_logger.get_logger()
 
 
 if not ala_sett.auth_type_static():

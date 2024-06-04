@@ -9,7 +9,7 @@ from argon2 import PasswordHasher
 
 from . import ala_logger
 
-logger = ala_logger.setup_logger_initial(__name__)
+logger = ala_logger.get_logger()
 
 VALID_URL_AUTH_TYPES = ["static", "jellyfin"]
 ph = PasswordHasher()

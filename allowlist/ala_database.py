@@ -5,7 +5,7 @@ import os
 
 from . import ala_logger
 
-logger = ala_logger.setup_logger(__name__)
+logger = ala_logger.get_logger()
 
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}

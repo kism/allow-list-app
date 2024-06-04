@@ -11,7 +11,7 @@ from . import ala_logger, get_ala_settings
 
 ala_sett = get_ala_settings()
 
-logger = ala_logger.setup_logger(__name__)
+logger = ala_logger.get_logger()
 
 
 class NGINXAllowlist:
