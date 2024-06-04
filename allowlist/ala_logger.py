@@ -30,7 +30,7 @@ def setup_logger(ala_sett: dict) -> Logger:
 
     try:
         if ala_sett.log_path != "":  # If we are logging to a file
-            filehandler = logging.RotatingFileHandler(ala_sett.log_path, maxBytes=1000000, backupCount=5)
+            filehandler = RotatingFileHandler(ala_sett.log_path, maxBytes=1000000, backupCount=5)
             formatter = logging.Formatter(LOG_FORMAT)
             filehandler.setFormatter(formatter)
             logger.addHandler(filehandler)
