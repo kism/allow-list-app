@@ -69,7 +69,8 @@ class NGINXAllowlist:
                 f"And insert the text: {self.user_account} ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx...\n\n"
             )
             if result:
-                err += f"stderr: \n{result.stderr}"
+                err += f"stderr: {result.stderr}\n\n"  # Not sure if this will ever get hit
+
             logger.exception(err)
 
         finally:

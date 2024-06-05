@@ -1,6 +1,6 @@
 function printSuccess(message) {
   document.getElementById("CONNECTION_TEST").innerHTML = message;
-  document.getElementById("CONNECTION_TEST").style.color = "#CCFFCC";
+  document.getElementById("CONNECTION_TEST").style.color = "#00FF00";
   document.getElementById("REDIRECT").style.display = "initial";
 }
 

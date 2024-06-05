@@ -13,13 +13,15 @@ flask --app allowlist run
 Simple
 
 ```bash
-waitress-serve --host 127.0.0.1 --call allowlist:create_app
+poetry install --only main
+.venv/bin/waitress-serve --host 127.0.0.1 --call allowlist:create_app
 ```
 
 Complex
 
 ```bash
-waitress-serve \
+poetry install --only main
+.venv/bin/waitress-serve \
     --listen "127.0.0.1:8080" \
     --trusted-proxy '*' \
     --trusted-proxy-headers 'x-forwarded-for' \
