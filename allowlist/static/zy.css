@@ -90,7 +90,7 @@ h5,
 h6 {
   font-family: "Fira Code", Consolas, "Lucida Console", monospace;
   line-height: 1.2;
-  color: silver;
+  color: white;
 }
 
 h1 {
@@ -281,6 +281,11 @@ tfoot td {
   padding: 16px 4px;
 }
 
+::selection {
+  color: white;
+  background: teal;
+}
+
 /* Ruining the classless dream */
 @media (width >= 400px) {
   .container {
@@ -339,7 +344,7 @@ input[type="button"] {
   display: inline-block;
   height: 30px;
   padding: 0 15px;
-  color: silver;
+  color: white;
   text-align: center;
   font-size: 11px;
   font-weight: 600;
@@ -350,7 +355,7 @@ input[type="button"] {
   white-space: nowrap;
   background-color: teal;
   border-radius: 4px;
-  border: 1px solid silver;
+  border: 1px solid white;
   cursor: pointer;
   box-sizing: border-box;
   min-width: 100px;
@@ -366,8 +371,8 @@ button:focus,
 input[type="submit"]:focus,
 input[type="reset"]:focus,
 input[type="button"]:focus {
-  color: grey;
-  border-color: silver;
+  color: silver;
+  border-color: white;
   background-color: teal;
   outline: 0;
 }
@@ -386,7 +391,7 @@ select {
   padding: 6px 10px; /* The 6px vertically centers text on FF, ignored by Webkit */
   background-color: grey;
   border: 1px solid white;
-  color: silver;
+  color: white;
   border-radius: 4px;
   box-shadow: none;
   box-sizing: border-box;
@@ -422,7 +427,7 @@ input[type="url"]:focus,
 input[type="password"]:focus,
 textarea:focus,
 select:focus {
-  border: 1px solid #008080;
+  border: 1px solid teal;
   outline: 0;
 }
 
