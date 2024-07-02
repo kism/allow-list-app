@@ -20,10 +20,14 @@ def create_app(test_config: dict | None = None) -> Flask:
         flask_config_path = f"{app.instance_path}{os.sep}flask.toml"
         try:
             app.config.from_file("flask.toml", load=tomllib.load, text=False)
-            app.logger.warning("Loaded flask config from: %s, I'M NOT CONVINCED THIS WORKS", flask_config_path)
+            app.logger.warning("Loaded flask config from: %s", flask_config_path)
+
         except FileNotFoundError:
             app.logger.info("No flask configuration file found at: %s", flask_config_path)
             app.logger.info("Using flask app.config defaults (this is not a problem).")
+
+    flask_settings_message = "Flask Settings:\n" + "\n".join([f"{key}: {value}" for key, value in app.config.items()])
+    app.logger.debug(flask_settings_message)
 
     # Now that we have loaded out configuration, we can import our modules
     from . import ala_auth
