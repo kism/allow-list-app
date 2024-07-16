@@ -14,10 +14,10 @@ def test_config_valid(get_test_config: dict):
     """Test passing config to app."""
     # TEST: Assert that the config dictionary can set config attributes successfully.
     assert not create_app(
-        get_test_config("testing_false_valid")
+        get_test_config("testing_false_valid"), instance_path=pytest.TEST_INSTANCE_PATH
     ).testing, "Flask testing config item not being set correctly."
     assert create_app(
-        get_test_config("testing_true_valid")
+        get_test_config("testing_true_valid"), instance_path=pytest.TEST_INSTANCE_PATH
     ).testing, "Flask testing config item not being set correctly."
 
 
