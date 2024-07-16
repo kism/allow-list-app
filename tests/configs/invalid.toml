@@ -1,0 +1,7 @@
+[app]
+configuration_failure = true
+
+[logging]
+
+[flask]
+TESTING = true

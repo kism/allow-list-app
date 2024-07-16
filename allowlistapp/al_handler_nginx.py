@@ -8,9 +8,9 @@ import time
 
 from jinja2 import Environment, FileSystemLoader
 
-from . import get_ala_settings
+from . import get_allowlistapp_config
 
-ala_sett = get_ala_settings()
+ala_conf = get_allowlistapp_config()
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class NGINXAllowlist:
     """Object to handle writing NGINX allowlist."""
 
     def __init__(self) -> True:
-        """Init settings for the NGINX Allowlist Writer."""
+        """Init config for the NGINX Allowlist Writer."""
         # Monitor Writing
         self.writing = False
 
@@ -31,9 +31,9 @@ class NGINXAllowlist:
         if self.user_account != "root":
             self.reload_nginx_command = ["sudo", "systemctl", "reload", "nginx"]
 
-    def write(self, ala_sett: dict, allowlist: list) -> None:
+    def write(self, ala_conf: dict, allowlist: list) -> None:
         """Write NGINX allowlist."""
-        logger.debug("Writing nginx allowlist: %s", ala_sett.allowlist_path)
+        logger.debug("Writing nginx allowlist: %s", ala_conf["app"]["allowlist_path"])
         while self.writing:
             time.sleep(1)
 
@@ -41,7 +41,7 @@ class NGINXAllowlist:
         template = env.get_template("nginx.conf.j2")
         rendered_template = template.render(allowlist=allowlist)
 
-        with open(ala_sett.allowlist_path, "w", encoding="utf8") as conf_file:
+        with open(ala_conf["app"]["allowlist_path"], "w", encoding="utf8") as conf_file:
             conf_file.write(rendered_template)
 
         self.writing = False

@@ -1,0 +1,7 @@
+[app]
+my_message = "Hello, PyTest!"
+
+[logging]
+
+[flask]
+TESTING = true

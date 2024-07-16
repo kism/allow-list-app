@@ -2,23 +2,24 @@
 
 import json
 import logging
+from http import HTTPStatus
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, request
 
-from . import allowlist_handler, get_ala_settings
+from . import al_handler, get_allowlistapp_config
 
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
-ala_sett = get_ala_settings()
-al = allowlist_handler.AllowList(ala_sett)
+ala_conf = get_allowlistapp_config()
+al = al_handler.AllowList(ala_conf)
 
 
 logger = logging.getLogger(__name__)
 
 
-if not ala_sett.auth_type_static():
+if not ala_conf.auth_type_static():
     from http import HTTPStatus
 
     import requests
@@ -42,7 +43,7 @@ dynamic_auth_types = {
 }
 
 
-@bp.route("/checkauth/", methods=["GET"])
+@bp.route("/check_auth/", methods=["GET"])
 def check_auth() -> int:
     """Test Authenticate."""
     if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
@@ -50,11 +51,11 @@ def check_auth() -> int:
     else:
         ip = request.environ["HTTP_X_FORWARDED_FOR"]
 
-    status = 401
+    status = HTTPStatus.FORBIDDEN
     message = "nope"
     if al.is_in_allowlist(ip):
         message = "yep"
-        status = 200
+        status = HTTPStatus.OK
 
     return message, status
 
@@ -66,7 +67,7 @@ def authenticate() -> str:
     password = request.form["password"]
 
     # Check the auth depending on if we are using static auth, or checking via an external url
-    result = check_password_static(password) if ala_sett.auth_type_static() else check_password_url(username, password)
+    result = check_password_static(password) if ala_conf.auth_type_static() else check_password_url(username, password)
 
     message = "nope"
     status = 401
@@ -95,27 +96,27 @@ def authenticate() -> str:
 
 def check_password_static(password: str) -> bool:
     """Check password (secure) (I hope)."""
-    passwordcorrect = False
-    hashed = ala_sett.static_password_hashed
+    password_correct = False
+    hashed = ala_conf["app"]["static_password_hashed"]
     try:
         ph.verify(hashed, password)
-        passwordcorrect = True
+        password_correct = True
     except VerifyMismatchError:
         pass
 
-    return passwordcorrect
+    return password_correct
 
 
 def check_password_url(username: str, password: str) -> bool:
     """Check password via Jellyfin (secure) (I hope)."""
-    passwordcorrect = False
+    password_correct = False
 
-    url = ala_sett.remote_auth_url + "/" + dynamic_auth_types[ala_sett.auth_type]["endpoint"]
-    headers = dynamic_auth_types[ala_sett.auth_type]["headers"]
+    url = ala_conf["app"]["remote_auth_url"] + "/" + dynamic_auth_types[ala_conf["app"]["auth_type"]]["endpoint"]
+    headers = dynamic_auth_types[ala_conf["app"]["auth_type"]]["headers"]
 
     data = {
-        dynamic_auth_types[ala_sett.auth_type]["username_field"]: username,
-        dynamic_auth_types[ala_sett.auth_type]["password_field"]: password,
+        dynamic_auth_types[ala_conf["app"]["auth_type"]]["username_field"]: username,
+        dynamic_auth_types[ala_conf["app"]["auth_type"]]["password_field"]: password,
     }
     json_data = json.dumps(data)
 
@@ -130,6 +131,6 @@ def check_password_url(username: str, password: str) -> bool:
         logger.exception("Uncaught exception for url: %s", url)
 
     if response and response.status_code == HTTPStatus.OK:
-        passwordcorrect = True
+        password_correct = True
 
-    return passwordcorrect
+    return password_correct

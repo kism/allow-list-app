@@ -10,7 +10,7 @@ function printFailure(message) {
 }
 
 function checkAuthentication() {
-  fetch("checkauth", {
+  fetch("check_auth", {
     method: "GET",
   }).then((response) => {
     if (response.ok) {

@@ -4,7 +4,13 @@ import csv
 import logging
 import os
 
+
+from . import database, get_allowlistapp_config
+
 logger = logging.getLogger(__name__)
+
+
+ala_conf = get_allowlistapp_config()
 
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
@@ -62,4 +68,4 @@ def db_reset() -> None:
         csv_writer.writeheader()
 
 
-database_path = os.getcwd() + os.sep + "database.csv"
+database_path = os.path.join(ala_conf.instance_path, "database.csv")

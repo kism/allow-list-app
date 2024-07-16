@@ -1,22 +1,22 @@
 """Allowlist object and its friends."""
 
+import datetime
 import ipaddress
 import logging
 import threading
 import time
-from datetime import datetime
 
-from . import ala_database, get_ala_settings
+from . import database, get_allowlistapp_config
 
 logger = logging.getLogger(__name__)
 
 
-ala_sett = get_ala_settings()
+ala_conf = get_allowlistapp_config()
 
 
 nginx_allowlist = None
-if "nginx" in ala_sett.services:
-    from allowlist.allowlist_app_nginx import NGINXAllowlist
+if "nginx" in ala_conf["app"]["services"]:
+    from allowlistapp.al_handler_nginx import NGINXAllowlist
 
     nginx_allowlist = NGINXAllowlist()
 
@@ -24,19 +24,19 @@ if "nginx" in ala_sett.services:
 class AllowList:
     """This is the allowlist object, init from database, query from memory, write to database."""
 
-    def __init__(self, ala_sett: dict) -> None:
+    def __init__(self, ala_conf: dict) -> None:
         """Initialise the AllowList."""
-        ala_database.db_check()
-        self.ala_sett = ala_sett
-        self.allowlist = ala_database.db_get_allowlist()
+        database.db_check()
+        self.ala_conf = ala_conf
+        self.allowlist = database.db_get_allowlist()
 
         # See if we need to revert the allowlist daily
-        if self.ala_sett.revert_daily:
+        if self.ala_conf["app"]["revert_daily"]:
             thread = threading.Thread(target=self.__revert_list_daily, args=(), daemon=True)
             thread.start()
 
         logger.info("Initialising the database...")
-        for subnet in self.ala_sett.allowed_subnets:
+        for subnet in self.ala_conf["app"]["allowed_subnets"]:
             self.add_to_allowlist("default", subnet)
         logger.info("Done initialising the database")
 
@@ -69,12 +69,12 @@ class AllowList:
         if self.is_in_allowlist(ip):
             logger.info("Duplicate auth! Not adding.")
         else:
-            new_item = {"username": username, "ip": ip, "date": str(datetime.now())}
+            new_item = {"username": username, "ip": ip, "date": str(datetime.datetime.now())}
             self.allowlist.append(new_item)
             added = True
             logger.info("Added ip: %s to allowlist", ip)
 
-            ala_database.db_write_allowlist(self.allowlist)
+            database.db_write_allowlist(self.allowlist)
             self.__write_app_allowlist_files()
 
         return added
@@ -84,8 +84,7 @@ class AllowList:
         while True:
             logger.info("Adding subnets/ips from config file")
 
-            ala_database.reset_database()
-            ala_database.init_database(ala_sett)
+            database.db_reset()
 
             # Get the current time
             current_time = datetime.datetime.now().time()
@@ -118,7 +117,7 @@ class AllowList:
     def __write_app_allowlist_files(self) -> None:
         """Write to the nginx allowlist conf file."""
         if nginx_allowlist:
-            nginx_allowlist.write(self.ala_sett, self.allowlist)
+            nginx_allowlist.write(self.ala_conf, self.allowlist)
 
     def __check_ip(self, in_ip_or_network: str) -> bool:
         """Check if string is valid IP or Network."""

@@ -1,0 +1,14 @@
+---
+  name: Check (Ruff)
+
+  on:
+    push:
+      paths-ignore:
+        - "**/*.md"
+
+  jobs:
+    check:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: chartboost/ruff-action@v1
