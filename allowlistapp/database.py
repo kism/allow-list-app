@@ -4,8 +4,7 @@ import csv
 import logging
 import os
 
-
-from . import database, get_allowlistapp_config
+from . import get_allowlistapp_config
 
 logger = logging.getLogger(__name__)
 
