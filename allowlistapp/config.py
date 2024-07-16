@@ -68,6 +68,8 @@ class AllowListAppConfig:
         Defaults shouldn't necessarily be enough to get the app to get to the point of starting the webapp.
         """
         self._config = DEFAULT_CONFIG.copy()
+        self.instance_path = os.path.join(os.getcwd(), "instance")
+        self._config_path = os.path.join(self.instance_path, "config.toml")
 
     """ These next special methods make this object behave like a dict, a few methods are missing
     __setitem__, __len__,__delitem__

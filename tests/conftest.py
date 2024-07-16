@@ -18,6 +18,7 @@ TEST_INSTANCE_PATH = os.path.join(os.getcwd(), "instance", "_TEST")
 TEST_CONFIG_FILE_PATH = os.path.join(TEST_INSTANCE_PATH, "config.toml")
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
 TEST_LOG_PATH = os.path.join(TEST_INSTANCE_PATH, "test.log")
+TEST_DB_PATH = os.path.join(TEST_INSTANCE_PATH, "database.csv")
 
 # Cleanup TEST_INSTANCE_PATH directory, this will be run before any testing.
 if os.path.exists(TEST_INSTANCE_PATH):
@@ -25,6 +26,15 @@ if os.path.exists(TEST_INSTANCE_PATH):
 
 # Recreate the folder
 os.makedirs(TEST_INSTANCE_PATH)
+
+
+def pytest_configure():
+    """This is a magic function for adding things to pytest?"""
+    pytest.TEST_INSTANCE_PATH = TEST_INSTANCE_PATH
+    pytest.TEST_CONFIG_FILE_PATH = TEST_CONFIG_FILE_PATH
+    pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
+    pytest.TEST_LOG_PATH = TEST_LOG_PATH
+    pytest.TEST_DB_PATH = TEST_DB_PATH
 
 
 @pytest.fixture()
@@ -41,6 +51,7 @@ def app(get_test_config: dict) -> any:
     # Remove any created config/logs
     with contextlib.suppress(FileNotFoundError):
         os.unlink(TEST_CONFIG_FILE_PATH)
+        os.unlink(TEST_DB_PATH)
 
 
 @pytest.fixture()
@@ -94,11 +105,3 @@ def get_test_config() -> dict:
         return out_config
 
     return _get_test_config
-
-
-def pytest_configure():
-    """This is a magic function for adding things to pytest?"""
-    pytest.TEST_INSTANCE_PATH = TEST_INSTANCE_PATH
-    pytest.TEST_CONFIG_FILE_PATH = TEST_CONFIG_FILE_PATH
-    pytest.TEST_CONFIGS_LOCATION = TEST_CONFIGS_LOCATION
-    pytest.TEST_LOG_PATH = TEST_LOG_PATH
