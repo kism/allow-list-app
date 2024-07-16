@@ -34,7 +34,7 @@ def test_config_file_creation(get_test_config: dict, caplog: pytest.LogCaptureFi
     """Tests relating to config file."""
     # TEST: that file is created when no config is provided.
 
-    # Remove any created config/logs
+    # Remove any created config/logs ???
     with contextlib.suppress(FileNotFoundError):
         os.unlink(pytest.TEST_CONFIG_FILE_PATH)
 
