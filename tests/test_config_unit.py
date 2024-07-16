@@ -58,7 +58,7 @@ def test_config_dictionary_not_in_schema(caplog: pytest.LogCaptureFixture):
     conf = allowlistapp.get_allowlistapp_config()
     test_config = {
         "TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA": "",
-        "app": {"my_message": "", "TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA": ""},
+        "app": {"TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA": ""},
     }
 
     # TEST: Warning when config loaded has a key that is not in the schema
