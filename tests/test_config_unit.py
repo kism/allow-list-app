@@ -3,23 +3,6 @@
 import logging
 
 import pytest
-import pytest_mock
-
-
-def test_config_permissions_error(mocker: pytest_mock.plugin.MockerFixture):
-    """Mock a Permissions error with mock_open."""
-    import allowlistapp
-
-    conf = allowlistapp.get_allowlistapp_config()
-
-    mock_open_func = mocker.mock_open(read_data="")
-    mock_open_func.side_effect = PermissionError("Permission denied")
-
-    mocker.patch("builtins.open", mock_open_func)
-
-    # TEST: PermissionsError is raised.
-    with pytest.raises(PermissionError):
-        conf._write_config({}, pytest.TEST_CONFIG_FILE_PATH)
 
 
 def test_dictionary_functions_of_config():

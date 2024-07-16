@@ -28,11 +28,13 @@ os.makedirs(TEST_INSTANCE_PATH)
 
 
 @pytest.fixture()
-def app() -> any:
+def app(get_test_config: dict) -> any:
     """This fixture uses the default config within the flask app."""
     assert not os.path.exists(TEST_CONFIG_FILE_PATH), "Tests should start without config file existing by default."
 
-    app = create_app(test_config=None, instance_path=TEST_INSTANCE_PATH)
+    test_config = get_test_config("testing_true_valid")
+
+    app = create_app(test_config, instance_path=TEST_INSTANCE_PATH)
 
     yield app  # This is the state that the test will get the object, anything below is cleanup.
 
