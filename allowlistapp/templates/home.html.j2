@@ -1,3 +1,4 @@
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -13,9 +14,9 @@
         <form id="AUTH_FORM">
             <div {% if hide_username %}style="display: none;" {% endif %}>
                 Username:<br><input type="text" name="username">
-                </div>
-                Password:<br><input type="password" name="password">
-                <br><br><input type="submit" value="Authenticate">
+            </div>
+            Password:<br><input type="password" name="password">
+            <br><br><input type="submit" value="Authenticate">
         </form>
         <div id="CONNECTION_TEST"></div> <a id="REDIRECT" style="display: none;" href="{{ redirect_url }}">Continue to
             site</a>

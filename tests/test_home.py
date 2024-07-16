@@ -18,6 +18,6 @@ def test_home(client: FlaskClient):
 
 def test_static_js_exists(client: FlaskClient):
     """Check that /static/allowlistapp.js exists."""
-    response = client.get("/static/allowlistapp.js")
+    response = client.get("/static/allowlist.js")
     # TEST: That the javascript loads
     assert response.status_code == HTTPStatus.OK

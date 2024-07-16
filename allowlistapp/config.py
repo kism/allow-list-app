@@ -137,10 +137,6 @@ class AllowListAppConfig:
         else:
             self._check_config_url_auth()
 
-        if "configuration_failure" in self._config["app"]:
-            logger.critical("Config contains 'configuration_failure' key!")
-            failure = True
-
         if failure:
             logger.critical("Config validation failed, Exiting.")
             sys.exit(1)
@@ -196,7 +192,7 @@ class AllowListAppConfig:
             logger.warning("No configuration file found, creating at default location: %s", config_path)
             with contextlib.suppress(FileExistsError):
                 os.makedirs(instance_path)  # Create instance path if it doesn't exist
-            self._write_config(DEFAULT_CONFIG, config_path)
+            self._write_config()
 
         return config_path
 
