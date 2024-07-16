@@ -335,6 +335,17 @@ tomli = {version = "*", optional = true, markers = "python_full_version <= \"3.1
 toml = ["tomli"]
 
 [[package]]
+name = "detect-test-pollution"
+version = "1.2.0"
+description = "a tool to detect test pollution"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "detect_test_pollution-1.2.0-py2.py3-none-any.whl", hash = "sha256:96095425dadf95d4ceabd585659ccc3197e88dfb1efb02a8479b27d8ad1a3afb"},
+    {file = "detect_test_pollution-1.2.0.tar.gz", hash = "sha256:94f383759bbab309771ceedb8dd526a62fa59607e5f7e41f5b33bbc656bfcea9"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
@@ -892,4 +903,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "ab67cef1141d1babf58be9a70862407855608f8d9143ec8dbd4adeb614abde68"
+content-hash = "ef5a847d4ad52c22c64ebb796d7948f466eabedda2dbb41106614944ef7a2d00"

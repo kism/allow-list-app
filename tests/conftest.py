@@ -41,6 +41,7 @@ def pytest_configure():
 def app(get_test_config: dict) -> any:
     """This fixture uses the default config within the flask app."""
     assert not os.path.exists(TEST_CONFIG_FILE_PATH), "Tests should start without config file existing by default."
+    assert not os.path.exists(TEST_DB_PATH), "Tests should start without database file existing by default."
 
     test_config = get_test_config("testing_true_valid")
 
@@ -64,6 +65,22 @@ def client(app: flask.Flask) -> any:
 def runner(app: flask.Flask) -> any:
     """TODO?????"""
     return app.test_cli_runner()
+
+
+@pytest.fixture()
+def allowlistapp() -> any:
+    """This fixture gives you the mycoolapp module."""
+    assert not os.path.exists(TEST_CONFIG_FILE_PATH), "Tests should start without config file existing by default."
+    assert not os.path.exists(TEST_DB_PATH), "Tests should start without database file existing by default."
+
+    import allowlistapp
+
+    yield allowlistapp  # This is the state that the test will get the object, anything below is cleanup.
+
+    # Remove any created config/logs
+    with contextlib.suppress(FileNotFoundError):
+        os.unlink(TEST_CONFIG_FILE_PATH)
+        os.unlink(TEST_DB_PATH)
 
 
 @pytest.fixture()

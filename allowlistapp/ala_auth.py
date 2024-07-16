@@ -70,10 +70,10 @@ def authenticate() -> str:
     result = check_password_static(password) if ala_conf.auth_type_static() else check_password_url(username, password)
 
     message = "nope"
-    status = 401
+    status = HTTPStatus.FORBIDDEN
 
     if result:
-        status = 200
+        status = HTTPStatus.OK
         message = "yep"
 
     # Get IP

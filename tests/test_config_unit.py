@@ -5,10 +5,8 @@ import logging
 import pytest
 
 
-def test_dictionary_functions_of_config():
+def test_dictionary_functions_of_config(allowlistapp: any):
     """Test the functions in the config object that let it behave like a dictionary."""
-    import allowlistapp
-
     conf = allowlistapp.get_allowlistapp_config()
 
     # TEST: __contains__ method.
@@ -21,9 +19,8 @@ def test_dictionary_functions_of_config():
     assert isinstance(conf["app"], dict), "__getitem__ method of config object doesn't work"
 
 
-def test_config_dictionary_merge(get_test_config: dict):
+def test_config_dictionary_merge(allowlistapp: any, get_test_config: dict):
     """Unit test the dictionary merge in _merge_with_defaults."""
-    import allowlistapp
     from allowlistapp import config
 
     conf = allowlistapp.get_allowlistapp_config()
@@ -49,9 +46,8 @@ def test_config_dictionary_merge(get_test_config: dict):
     assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
 
 
-def test_config_dictionary_not_in_schema(caplog: pytest.LogCaptureFixture):
+def test_config_dictionary_not_in_schema(allowlistapp: any, caplog: pytest.LogCaptureFixture):
     """Unit test _warn_unexpected_keys."""
-    import allowlistapp
     from allowlistapp import config
 
     caplog.set_level(logging.WARNING)

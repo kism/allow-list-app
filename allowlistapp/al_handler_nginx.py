@@ -37,7 +37,9 @@ class NGINXAllowlist:
         while self.writing:
             time.sleep(1)
 
-        env = Environment(loader=FileSystemLoader(f"allowlist{os.sep}templates"), autoescape=True)
+        env = Environment(
+            loader=FileSystemLoader(os.path.join(os.getcwd(), "allowlistapp", "templates")), autoescape=True
+        )
         template = env.get_template("nginx.conf.j2")
         rendered_template = template.render(allowlist=allowlist)
 
@@ -60,8 +62,8 @@ class NGINXAllowlist:
             result = subprocess.run(self.reload_nginx_command, check=True, capture_output=True, text=True)  # noqa: S603 Input has been validated
         except subprocess.CalledProcessError:
             err = (
-                "❌ Couldnt restart nginx, either: \n"
-                "Nginx isnt installed\n"
+                "❌ Couldn't restart nginx, either: \n"
+                "Nginx isn't installed\n"
                 "or\n"
                 f"Sudoers rule not created for this user ({self.user_account})\n"
                 "Create and edit a sudoers file\n"

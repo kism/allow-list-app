@@ -1,0 +1,11 @@
+[app]
+auth_type = "static"
+services = ["nginx"]
+static_password_hashed = ""
+static_password_cleartext = "hunter2"
+revert_daily = true
+
+[logging]
+
+[flask]
+TESTING = true

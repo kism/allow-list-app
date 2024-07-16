@@ -33,23 +33,10 @@ poetry install --only main
 
 ## TODO
 
-* ~~Config items for always allowed networks and such~~
-* ~~Revert every day~~
-* ~~Real logging~~
-* ~~Adopt the suggested Flask structure~~
-* ~~use waitress, set threads~~
-* ~~jf login~~
-* ~~Template the allowlist~~
-* ~~Log to different loggers~~
-* ~~js test to check if authed~~
-* ~~redirect when success~~
-* ~~single page, only javascript~~
-* ~~check if ip in subnet for the auth check~~
-* ~~Fix logger~~
-* better yaml
+- `detect-test-pollution --failing-test tests/test_nginx.py::test_nginx_reload --tests tests`
 
 ### Later
 
-* ipv6 support
-* Tests
-* publish whl
+- ipv6 support
+- Tests
+- publish whl
