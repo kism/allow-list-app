@@ -10,13 +10,11 @@ from flask import Blueprint, request
 
 from . import al_handler, get_allowlistapp_config
 
+logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
 ala_conf = get_allowlistapp_config()
 al = al_handler.AllowList(ala_conf)
-
-
-logger = logging.getLogger(__name__)
 
 
 if not ala_conf.auth_type_static():
@@ -134,3 +132,6 @@ def check_password_url(username: str, password: str) -> bool:
         password_correct = True
 
     return password_correct
+
+
+logger.debug("Loaded module: %s", __name__)

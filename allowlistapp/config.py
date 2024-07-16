@@ -238,3 +238,6 @@ class AllowListAppConfig:
             result = False
 
         return result
+
+
+logger.debug("Loaded module: %s", __name__)

@@ -77,3 +77,6 @@ class NGINXAllowlist:
 
         finally:
             self.nginx_reloading = False
+
+
+logger.debug("Loaded module: %s", __name__)

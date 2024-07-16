@@ -6,6 +6,8 @@ static_password_cleartext = "hunter2"
 revert_daily = true
 
 [logging]
+level = "DEBUG"
+path = ""
 
 [flask]
 TESTING = true

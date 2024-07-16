@@ -21,8 +21,8 @@ def db_get_allowlist() -> list:
 
     logger.debug("Building allowlist list from file...")
     try:
-        with open(database_path, newline="") as csvfile:
-            csv_reader = csv.DictReader(csvfile, quoting=csv.QUOTE_MINIMAL)
+        with open(database_path, newline="") as csv_file:
+            csv_reader = csv.DictReader(csv_file, quoting=csv.QUOTE_MINIMAL)
             allowlist = list(csv_reader)
     except FileNotFoundError:
         pass
@@ -31,9 +31,9 @@ def db_get_allowlist() -> list:
 
 def db_write_allowlist(allowlist: list) -> True:
     """Insert an IP into the allowlist, returns if an IP has been inserted."""
-    with open(database_path, "w", newline="") as csvfile:
+    with open(database_path, "w", newline="") as csv_file:
         csv_writer = csv.DictWriter(
-            csvfile,
+            csv_file,
             CSV_SCHEMA.keys(),
             delimiter=",",
             quotechar='"',
@@ -48,8 +48,8 @@ def db_check() -> True:
     """Check the 'schema' of the database."""
     logger.info("Checking Database")
     try:
-        with open(database_path, newline="") as csvfile:
-            csv_reader = csv.reader(csvfile, quoting=csv.QUOTE_MINIMAL)
+        with open(database_path, newline="") as csv_file:
+            csv_reader = csv.reader(csv_file, quoting=csv.QUOTE_MINIMAL)
             for i, row in enumerate(csv_reader):
                 if len(row) != len(CSV_SCHEMA.keys()):
                     err = f"Row {i + 1} of csv not three columns, fix or delete {database_path}"
@@ -62,9 +62,13 @@ def db_check() -> True:
 def db_reset() -> None:
     """Clear the database."""
     logger.info("CLEARING THE DATABASE...")
-    with open(database_path, "w", newline="") as csvfile:
-        csv_writer = csv.DictWriter(csvfile, CSV_SCHEMA.keys(), delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    with open(database_path, "w", newline="") as csv_file:
+        csv_writer = csv.DictWriter(
+            csv_file, CSV_SCHEMA.keys(), delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+        )
         csv_writer.writeheader()
 
 
 database_path = os.path.join(ala_conf.instance_path, "database.csv")
+
+logger.debug("Loaded module: %s", __name__)

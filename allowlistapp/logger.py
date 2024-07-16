@@ -97,3 +97,6 @@ def _add_file_handler(in_logger: logging.Logger, log_path: str) -> None:
     file_handler.setFormatter(formatter)
     in_logger.addHandler(file_handler)
     logger.info("Logging to file: %s", log_path)
+
+
+logger.debug("Loaded module: %s", __name__)

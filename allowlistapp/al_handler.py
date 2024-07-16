@@ -134,3 +134,6 @@ class AllowList:
             logger.error(err)
 
         return valid_ip
+
+
+logger.debug("Loaded module: %s", __name__)

@@ -12,12 +12,12 @@ def test_config_invalid_log_level(get_test_config: FunctionType, caplog: pytest.
     """Test if logging to file works."""
     from allowlistapp import create_app
 
-    caplog.set_level(logging.WARNING)
-    app = create_app(get_test_config("logging_invalid_log_level"))
-    # TEST: App still starts
-    assert app
-    # TEST: Assert that the invalid logging level message gets logged
-    assert "Invalid logging level" in caplog.text
+    with caplog.at_level(logging.WARNING):
+        app = create_app(get_test_config("logging_invalid_log_level"))
+        # TEST: App still starts
+        assert app
+        # TEST: Assert that the invalid logging level message gets logged
+        assert "Invalid logging level" in caplog.text
 
 
 def test_handlers_added(app: Flask):
