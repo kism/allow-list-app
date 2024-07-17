@@ -1,0 +1,9 @@
+[app]
+auth_type = "jellyfin"
+services = []
+remote_auth_url = "https://jf.example.com"
+
+[logging]
+
+[flask]
+TESTING = true

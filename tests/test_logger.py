@@ -1,5 +1,6 @@
 """Test the logger of the app."""
 
+import contextlib
 import logging
 import os
 from types import FunctionType
@@ -16,9 +17,6 @@ def test_config_invalid_log_level(allowlistapp: any, get_test_config: FunctionTy
         assert app
         # TEST: Assert that the invalid logging level message gets logged
         assert "Invalid logging level" in caplog.text
-
-    # TODO: This is an issue???  # noqa: FIX002
-    os.remove(pytest.TEST_DB_PATH)
 
 
 def test_handlers_added(allowlistapp: any, app: Flask):
