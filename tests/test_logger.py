@@ -11,7 +11,9 @@ from flask import Flask
 def test_config_invalid_log_level(allowlistapp: any, get_test_config: FunctionType, caplog: pytest.LogCaptureFixture):
     """Test if logging to file works."""
     with caplog.at_level(logging.WARNING):
-        app = allowlistapp.create_app(get_test_config("logging_invalid_log_level"))
+        app = allowlistapp.create_app(
+            get_test_config("logging_invalid_log_level"), instance_path=pytest.TEST_INSTANCE_PATH
+        )
         # TEST: App still starts
         assert app
         # TEST: Assert that the invalid logging level message gets logged

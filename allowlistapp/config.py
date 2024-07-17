@@ -29,6 +29,7 @@ DEFAULT_CONFIG = {
         "static_password_hashed": "",
         "revert_daily": True,
         "redirect_url": "",
+        "db_path": "",
     },
     "logging": {
         "level": "INFO",
@@ -68,8 +69,8 @@ class AllowListAppConfig:
         Defaults shouldn't necessarily be enough to get the app to get to the point of starting the webapp.
         """
         self._config = DEFAULT_CONFIG.copy()
-        self.instance_path = os.path.join(os.getcwd(), "instance")
-        self._config_path = os.path.join(self.instance_path, "config.toml")
+        # self.instance_path = os.path.join(os.getcwd(), "instance", "gross")
+        # self._config_path = os.path.join(self.instance_path, "config.toml")
 
     """ These next special methods make this object behave like a dict, a few methods are missing
     __setitem__, __len__,__delitem__
@@ -92,7 +93,7 @@ class AllowListAppConfig:
         """Initiate config object, get config from file."""
         self.instance_path = instance_path
 
-        self._config_path = self._get_config_file_path(instance_path)
+        self._config_path = self._get_config_file_path()
 
         self.load_from_dictionary(self._load_file(), instance_path=instance_path)
 
@@ -100,7 +101,7 @@ class AllowListAppConfig:
         """Load from dictionary, useful for testing."""
         self.instance_path = instance_path
 
-        self._config_path = self._get_config_file_path(instance_path)
+        self._config_path = self._get_config_file_path()
 
         self._config = self._merge_with_defaults(DEFAULT_CONFIG, config)
 
@@ -131,6 +132,11 @@ class AllowListAppConfig:
         failure = False
 
         self._warn_unexpected_keys(DEFAULT_CONFIG, self._config, "<root>")
+
+        if self._config["app"]["db_path"] == "":
+            self._config["app"]["db_path"] = os.path.join(
+                self.instance_path + f"{os.sep}database.csv"
+            )  # This is very odd that is needs the os.sep
 
         if self.auth_type_static():
             self._config["app"]["static_password_cleartext"], self._config["app"]["static_password_hashed"] = (
@@ -171,11 +177,11 @@ class AllowListAppConfig:
 
         return target_dict
 
-    def _get_config_file_path(self, instance_path: str) -> str:
+    def _get_config_file_path(self) -> str:
         """Figure out the config path to load config from."""
         config_path = None
         paths = [
-            os.path.join(instance_path, "config.toml"),
+            os.path.join(self.instance_path, "config.toml"),
             os.path.expanduser("~/.config/allowlistapp/config.toml"),
             "/etc/allowlistapp/config.toml",
         ]
@@ -193,7 +199,7 @@ class AllowListAppConfig:
             config_path = paths[0]
             logger.warning("No configuration file found, creating at default location: %s", config_path)
             with contextlib.suppress(FileExistsError):
-                os.makedirs(instance_path)  # Create instance path if it doesn't exist
+                os.makedirs(self.instance_path)  # Create instance path if it doesn't exist
             self._write_config()
 
         return config_path

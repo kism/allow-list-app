@@ -20,7 +20,7 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
             config=test_config, instance_path=app.instance_path
         )  # Loads app config from dict provided
     else:
-        ala_conf.load_from_disk(app.instance_path)  # Loads app config from disk
+        ala_conf.load_from_disk(instance_path=app.instance_path)  # Loads app config from disk
 
     logger.setup_logger(app, ala_conf["logging"])  # Setup logger per config
 

@@ -12,7 +12,7 @@ from flask import Flask
 def test_nginx_reload(allowlistapp: any, get_test_config: dict, caplog: pytest.LogCaptureFixture):
     """Unit test _warn_unexpected_keys."""
     with caplog.at_level(logging.INFO):
-        app = allowlistapp.create_app(get_test_config("nginx_valid"), instance_path=pytest.TEST_INSTANCE_PATH)
+        app = allowlistapp.create_app(get_test_config("nginx_valid"))
 
         assert type(app) == Flask
 

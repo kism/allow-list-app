@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 
 ala_conf = get_allowlistapp_config()
 
+database_path = ala_conf["app"]["db_path"]
+
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 
@@ -69,7 +71,5 @@ def db_reset() -> None:
         )
         csv_writer.writeheader()
 
-
-database_path = os.path.join(ala_conf.instance_path, "database.csv")
 
 logger.debug("Loaded module: %s", __name__)
