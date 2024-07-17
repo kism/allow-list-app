@@ -11,9 +11,6 @@ def test_auth_fail(client: FlaskClient):
     assert response.data == b"nope", "Auth should have failed"
     assert response.status_code == HTTPStatus.FORBIDDEN
 
-
-def test_auth_check_fail(client: FlaskClient):
-    """Test the hello API endpoint. This one uses the fixture in conftest.py."""
     response = client.get("/check_auth/")
     # TEST: /check_auth/ response
     assert response.data == b"nope", "Auth check should have failed"
