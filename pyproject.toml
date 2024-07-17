@@ -23,7 +23,6 @@ pytest-mock = "*"
 detect-test-pollution = "*"
 pytest-random-order = "*"
 responses = "*"
-ipdb = "*"
 jinja2 = "*"                # Flask depends on this, I have it here since config loading is templated for tests.
 
 [tool.poetry.group.dev.dependencies]
