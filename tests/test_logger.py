@@ -8,19 +8,20 @@ import pytest
 from flask import Flask
 
 
-def test_config_invalid_log_level(get_test_config: FunctionType, caplog: pytest.LogCaptureFixture):
+def test_config_invalid_log_level(allowlistapp: any, get_test_config: FunctionType, caplog: pytest.LogCaptureFixture):
     """Test if logging to file works."""
-    from allowlistapp import create_app
-
     with caplog.at_level(logging.WARNING):
-        app = create_app(get_test_config("logging_invalid_log_level"))
+        app = allowlistapp.create_app(get_test_config("logging_invalid_log_level"))
         # TEST: App still starts
         assert app
         # TEST: Assert that the invalid logging level message gets logged
         assert "Invalid logging level" in caplog.text
 
+    # TODO: This is an issue???  # noqa: FIX002
+    os.remove(pytest.TEST_DB_PATH)
 
-def test_handlers_added(app: Flask):
+
+def test_handlers_added(allowlistapp: any, app: Flask):
     """Test passing config to app."""
     # TEST: Assert that the config dictionary can set config attributes successfully.
     import allowlistapp.logger
