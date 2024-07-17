@@ -84,8 +84,13 @@ docstring-code-format = true
 docstring-code-line-length = 40
 
 [tool.pytest.ini_options]
-addopts = "--cov-context=test --cov=allowlistapp --cov-report=term --cov-report=html"
-pythonpath = "allowlistapp"
+addopts = [
+    "--import-mode=importlib",
+    "--cov-context=test",
+    "--cov=allowlistapp",
+    "--cov-report=term",
+    "--cov-report=html",
+]
 testpaths = ["tests"]
 
 [tool.coverage.html]
