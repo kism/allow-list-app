@@ -1,6 +1,5 @@
 """Test the logger of the app."""
 
-import contextlib
 import logging
 import os
 from types import FunctionType
