@@ -29,7 +29,7 @@ def db_get_allowlist() -> list:
     return allowlist
 
 
-def db_write_allowlist(allowlist: list) -> True:
+def db_write_allowlist(allowlist: list) -> None:
     """Insert an IP into the allowlist, returns if an IP has been inserted."""
     with open(database_path, "w", newline="") as csv_file:
         csv_writer = csv.DictWriter(
@@ -44,11 +44,12 @@ def db_write_allowlist(allowlist: list) -> True:
             csv_writer.writerow(item)
 
 
-def db_check() -> True:
+def db_check() -> None:
     """Check the 'schema' of the database."""
     logger.info("Checking Database")
     try:
         with open(database_path, newline="") as csv_file:
+            logger.debug(csv_file.read())
             csv_reader = csv.reader(csv_file, quoting=csv.QUOTE_MINIMAL)
             for i, row in enumerate(csv_reader):
                 if len(row) != len(CSV_SCHEMA.keys()):

@@ -6,7 +6,7 @@ import shutil
 
 import pytest
 
-from allowlistapp import config, create_app
+from allowlistapp import config
 
 
 def test_config_valid(allowlistapp: any, get_test_config: dict):
@@ -20,11 +20,11 @@ def test_config_valid(allowlistapp: any, get_test_config: dict):
     ).testing, "Flask testing config item not being set correctly."
 
 
-def test_config_invalid(get_test_config: dict):
+def test_config_invalid(allowlistapp: any, get_test_config: dict):
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     with pytest.raises(config.ConfigPasswordError) as exc_info:
-        create_app(get_test_config("no_password"))
+        allowlistapp.create_app(get_test_config("no_password"))
 
     assert isinstance(exc_info.type, type(config.ConfigPasswordError)), "App did not exit on config validation failure."
 
