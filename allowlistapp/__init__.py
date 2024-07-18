@@ -1,7 +1,5 @@
 """Flask webapp allowlistapp."""
 
-from importlib import reload
-
 from flask import Flask, render_template
 
 from . import config, logger
@@ -34,8 +32,6 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     # Now that we have loaded out configuration, we can import our modules
 
     from allowlistapp import ala_auth
-
-    reload(ala_auth)
 
     # Register the authentication endpoint
     app.register_blueprint(ala_auth.bp)

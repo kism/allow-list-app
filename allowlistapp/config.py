@@ -69,8 +69,6 @@ class AllowListAppConfig:
         Defaults shouldn't necessarily be enough to get the app to get to the point of starting the webapp.
         """
         self._config = DEFAULT_CONFIG.copy()
-        # self.instance_path = os.path.join(os.getcwd(), "instance", "gross")
-        # self._config_path = os.path.join(self.instance_path, "config.toml")
 
     """ These next special methods make this object behave like a dict, a few methods are missing
     __setitem__, __len__,__delitem__
@@ -93,15 +91,21 @@ class AllowListAppConfig:
         """Initiate config object, get config from file."""
         self.instance_path = instance_path
 
-        self._config_path = self._get_config_file_path()
+        self._get_config_file_path()
 
-        self.load_from_dictionary(self._load_file(), instance_path=instance_path)
+        self._config = self._merge_with_defaults(DEFAULT_CONFIG, self._load_file())
+
+        self._validate_config()
+
+        self._write_config()
+
+        logger.info("Configuration loaded successfully!")
 
     def load_from_dictionary(self, config: dict, instance_path: str) -> None:
         """Load from dictionary, useful for testing."""
         self.instance_path = instance_path
 
-        self._config_path = self._get_config_file_path()
+        self._get_config_file_path()
 
         self._config = self._merge_with_defaults(DEFAULT_CONFIG, config)
 
@@ -191,18 +195,16 @@ class AllowListAppConfig:
                 logger.info("Found config at path: %s", path)
                 if not config_path:
                     logger.info("Using this path as it's the first one that was found")
-                    config_path = path
+                    self._config_path = path
             else:
                 logger.info("No config file found at: %s", path)
 
         if not config_path:
-            config_path = paths[0]
+            self._config_path = paths[0]
             logger.warning("No configuration file found, creating at default location: %s", config_path)
             with contextlib.suppress(FileExistsError):
                 os.makedirs(self.instance_path)  # Create instance path if it doesn't exist
             self._write_config()
-
-        return config_path
 
     def _load_file(self) -> dict:
         """Load configuration from a file."""

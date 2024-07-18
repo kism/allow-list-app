@@ -2,7 +2,6 @@
 
 import csv
 import logging
-import os
 
 from . import get_allowlistapp_config
 
@@ -12,6 +11,10 @@ logger = logging.getLogger(__name__)
 ala_conf = get_allowlistapp_config()
 
 database_path = ala_conf["app"]["db_path"]
+if database_path == "":
+    import sys
+
+    sys.exit(1)
 
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}

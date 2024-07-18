@@ -1,12 +1,13 @@
 """Test the logger of the app."""
 
 import logging
+import os
 
 import pytest
 import pytest_mock
 
 
-def test_logging_permissions_error(mocker: pytest_mock.plugin.MockerFixture):
+def test_logging_permissions_error(tmp_path, mocker: pytest_mock.plugin.MockerFixture):
     """Try mock a permission error."""
     from allowlistapp.logger import _add_file_handler
 
@@ -19,10 +20,10 @@ def test_logging_permissions_error(mocker: pytest_mock.plugin.MockerFixture):
 
     # TEST: That a permissions error is raised.
     with pytest.raises(PermissionError):
-        _add_file_handler(logger, pytest.TEST_LOG_PATH)
+        _add_file_handler(logger, os.path.join(tmp_path, "test.log"))
 
 
-def test_config_logging_to_dir():
+def test_config_logging_to_dir(tmp_path):
     """Test if logging to directory raises error.
 
     This one needs to go at the end since it interferes with other tests???
@@ -33,7 +34,7 @@ def test_config_logging_to_dir():
 
     # TEST: Check that correct exception is caught when you try log to a folder
     with pytest.raises(IsADirectoryError):
-        _add_file_handler(logger, pytest.TEST_INSTANCE_PATH)
+        _add_file_handler(logger, tmp_path)
 
 
 @pytest.mark.parametrize(

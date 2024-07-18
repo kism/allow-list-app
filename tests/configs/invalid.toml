@@ -3,7 +3,7 @@ auth_type = "static"
 services = []
 static_password_hashed = ""
 static_password_cleartext = "hunter2"
-configuration_failure = true
+db_path = "test.csv"
 
 [logging]
 

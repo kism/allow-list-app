@@ -9,6 +9,16 @@ import responses
 
 from allowlistapp.ala_auth import check_password_url
 
+AUTHENTICATE_ENDPOINT = "https://jf.example.com/Users/authenticatebyname"
+
+
+@pytest.fixture()
+def client_url_auth(tmp_path, get_test_config) -> any:
+    """This fixture uses the default config within the flask app."""
+    from allowlistapp import create_app
+
+    return create_app(get_test_config("testing_url"), instance_path=tmp_path).test_client()
+
 
 @pytest.fixture()
 def mock_response_success():
@@ -16,18 +26,16 @@ def mock_response_success():
     with responses.RequestsMock() as mocked_response:
         mocked_response.add(
             responses.POST,
-            "https://jf.example.com/Users/authenticatebyname",
+            AUTHENTICATE_ENDPOINT,
             json={},  # Mocked response JSON
             status=HTTPStatus.OK,
         )
         yield mocked_response
 
 
-def test_auth_success(allowlistapp: any, mock_response_success: any, get_test_config: dict):
+def test_auth_success(client_url_auth, mock_response_success: any, get_test_config):
     """TEST: Successful auth via URL."""
-    allowlistapp.create_app(get_test_config("testing_url_valid"))
-
-    result = check_password_url("test", "test")
+    result = client_url_auth.post(AUTHENTICATE_ENDPOINT, data={"username": "test", "password": "test"})
 
     assert result, "Login should have succeeded"
 
@@ -38,18 +46,17 @@ def mock_response_failure():
     with responses.RequestsMock() as mocked_response:
         mocked_response.add(
             responses.POST,
-            "https://jf.example.com/Users/authenticatebyname",
+            AUTHENTICATE_ENDPOINT,
             json={},  # Mocked response JSON
             status=HTTPStatus.FORBIDDEN,
         )
         yield mocked_response
 
 
-def test_auth_failure(allowlistapp: any, mock_response_failure: any, get_test_config: dict):
+def test_auth_failure(client_url_auth, mock_response_failure: any, get_test_config):
     """TEST: Failed auth via URL."""
-    allowlistapp.create_app(get_test_config("testing_url_valid"))
 
-    result = check_password_url("test", "test")
+    result = client_url_auth.post(AUTHENTICATE_ENDPOINT, data={"username": "test", "password": "test"})
 
     assert not result, "Login should have failed"
 
@@ -60,20 +67,19 @@ def mock_response_connection_error():
     with responses.RequestsMock() as mocked_response:
         mocked_response.add(
             responses.POST,
-            "https://fail.example.com/Users/authenticatebyname",
+            AUTHENTICATE_ENDPOINT,
             body=requests.exceptions.ConnectionError(),
         )
         yield mocked_response
 
 
 def test_auth_connection_error(
-    allowlistapp: any, mock_response_connection_error: any, get_test_config: dict, caplog: pytest.LogCaptureFixture
+    client_url_auth, mock_response_connection_error: any, get_test_config, caplog: pytest.LogCaptureFixture
 ):
     """TEST: Failed auth via URL."""
-    allowlistapp.create_app(get_test_config("testing_url_invalid"))
 
     with caplog.at_level(logging.ERROR):
-        check_password_url("test", "test")
+        client_url_auth.post(AUTHENTICATE_ENDPOINT, data={"username": "test", "password": "test"})
 
     assert "Connection error for url:" in caplog.text
 
@@ -84,20 +90,17 @@ def mock_response_timeout():
     with responses.RequestsMock() as mocked_response:
         mocked_response.add(
             responses.POST,
-            "https://fail.example.com/Users/authenticatebyname",
+            AUTHENTICATE_ENDPOINT,
             body=requests.exceptions.Timeout(),
         )
         yield mocked_response
 
 
-def test_auth_timeout(
-    allowlistapp: any, mock_response_timeout: any, get_test_config: dict, caplog: pytest.LogCaptureFixture
-):
+def test_auth_timeout(mock_response_timeout: any, get_test_config, caplog: pytest.LogCaptureFixture):
     """TEST: Failed auth via URL."""
-    allowlistapp.create_app(get_test_config("testing_url_invalid"))
 
     with caplog.at_level(logging.ERROR):
-        check_password_url("test", "test")
+        client_url_auth.post(AUTHENTICATE_ENDPOINT, data={"username": "test", "password": "test"})
 
     assert "Timeout exception for url:" in caplog.text
 
@@ -108,19 +111,18 @@ def mock_response_uncaught_exception():
     with responses.RequestsMock() as mocked_response:
         mocked_response.add(
             responses.POST,
-            "https://fail.example.com/Users/authenticatebyname",
+            AUTHENTICATE_ENDPOINT,
             body=Exception,
         )
         yield mocked_response
 
 
 def test_auth_uncaught_exception(
-    allowlistapp: any, mock_response_uncaught_exception: any, get_test_config: dict, caplog: pytest.LogCaptureFixture
+    client_url_auth, mock_response_uncaught_exception: any, get_test_config, caplog: pytest.LogCaptureFixture
 ):
     """TEST: Failed auth via URL."""
-    allowlistapp.create_app(get_test_config("testing_url_invalid"))
 
     with caplog.at_level(logging.ERROR):
-        check_password_url("test", "test")
+        client_url_auth.post(AUTHENTICATE_ENDPOINT, data={"username": "test", "password": "test"})
 
     assert "Uncaught exception for url:" in caplog.text
