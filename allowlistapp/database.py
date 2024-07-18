@@ -12,9 +12,7 @@ ala_conf = get_allowlistapp_config()
 
 database_path = ala_conf["app"]["db_path"]
 if database_path == "":
-    import sys
-
-    sys.exit(1)
+    raise FileNotFoundError
 
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
