@@ -22,17 +22,30 @@ def pytest_configure():
 @pytest.fixture()
 def app(tmp_path, get_test_config) -> any:
     """This fixture uses the default config within the flask app."""
-    return create_app(get_test_config("testing_true_valid"), instance_path=tmp_path)
+
+    import os
+
+    assert not os.path.exists(os.path.join(os.getcwd(), "test.csv")), "HERHEHRHEHRE"
+
+    yield create_app(get_test_config("testing_true_valid"), instance_path=tmp_path)
+
+    assert not os.path.exists(os.path.join(os.getcwd(), "test.csv")), "HERHEHRHEHRE____AFTER"
 
 
 @pytest.fixture()
-def client(app) -> any:
+def client(tmp_path, get_test_config) -> any:
     """This returns a test client for the default app()."""
-    return app.test_client()
+    app = create_app(get_test_config("testing_true_valid"), instance_path=tmp_path)
+
+    assert not os.path.exists(os.path.join(os.getcwd(), "test.csv")), "HERHEHRHEHRE"
+
+    yield app.test_client()
+
+    assert not os.path.exists(os.path.join(os.getcwd(), "test.csv")), "HERHEHRHEHRE____AFTER"
 
 
 @pytest.fixture()
-def runner(app: flask.Flask) -> any:
+def runner() -> any:
     """TODO?????"""
     return app.test_cli_runner()
 

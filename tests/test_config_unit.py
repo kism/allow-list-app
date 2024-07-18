@@ -5,7 +5,8 @@ import logging
 import pytest
 
 import allowlistapp
-from allowlistapp import config
+
+DEFAULT_CONFIG = allowlistapp.config.DEFAULT_CONFIG
 
 
 def test_dictionary_functions_of_config():
@@ -33,7 +34,7 @@ def test_config_dictionary_merge(get_test_config):
     ]
 
     for test_dictionary in test_dictionaries:
-        result_dict = conf._merge_with_defaults(config.DEFAULT_CONFIG, test_dictionary)
+        result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, test_dictionary)
 
         # TEST: Check that the resulting config after ensuring default is valid
         assert isinstance(result_dict["app"], dict)
@@ -43,7 +44,7 @@ def test_config_dictionary_merge(get_test_config):
         assert isinstance(result_dict["flask"], dict)
 
     # TEST: If an item isn't in the schema, it still ends up around, not that this is a good idea...
-    result_dict = conf._merge_with_defaults(config.DEFAULT_CONFIG, {"TEST_CONFIG_ENTRY_NOT_IN_SCHEMA": "lmao"})
+    result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, {"TEST_CONFIG_ENTRY_NOT_IN_SCHEMA": "lmao"})
     assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
 
 
@@ -57,6 +58,6 @@ def test_config_dictionary_not_in_schema(caplog: pytest.LogCaptureFixture):
         }
 
         # TEST: Warning when config loaded has a key that is not in the schema
-        conf._warn_unexpected_keys(config.DEFAULT_CONFIG, test_config, "<root>")
+        conf._warn_unexpected_keys(DEFAULT_CONFIG, test_config, "<root>")
         assert "Config entry key <root>[TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text
         assert "Config entry key [app][TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text

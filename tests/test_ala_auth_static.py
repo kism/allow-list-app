@@ -5,7 +5,7 @@ from http import HTTPStatus
 from flask.testing import FlaskClient
 
 
-def test_auth__static_fail(client: FlaskClient):
+def test_auth_static_fail(client: FlaskClient):
     """Test the hello API endpoint. This one uses the fixture in conftest.py."""
     response = client.post("/authenticate/", data={"username": "", "password": "hunter3"})
     assert response.data == b"nope", "Auth should have failed"
