@@ -70,8 +70,6 @@ def start_database(ala_conf: dict) -> None:
     """Start this module."""
     global database_path  # noqa: PLW0603 Needed due to how flask loads modules.
     database_path = ala_conf["app"]["db_path"]
-    if database_path == "":
-        raise FileNotFoundError
 
 
 logger.debug("Loaded module: %s", __name__)
