@@ -71,6 +71,7 @@ ignore = [
     "INP001", # KG __init__.py not needed for PyTest.
     "PT004",  # KG monkeypatches don't return.
     "ANN001", # KG Type annotations get really weird in testing
+    "S311",   # KG I'll assume no real crypto will be done in PyTest.
 ]
 
 

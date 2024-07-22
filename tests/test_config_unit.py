@@ -1,63 +1,91 @@
-"""Test launching the app and config."""
+"""Logger unit tests."""
 
 import logging
+import os
 
 import pytest
+import pytest_mock
+from flask import Flask
 
-import allowlistapp
-
-DEFAULT_CONFIG = allowlistapp.config.DEFAULT_CONFIG
-
-
-def test_dictionary_functions_of_config():
-    """Test the functions in the config object that let it behave like a dictionary."""
-    conf = allowlistapp.get_allowlistapp_config()
-
-    # TEST: __contains__ method.
-    assert "app" in conf, "__contains__ method of config object doesn't work"
-
-    # TEST: __repr__ method.
-    assert isinstance(str(conf), str), "__repr__ method of config object doesn't work"
-
-    # TEST: __getitem__ method.
-    assert isinstance(conf["app"], dict), "__getitem__ method of config object doesn't work"
+import allowlistapp.logger
 
 
-def test_config_dictionary_merge(get_test_config):
-    """Unit test the dictionary merge in _merge_with_defaults."""
-    conf = allowlistapp.get_allowlistapp_config()
+@pytest.fixture()
+def logger() -> any:
+    """Logger to use in unit tests, including cleanup."""
+    logger = logging.getLogger("TEST_LOGGER")
 
-    test_dictionaries = [
-        {},
-        get_test_config("nginx_valid"),
-        get_test_config("testing_true_valid"),
-    ]
+    assert len(logger.handlers) == 0  # Check the logger has no handlers
 
-    for test_dictionary in test_dictionaries:
-        result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, test_dictionary)
+    yield logger
 
-        # TEST: Check that the resulting config after ensuring default is valid
-        assert isinstance(result_dict["app"], dict)
-        assert isinstance(result_dict["logging"], dict)
-        assert isinstance(result_dict["logging"]["path"], str)
-        assert isinstance(result_dict["logging"]["level"], str)
-        assert isinstance(result_dict["flask"], dict)
-
-    # TEST: If an item isn't in the schema, it still ends up around, not that this is a good idea...
-    result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, {"TEST_CONFIG_ENTRY_NOT_IN_SCHEMA": "lmao"})
-    assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
+    # Reset the test object since it will persist.
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
 
 
-def test_config_dictionary_not_in_schema(caplog: pytest.LogCaptureFixture):
-    """Unit test _warn_unexpected_keys."""
-    with caplog.at_level(logging.WARNING):
-        conf = allowlistapp.get_allowlistapp_config()
-        test_config = {
-            "TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA": "",
-            "app": {"TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA": ""},
-        }
+def test_logging_permissions_error(logger, tmp_path, mocker: pytest_mock.plugin.MockerFixture):
+    """Test logging, mock a permission error."""
+    from allowlistapp.logger import _add_file_handler
 
-        # TEST: Warning when config loaded has a key that is not in the schema
-        conf._warn_unexpected_keys(DEFAULT_CONFIG, test_config, "<root>")
-        assert "Config entry key <root>[TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text
-        assert "Config entry key [app][TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text
+    mock_open_func = mocker.mock_open(read_data="")
+    mock_open_func.side_effect = PermissionError("Permission denied")
+
+    mocker.patch("builtins.open", mock_open_func)
+
+    # TEST: That a permissions error is raised when open() results in a permissions error.
+    with pytest.raises(PermissionError):
+        _add_file_handler(logger, str(tmp_path))
+
+
+def test_config_logging_to_dir(logger, tmp_path):
+    """TEST: Correct exception is caught when you try log to a folder."""
+    from allowlistapp.logger import _add_file_handler
+
+    with pytest.raises(IsADirectoryError):
+        _add_file_handler(logger, tmp_path)
+
+
+def test_handler_console_added(logger, app: Flask):
+    """Test logging console handler."""
+    logging_conf = {"path": "", "level": "INFO"}  # Test only console handler
+
+    # TEST: Only one handler (console), should exist when no logging path provided
+    allowlistapp.logger.setup_logger(app, logging_conf, logger)
+    assert len(logger.handlers) == 1
+
+    # TEST: If a console handler exists, another one shouldn't be created
+    allowlistapp.logger.setup_logger(app, logging_conf, logger)
+    assert len(logger.handlers) == 1
+
+
+def test_handler_file_added(logger, tmp_path, app: Flask):
+    """Test logging file handler."""
+    logging_conf = {"path": os.path.join(tmp_path, "test.log"), "level": "INFO"}  # Test file handler
+
+    # TEST: Two handlers when logging to file expected
+    allowlistapp.logger.setup_logger(app, logging_conf, logger)
+    assert len(logger.handlers) == 2  # noqa: PLR2004 A console and a file handler are expected
+
+    # TEST: Two handlers when logging to file expected, another one shouldn't be created
+    allowlistapp.logger.setup_logger(app, logging_conf, logger)
+    assert len(logger.handlers) == 2  # noqa: PLR2004 A console and a file handler are expected
+
+
+@pytest.mark.parametrize(
+    ("log_level_in", "log_level_expected"),
+    [
+        (50, 50),
+        ("INFO", 20),
+        ("WARNING", 30),
+        ("INVALID", 20),
+    ],
+)
+def test_set_log_level(log_level_in: str | int, log_level_expected: int, logger):
+    """Test if _set_log_level results in correct log_level."""
+    from allowlistapp.logger import _set_log_level
+
+    # TEST: Logger ends up with correct values
+    _set_log_level(logger, log_level_in)
+    assert logger.getEffectiveLevel() == log_level_expected

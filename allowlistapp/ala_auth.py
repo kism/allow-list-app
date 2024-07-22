@@ -4,23 +4,21 @@ import json
 import logging
 from http import HTTPStatus
 
+import requests
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, request
 
-from . import al_handler, get_allowlistapp_config
+from . import al_handler
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
-ala_conf = get_allowlistapp_config()
-al = al_handler.AllowList(ala_conf)
 
+ala_conf = None
 
-if not ala_conf.auth_type_static():
-    from http import HTTPStatus
+al = None
 
-    import requests
 
 dynamic_auth_types = {
     "jellyfin": {
@@ -65,7 +63,11 @@ def authenticate() -> str:
     password = request.form["password"]
 
     # Check the auth depending on if we are using static auth, or checking via an external url
-    result = check_password_static(password) if ala_conf.auth_type_static() else check_password_url(username, password)
+    result = (
+        check_password_static(password)
+        if ala_conf["app"]["auth_type"] == "static"
+        else check_password_url(username, password)
+    )
 
     message = "nope"
     status = HTTPStatus.FORBIDDEN
@@ -132,6 +134,18 @@ def check_password_url(username: str, password: str) -> bool:
         password_correct = True
 
     return password_correct
+
+
+def start_allowlist_auth(ala_conf_in: dict) -> None:
+    """Start the allowlist."""
+    global al  # noqa: PLW0603 Needed due to how flask loads modules
+    global ala_conf  # noqa: PLW0603 Needed due to how flask loads modules
+
+    ala_conf = ala_conf_in
+
+    al_handler.start_allowlist_handler(ala_conf)
+
+    al = al_handler.AllowList(ala_conf)
 
 
 logger.debug("Loaded module: %s", __name__)

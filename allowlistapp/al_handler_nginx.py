@@ -8,10 +8,6 @@ import time
 
 from jinja2 import Environment, FileSystemLoader
 
-from . import get_allowlistapp_config
-
-ala_conf = get_allowlistapp_config()
-
 logger = logging.getLogger(__name__)
 
 

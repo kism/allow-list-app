@@ -21,7 +21,13 @@ logger = logging.getLogger(__name__)  # This is where we log to in this module, 
 
 # Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
 def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
-    """Setup the logger, set config per ala_conf."""
+    """Setup the logger, set configuration per logging_conf.
+
+    Args:
+        app: The Flask app, needed to get the app's logger object.
+        logging_conf: The logging configuration {"level": "", "path": ""}
+        in_logger: Logger to configure, useful for testing.
+    """
     if not in_logger:  # in_logger should only exist when testing with PyTest.
         in_logger = logging.getLogger()  # Get the root logger
 
@@ -97,6 +103,3 @@ def _add_file_handler(in_logger: logging.Logger, log_path: str) -> None:
     file_handler.setFormatter(formatter)
     in_logger.addHandler(file_handler)
     logger.info("Logging to file: %s", log_path)
-
-
-logger.debug("Loaded module: %s", __name__)

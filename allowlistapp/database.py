@@ -3,19 +3,12 @@
 import csv
 import logging
 
-from . import get_allowlistapp_config
-
 logger = logging.getLogger(__name__)
 
 
-ala_conf = get_allowlistapp_config()
-
-database_path = ala_conf["app"]["db_path"]
-if database_path == "":
-    raise FileNotFoundError
-
-
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
+
+database_path = None
 
 
 def db_get_allowlist() -> list:
@@ -71,6 +64,14 @@ def db_reset() -> None:
             csv_file, CSV_SCHEMA.keys(), delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
         )
         csv_writer.writeheader()
+
+
+def start_database(ala_conf: dict) -> None:
+    """Start this module."""
+    global database_path  # noqa: PLW0603 Needed due to how flask loads modules.
+    database_path = ala_conf["app"]["db_path"]
+    if database_path == "":
+        raise FileNotFoundError
 
 
 logger.debug("Loaded module: %s", __name__)

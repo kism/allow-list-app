@@ -3,8 +3,9 @@ auth_type = "static"
 services = []
 static_password_hashed = ""
 static_password_cleartext = "hunter2"
-db_path = "test.csv"
+db_path = ""
 
 [logging]
 
 [flask]
+testing = false

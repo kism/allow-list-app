@@ -6,19 +6,11 @@ import logging
 import threading
 import time
 
-from . import database, get_allowlistapp_config
+from . import database
 
 logger = logging.getLogger(__name__)
 
-
-ala_conf = get_allowlistapp_config()
-
-
 nginx_allowlist = None
-if "nginx" in ala_conf["app"]["services"]:
-    from allowlistapp.al_handler_nginx import NGINXAllowlist
-
-    nginx_allowlist = NGINXAllowlist()
 
 
 class AllowList:
@@ -45,7 +37,7 @@ class AllowList:
 
     def is_in_allowlist(self, ip: str) -> bool:
         """Check if ip addres is in the allowlist."""
-        logger.debug("Checking if IP allready in allowlist...")
+        logger.debug("Checking if IP already in allowlist...")
         auth_in_list = False
 
         for item in self.allowlist:
@@ -134,6 +126,18 @@ class AllowList:
             logger.error(err)
 
         return valid_ip
+
+
+def start_allowlist_handler(ala_conf: dict) -> None:
+    """Start the allowlist handler to handle the allowlists."""
+    database.start_database(ala_conf)
+
+    global nginx_allowlist  # noqa: PLW0603 Needed for how flask loads modules.
+
+    if "nginx" in ala_conf["app"]["services"]:
+        from allowlistapp.al_handler_nginx import NGINXAllowlist
+
+        nginx_allowlist = NGINXAllowlist()
 
 
 logger.debug("Loaded module: %s", __name__)
