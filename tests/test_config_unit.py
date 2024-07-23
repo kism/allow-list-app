@@ -12,7 +12,7 @@ DEFAULT_CONFIG = allowlistapp.config.DEFAULT_CONFIG
 
 def test_config_permissions_error_read(tmp_path, mocker: pytest_mock.plugin.MockerFixture):
     """Mock a Permissions error with mock_open."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "testing_true_valid.toml")) as f:
+    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
         config_contents = f.read()
 
     tmp_f = tmp_path / "config.toml"
@@ -31,7 +31,7 @@ def test_config_permissions_error_read(tmp_path, mocker: pytest_mock.plugin.Mock
 
 def test_config_permissions_error_write(tmp_path, mocker: pytest_mock.plugin.MockerFixture):
     """Mock a Permissions error with mock_open."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "testing_true_valid.toml")) as f:
+    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
         config_contents = f.read()
 
     tmp_f = tmp_path / "config.toml"
@@ -52,7 +52,7 @@ def test_config_permissions_error_write(tmp_path, mocker: pytest_mock.plugin.Moc
 
 def test_dictionary_functions_of_config(tmp_path):
     """Test the functions in the config object that let it behave like a dictionary."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "testing_true_valid.toml")) as f:
+    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
         config_contents = f.read()
 
     tmp_f = tmp_path / "config.toml"
@@ -78,7 +78,7 @@ def test_dictionary_functions_of_config(tmp_path):
 
 def test_config_dictionary_merge(tmp_path, get_test_config):
     """Unit test the dictionary merge in _merge_with_defaults."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "testing_true_valid.toml")) as f:
+    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
         config_contents = f.read()
 
     tmp_f = tmp_path / "config.toml"
@@ -89,8 +89,8 @@ def test_config_dictionary_merge(tmp_path, get_test_config):
 
     test_dictionaries = [
         {},
-        get_test_config("logging_invalid_log_level.toml"),
-        get_test_config("testing_true_valid.toml"),
+        get_test_config("invalid_log_level.toml"),
+        get_test_config("valid_testing_true.toml"),
     ]
 
     for test_dictionary in test_dictionaries:
@@ -110,7 +110,7 @@ def test_config_dictionary_merge(tmp_path, get_test_config):
 
 def test_config_dictionary_not_in_schema(tmp_path, caplog: pytest.LogCaptureFixture):
     """Unit test _warn_unexpected_keys."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "testing_true_valid.toml")) as f:
+    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
         config_contents = f.read()
 
     tmp_f = tmp_path / "config.toml"

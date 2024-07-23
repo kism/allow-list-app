@@ -1,0 +1,11 @@
+[app]
+auth_type = "static"
+services = []
+static_password_hashed = "$argon2id$v=19$m=65536,t=3,p=4$J+dLzzpI3W8sXiisUZctpw$MRIr427g87qzJCMOPZz3Rq0Ni8EFz+maH7/MvfR7paA"
+static_password_cleartext = ""
+db_path = ""
+
+[logging]
+
+[flask]
+TESTING = true

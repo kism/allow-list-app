@@ -21,7 +21,7 @@ def pytest_configure():
 @pytest.fixture()
 def app(tmp_path, get_test_config) -> any:
     """This fixture uses the default config within the flask app."""
-    return create_app(get_test_config("testing_true_valid.toml"), instance_path=tmp_path)
+    return create_app(get_test_config("valid_testing_true.toml"), instance_path=tmp_path)
 
 
 @pytest.fixture()

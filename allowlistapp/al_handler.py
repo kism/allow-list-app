@@ -18,7 +18,6 @@ class AllowList:
 
     def __init__(self, ala_conf: dict) -> None:
         """Initialise the AllowList."""
-        database.db_check()
         self.ala_conf = ala_conf
         self.allowlist = database.db_get_allowlist()
 

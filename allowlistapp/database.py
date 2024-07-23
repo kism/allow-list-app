@@ -11,6 +11,13 @@ CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 database_path = None
 
 
+def start_database(ala_conf: dict) -> None:
+    """Start this module."""
+    global database_path  # noqa: PLW0603 Needed due to how flask loads modules.
+    database_path = ala_conf["app"]["db_path"]
+    db_check()
+
+
 def db_get_allowlist() -> list:
     """Get the allowlist as a dict."""
     allowlist = []
@@ -21,7 +28,7 @@ def db_get_allowlist() -> list:
             csv_reader = csv.DictReader(csv_file, quoting=csv.QUOTE_MINIMAL)
             allowlist = list(csv_reader)
     except FileNotFoundError:
-        pass
+        logger.warning("No database found, will be created the first time a IP is added.")
     return allowlist
 
 
@@ -39,18 +46,26 @@ def db_write_allowlist(allowlist: list) -> None:
         for item in allowlist:
             csv_writer.writerow(item)
 
+    logger.info("DB write complete.")
+
 
 def db_check() -> None:
     """Check the 'schema' of the database."""
-    logger.info("Checking Database")
     try:
         with open(database_path, newline="") as csv_file:
-            logger.debug(csv_file.read())
-            csv_reader = csv.reader(csv_file, quoting=csv.QUOTE_MINIMAL)
-            for i, row in enumerate(csv_reader):
-                if len(row) != len(CSV_SCHEMA.keys()):
-                    err = f"Row {i + 1} of csv not three columns, fix or delete {database_path}"
-                    raise ValueError(err)
+            msg = f"Database found at: {database_path}"
+            logger.info(msg)
+            csv_reader = csv.DictReader(csv_file, quoting=csv.QUOTE_MINIMAL)
+            allowlist = list(csv_reader).copy()
+
+        msg = f"CSV DictReader as list:\n{allowlist}"
+        logger.debug(msg)
+
+        for row in allowlist:
+            if len(row) != len(CSV_SCHEMA.keys()):
+                err = f"Row {row} of csv not three columns, fix or delete {database_path}"
+                logger.critical(err)
+                raise ValueError(err)
         logger.info("Database checks passed")
     except FileNotFoundError:
         logger.info("Database file not found, that's okay")
@@ -64,12 +79,6 @@ def db_reset() -> None:
             csv_file, CSV_SCHEMA.keys(), delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
         )
         csv_writer.writeheader()
-
-
-def start_database(ala_conf: dict) -> None:
-    """Start this module."""
-    global database_path  # noqa: PLW0603 Needed due to how flask loads modules.
-    database_path = ala_conf["app"]["db_path"]
 
 
 logger.debug("Loaded module: %s", __name__)

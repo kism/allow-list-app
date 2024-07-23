@@ -28,11 +28,6 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     # Flask config, at the root of the config object.
     app.config.from_mapping(ala_conf["flask"])
 
-    # Other sections handled by config.py
-    for key, value in ala_conf.items():
-        if key != "flask":
-            app.config[key] = value
-
     # Do some debug logging of config
     app_config_str = ">>>\nFlask config:"
     for key, value in app.config.items():

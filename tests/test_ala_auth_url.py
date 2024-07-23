@@ -15,7 +15,7 @@ def client_url_auth(tmp_path, get_test_config) -> any:
     """This fixture uses the default config within the flask app."""
     from allowlistapp import create_app
 
-    app = create_app(get_test_config("testing_url.toml"), instance_path=tmp_path)
+    app = create_app(get_test_config("valid_url_auth_url.toml"), instance_path=tmp_path)
 
     return app.test_client()
 

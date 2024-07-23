@@ -18,7 +18,7 @@ from allowlistapp.config import ConfigValidationError
 def test_instance_path_check(get_test_config: dict):
     """TEST: When passed a dictionary as a config, the instance path must be specified."""
     with pytest.raises(AttributeError):
-        create_app(get_test_config("testing_false_valid.toml"))
+        create_app(get_test_config("valid_testing_false.toml"))
 
 
 def test_config_validate_test_instance_path(get_test_config: dict):
@@ -46,7 +46,7 @@ def test_config_validate_test_instance_path(get_test_config: dict):
 
     # TEST: The program exits when in testing mode and the instance path is not a temp path.
     with pytest.raises(ConfigValidationError) as exc_info:
-        create_app(test_config=get_test_config("testing_true_valid.toml"), instance_path=incorrect_instance_path)
+        create_app(test_config=get_test_config("valid_testing_true.toml"), instance_path=incorrect_instance_path)
 
     assert isinstance(exc_info.type, type(ConfigValidationError)), "App did not raise correct exception."
     assert "['flask']['TESTING'] is True but instance_path is not a tmp_path" in str(exc_info.getrepr())

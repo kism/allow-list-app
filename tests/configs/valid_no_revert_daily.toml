@@ -4,8 +4,10 @@ services = []
 static_password_hashed = ""
 static_password_cleartext = "hunter2"
 db_path = ""
+revert_daily = false
 
 [logging]
+level = "DEBUG"
 
 [flask]
-TESTING = true
+testing = true

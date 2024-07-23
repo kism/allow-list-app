@@ -233,7 +233,9 @@ class AllowListAppConfig:
             raise ConfigUrlAuthError(err_text)
 
         if self._config["app"]["auth_type"] not in VALID_URL_AUTH_TYPES:
-            err_text = f"Invalid auth type: {self.auth_type}\nValid Auth types: {VALID_URL_AUTH_TYPES}"
+            err_text = (
+                f"Invalid auth type: {self._config['app']['auth_type']}\nValid Auth types: {VALID_URL_AUTH_TYPES}"
+            )
             raise ConfigUrlAuthError(err_text)
 
 

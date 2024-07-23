@@ -94,6 +94,18 @@ def authenticate() -> str:
     return message, status
 
 
+def start_allowlist_auth(ala_conf_in: dict) -> None:
+    """Start the allowlist."""
+    global al  # noqa: PLW0603 Needed due to how flask loads modules
+    global ala_conf  # noqa: PLW0603 Needed due to how flask loads modules
+
+    ala_conf = ala_conf_in
+
+    al_handler.start_allowlist_handler(ala_conf)
+
+    al = al_handler.AllowList(ala_conf)
+
+
 def check_password_static(password: str) -> bool:
     """Check password (secure) (I hope)."""
     password_correct = False
@@ -134,18 +146,6 @@ def check_password_url(username: str, password: str) -> bool:
         password_correct = True
 
     return password_correct
-
-
-def start_allowlist_auth(ala_conf_in: dict) -> None:
-    """Start the allowlist."""
-    global al  # noqa: PLW0603 Needed due to how flask loads modules
-    global ala_conf  # noqa: PLW0603 Needed due to how flask loads modules
-
-    ala_conf = ala_conf_in
-
-    al_handler.start_allowlist_handler(ala_conf)
-
-    al = al_handler.AllowList(ala_conf)
 
 
 logger.debug("Loaded module: %s", __name__)
