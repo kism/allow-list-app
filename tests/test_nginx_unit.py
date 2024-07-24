@@ -27,7 +27,11 @@ def test_conflicting_writes(tmp_path, fp, caplog):
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
     ala_conf = {"app": {"allowlist_path": os.path.join(tmp_path, "allowlist.conf")}}
-    allowlist = [{"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"}]
+    allowlist = [
+        {"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"},
+        {"date": "2023-01-01", "ip": "192.168.0.1", "username": "TESTUSER2"},
+        {"date": "2024-01-01", "ip": "192.168.0.2", "username": "TESTUSER3"},
+    ]
 
     nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 
@@ -46,11 +50,8 @@ def test_conflicting_writes(tmp_path, fp, caplog):
     with open(os.path.join(tmp_path, "allowlist.conf")) as f:
         nginx_conf = f.read()
 
-    al_handler_nginx.logger.debug(nginx_conf)
-    with caplog.at_level(logging.DEBUG):
-        assert allowlist[0]["ip"] in caplog.text
-
-    assert allowlist[0]["ip"] in nginx_conf
+    for item in allowlist:
+        assert item["ip"] in nginx_conf
 
 
 def test_conflicting_reloads(tmp_path):
