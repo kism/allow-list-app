@@ -33,7 +33,8 @@ poetry install --only main
 
 ### Todo
 
+- database and file checking in tests
+- remove some globals
 - make settings better, nginx needs it's own path
 - ipv6 support
-- Tests
-- publish whl
+- opnsense
