@@ -4,7 +4,7 @@ from pprint import pformat
 
 from flask import Flask, render_template
 
-from . import config, logger, ala_auth
+from . import ala_auth, config, logger
 
 
 def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:

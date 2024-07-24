@@ -1,22 +1,21 @@
 """Unit test ngnix reloading."""
 
 import logging
-import time
 import os
 import threading
-
-
-import pytest
+import time
 
 from allowlistapp import al_handler_nginx
 
 
 def mock_finish_write(nginx_allowlist):
+    """This mocks an allowlist which is currently writing, thus we need to wait for it to finish."""
     time.sleep(1)
     nginx_allowlist._writing = False
 
 
 def mock_finish_reload(nginx_allowlist):
+    """This mocks an allowlist which is currently reloading, thus we need to wait for it to finish."""
     time.sleep(1)
     nginx_allowlist._nginx_reloading = False
 

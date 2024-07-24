@@ -1,10 +1,9 @@
 """Test ngnix reloading."""
 
-import time
 import logging
+import time
 
 import pytest
-
 
 from allowlistapp import create_app
 
