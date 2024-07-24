@@ -31,11 +31,7 @@ poetry install --only main
     --call allowlist:create_app
 ```
 
-## TODO
-
-- `detect-test-pollution --failing-test tests/test_nginx.py::test_nginx_reload --tests tests`
-
-### Later
+### Todo
 
 - make the loading for the allowlist less cringe
 - make settings better, nginx needs it's own path

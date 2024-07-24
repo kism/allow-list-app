@@ -25,7 +25,7 @@ class AllowList:
 
         # See if we need to revert the allowlist daily
         if self.ala_conf["app"]["revert_daily"]:
-            thread = threading.Thread(target=self.__revert_list_daily, args=(), daemon=True)
+            thread = threading.Thread(target=self._revert_list_daily, args=(), daemon=True)
             thread.start()
 
         logger.info("Initialising the database...")
@@ -34,7 +34,7 @@ class AllowList:
         logger.info("Done initialising the database")
 
         # For safety since in theory the file can be written to outside of this program
-        self.__write_app_allowlist_files()
+        self._write_app_allowlist_files()
 
     def is_in_allowlist(self, ip: str) -> bool:
         """Check if ip address is in the allowlist."""
@@ -57,7 +57,7 @@ class AllowList:
         logger.debug("Trying to insert ip: %s for user: %s", ip, username)
 
         added = False
-        self.__check_ip(ip)
+        self._check_ip(ip)
 
         if self.is_in_allowlist(ip):
             logger.info("Duplicate ip/network, not adding.")
@@ -68,11 +68,11 @@ class AllowList:
             logger.info("Added ip: %s to allowlist", ip)
 
             database.db_write_allowlist(self.allowlist)
-            self.__write_app_allowlist_files()
+            self._write_app_allowlist_files()
 
         return added
 
-    def __revert_list_daily(self) -> None:
+    def _revert_list_daily(self) -> None:
         """Reset list at 4am."""
         while True:
             logger.info("Adding subnets/ips from config file")
@@ -107,12 +107,12 @@ class AllowList:
 
             logger.info("It's 4am, reverting IP list to default")
 
-    def __write_app_allowlist_files(self) -> None:
+    def _write_app_allowlist_files(self) -> None:
         """Write to the nginx allowlist conf file."""
         if nginx_allowlist:
             nginx_allowlist.write(self.ala_conf, self.allowlist)
 
-    def __check_ip(self, in_ip_or_network: str) -> bool:
+    def _check_ip(self, in_ip_or_network: str) -> bool:
         """Check if string is valid IP or Network."""
         valid_ip = False
         for ip_cls in [ipaddress.IPv4Address, ipaddress.IPv4Network, ipaddress.IPv6Address, ipaddress.IPv6Network]:
