@@ -33,7 +33,6 @@ poetry install --only main
 
 ### Todo
 
-- make the loading for the allowlist less cringe
 - make settings better, nginx needs it's own path
 - ipv6 support
 - Tests

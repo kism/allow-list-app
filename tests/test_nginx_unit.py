@@ -26,7 +26,7 @@ def test_conflicting_writes(tmp_path, fp, caplog):
 
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
-    ala_conf = {"app": {"allowlist_path": os.path.join(tmp_path, "allowlist.conf")}}
+    ala_conf = {"app": {"allowlist_path": os.path.join(tmp_path, "ipallowlist.conf")}}
     allowlist = [
         {"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"},
         {"date": "2023-01-01", "ip": "192.168.0.1", "username": "TESTUSER2"},
@@ -47,7 +47,7 @@ def test_conflicting_writes(tmp_path, fp, caplog):
     with caplog.at_level(logging.DEBUG):
         assert "Finished writing nginx allowlist" in caplog.text
 
-    with open(os.path.join(tmp_path, "allowlist.conf")) as f:
+    with open(os.path.join(tmp_path, "ipallowlist.conf")) as f:
         nginx_conf = f.read()
 
     for item in allowlist:
