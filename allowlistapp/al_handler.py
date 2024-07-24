@@ -6,6 +6,8 @@ import logging
 import threading
 import time
 
+from flask import current_app
+
 from . import database
 
 logger = logging.getLogger(__name__)
@@ -127,13 +129,13 @@ class AllowList:
         return valid_ip
 
 
-def start_allowlist_handler(ala_conf: dict) -> None:
+def start_allowlist_handler() -> None:
     """Start the allowlist handler to handle the allowlists."""
-    database.start_database(ala_conf)
-
     global nginx_allowlist  # noqa: PLW0603 Needed for how flask loads modules.
 
-    if "nginx" in ala_conf["app"]["services"]:
+    database.start_database()
+
+    if "nginx" in current_app.config["app"]["services"]:
         from allowlistapp.al_handler_nginx import NGINXAllowlist
 
         nginx_allowlist = NGINXAllowlist()

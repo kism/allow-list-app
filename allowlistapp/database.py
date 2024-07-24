@@ -3,6 +3,8 @@
 import csv
 import logging
 
+from flask import current_app
+
 logger = logging.getLogger(__name__)
 
 
@@ -11,10 +13,10 @@ CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 database_path = None
 
 
-def start_database(ala_conf: dict) -> None:
+def start_database() -> None:
     """Start this module."""
     global database_path  # noqa: PLW0603 Needed due to how flask loads modules.
-    database_path = ala_conf["app"]["db_path"]
+    database_path = current_app.config["app"]["db_path"]
     db_check()
 
 

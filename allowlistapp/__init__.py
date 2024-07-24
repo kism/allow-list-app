@@ -4,7 +4,7 @@ from pprint import pformat
 
 from flask import Flask, render_template
 
-from . import config, logger
+from . import config, logger, ala_auth
 
 
 def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:
@@ -28,6 +28,11 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     # Flask config, at the root of the config object.
     app.config.from_mapping(ala_conf["flask"])
 
+    # Other sections handled by config.py
+    for key, value in ala_conf.items():
+        if key != "flask":
+            app.config[key] = value
+
     # Do some debug logging of config
     app_config_str = ">>>\nFlask config:"
     for key, value in app.config.items():
@@ -35,13 +40,13 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
 
     app.logger.debug(app_config_str)
 
-    from allowlistapp import ala_auth
-
-    ala_auth.start_allowlist_auth(ala_conf)
+    with app.app_context():
+        ala_auth.start_allowlist_auth()
 
     # Register the authentication endpoint
     app.register_blueprint(ala_auth.bp)
 
+    # Setup vars for template
     if ala_conf["app"]["auth_type"] == "static":
         hide_username = True
     redirect_url = ala_conf["app"]["redirect_url"]

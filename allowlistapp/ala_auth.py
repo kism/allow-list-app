@@ -7,7 +7,7 @@ from http import HTTPStatus
 import requests
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-from flask import Blueprint, request
+from flask import Blueprint, current_app, request
 
 from . import al_handler
 
@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
 
-ala_conf = None
 
 al = None
 
@@ -65,7 +64,7 @@ def authenticate() -> str:
     # Check the auth depending on if we are using static auth, or checking via an external url
     result = (
         check_password_static(password)
-        if ala_conf["app"]["auth_type"] == "static"
+        if current_app.config["app"]["auth_type"] == "static"
         else check_password_url(username, password)
     )
 
@@ -94,22 +93,19 @@ def authenticate() -> str:
     return message, status
 
 
-def start_allowlist_auth(ala_conf_in: dict) -> None:
+def start_allowlist_auth() -> None:
     """Start the allowlist."""
     global al  # noqa: PLW0603 Needed due to how flask loads modules
-    global ala_conf  # noqa: PLW0603 Needed due to how flask loads modules
 
-    ala_conf = ala_conf_in
+    al_handler.start_allowlist_handler()
 
-    al_handler.start_allowlist_handler(ala_conf)
-
-    al = al_handler.AllowList(ala_conf)
+    al = al_handler.AllowList(current_app.config)
 
 
 def check_password_static(password: str) -> bool:
     """Check password (secure) (I hope)."""
     password_correct = False
-    hashed = ala_conf["app"]["static_password_hashed"]
+    hashed = current_app.config["app"]["static_password_hashed"]
     try:
         ph.verify(hashed, password)
         password_correct = True
@@ -123,12 +119,16 @@ def check_password_url(username: str, password: str) -> bool:
     """Check password via Jellyfin (secure) (I hope)."""
     password_correct = False
 
-    url = ala_conf["app"]["remote_auth_url"] + "/" + dynamic_auth_types[ala_conf["app"]["auth_type"]]["endpoint"]
-    headers = dynamic_auth_types[ala_conf["app"]["auth_type"]]["headers"]
+    url = (
+        current_app.config["app"]["remote_auth_url"]
+        + "/"
+        + dynamic_auth_types[current_app.config["app"]["auth_type"]]["endpoint"]
+    )
+    headers = dynamic_auth_types[current_app.config["app"]["auth_type"]]["headers"]
 
     data = {
-        dynamic_auth_types[ala_conf["app"]["auth_type"]]["username_field"]: username,
-        dynamic_auth_types[ala_conf["app"]["auth_type"]]["password_field"]: password,
+        dynamic_auth_types[current_app.config["app"]["auth_type"]]["username_field"]: username,
+        dynamic_auth_types[current_app.config["app"]["auth_type"]]["password_field"]: password,
     }
     json_data = json.dumps(data)
 
