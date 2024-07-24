@@ -10,13 +10,13 @@ from allowlistapp import al_handler_nginx
 
 def mock_finish_write(nginx_allowlist):
     """This mocks an allowlist which is currently writing, thus we need to wait for it to finish."""
-    time.sleep(1)
+    time.sleep(0.5)
     nginx_allowlist._writing = False
 
 
 def mock_finish_reload(nginx_allowlist):
     """This mocks an allowlist which is currently reloading, thus we need to wait for it to finish."""
-    time.sleep(1)
+    time.sleep(0.5)
     nginx_allowlist._nginx_reloading = False
 
 
@@ -27,7 +27,7 @@ def test_conflicting_writes(tmp_path, fp, caplog):
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
     ala_conf = {"app": {"allowlist_path": os.path.join(tmp_path, "allowlist.conf")}}
-    allowlist = {"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"}
+    allowlist = [{"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"}]
 
     nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 
@@ -48,9 +48,9 @@ def test_conflicting_writes(tmp_path, fp, caplog):
 
     al_handler_nginx.logger.debug(nginx_conf)
     with caplog.at_level(logging.DEBUG):
-        assert allowlist["ip"] in caplog.text
+        assert allowlist[0]["ip"] in caplog.text
 
-    assert allowlist["ip"] in nginx_conf
+    assert allowlist[0]["ip"] in nginx_conf
 
 
 def test_conflicting_reloads(tmp_path):

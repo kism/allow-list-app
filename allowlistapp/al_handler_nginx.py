@@ -31,7 +31,7 @@ class NGINXAllowlist:
         """Write NGINX allowlist."""
         logger.debug("Writing nginx allowlist: %s", ala_conf["app"]["allowlist_path"])
         while self._writing:
-            time.sleep(1)
+            time.sleep(0.2)
 
         env = Environment(
             loader=FileSystemLoader(os.path.join(os.getcwd(), "allowlistapp", "templates")), autoescape=True
@@ -49,7 +49,7 @@ class NGINXAllowlist:
     def _reload(self) -> None:
         """Reload NGINX."""
         while self._nginx_reloading:
-            time.sleep(1)
+            time.sleep(0.2)
 
         self._nginx_reloading = True
         logger.info("Reloading nginx")
