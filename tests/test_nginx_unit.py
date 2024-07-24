@@ -8,7 +8,7 @@ import threading
 
 import pytest
 
-from allowlistapp.al_handler_nginx import NGINXAllowlist
+from allowlistapp import al_handler_nginx
 
 
 def mock_finish_write(nginx_allowlist):
@@ -21,13 +21,16 @@ def mock_finish_reload(nginx_allowlist):
     nginx_allowlist._nginx_reloading = False
 
 
-def test_conflicting_writes(tmp_path):
+def test_conflicting_writes(tmp_path, fp, caplog):
     """TKTKTKTKTKTKT."""
+    fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
+
+    al_handler_nginx.logger.setLevel(logging.DEBUG)
 
     ala_conf = {"app": {"allowlist_path": os.path.join(tmp_path, "allowlist.conf")}}
     allowlist = {"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"}
 
-    nginx_allowlist = NGINXAllowlist()
+    nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 
     nginx_allowlist._writing = True
 
@@ -38,15 +41,22 @@ def test_conflicting_writes(tmp_path):
 
     thread.join()
 
+    with caplog.at_level(logging.DEBUG):
+        assert "Finished writing nginx allowlist" in caplog.text
+
     with open(os.path.join(tmp_path, "allowlist.conf")) as f:
         nginx_conf = f.read()
+
+    al_handler_nginx.logger.debug(nginx_conf)
+    with caplog.at_level(logging.DEBUG):
+        assert allowlist["ip"] in caplog.text
 
     assert allowlist["ip"] in nginx_conf
 
 
 def test_conflicting_reloads(tmp_path):
     """TKTKTKTKTKTKT."""
-    nginx_allowlist = NGINXAllowlist()
+    nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 
     nginx_allowlist._nginx_reloading = True
 
