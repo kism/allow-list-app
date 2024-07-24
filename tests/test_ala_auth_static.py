@@ -2,6 +2,7 @@
 
 from http import HTTPStatus
 
+import pytest
 from flask.testing import FlaskClient
 
 
@@ -17,11 +18,18 @@ def test_auth_static_fail(client: FlaskClient):
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_auth_static_success(client: FlaskClient):
+@pytest.mark.parametrize(
+    ("headers"),
+    [
+        ({}),
+        ({"X-Forwarded-For": "192.168.0.1"}),
+    ],
+)
+def test_auth_static_success(headers, client: FlaskClient):
     """TKTKTKTKTKKTKT."""
-    response = client.post("/authenticate/", data={"username": "", "password": "hunter2"})
+    response = client.post("/authenticate/", data={"username": "", "password": "hunter2"}, headers=headers)
     assert response.status_code == HTTPStatus.OK
 
-    response = client.get("/check_auth/")
+    response = client.get("/check_auth/", headers=headers)
     assert response.data == b"yep", "Check auth should have said that user is logged in."
     assert response.status_code == HTTPStatus.OK

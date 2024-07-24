@@ -76,3 +76,37 @@ def test_config_file_loading(tmp_path, caplog: pytest.LogCaptureFixture):
     caplog.set_level(logging.INFO)
     create_app(test_config=None, instance_path=tmp_path)
     assert "Using this path as it's the first one that was found" in caplog.text
+
+
+def test_config_valid_allowed_subnets(tmp_path, get_test_config, caplog):
+    """Test that program exits when given invalid config."""
+    # TEST: Assert that the program exists when provided an invalid config dictionary.
+    create_app(get_test_config("valid_allowed_subnets.toml"), instance_path=tmp_path)
+
+    with caplog.at_level(logging.DEBUG):
+        assert "Trying to insert ip: 127.0.0.1 for user: default" in caplog.text
+        assert "Trying to insert ip: 192.168.1.0/24 for user: default" in caplog.text
+
+    with caplog.at_level(logging.INFO):
+        assert "DB write complete" in caplog.text
+
+    with caplog.at_level(logging.ERROR):
+        assert "Invalid IP/network address" not in caplog.text
+
+
+def test_config_valid_allowed_subnets_duplicate(tmp_path, get_test_config, caplog):
+    """Test that program exits when given invalid config."""
+    # TEST: Assert that the program exists when provided an invalid config dictionary.
+    create_app(get_test_config("valid_allowed_subnets_duplicate.toml"), instance_path=tmp_path)
+
+    with caplog.at_level(logging.INFO):
+        assert "Duplicate ip/network, not adding." in caplog.text
+
+
+def test_config_invalid_allowed_subnets(tmp_path, get_test_config, caplog):
+    """Test that program exits when given invalid config."""
+    # TEST: Assert that the program exists when provided an invalid config dictionary.
+    create_app(get_test_config("invalid_allowed_subnets.toml"), instance_path=tmp_path)
+
+    with caplog.at_level(logging.ERROR):
+        assert "Invalid IP/network address: TEST_INVALID_IP" in caplog.text

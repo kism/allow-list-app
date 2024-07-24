@@ -22,6 +22,7 @@ pytest-cov = "*"
 pytest-mock = "*"
 detect-test-pollution = "*"
 pytest-random-order = "*"
+pytest-subprocess = "*"
 responses = "*"
 jinja2 = "*"                # Flask depends on this, I have it here since config loading is templated for tests.
 

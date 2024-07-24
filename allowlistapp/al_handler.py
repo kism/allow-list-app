@@ -37,7 +37,7 @@ class AllowList:
         self.__write_app_allowlist_files()
 
     def is_in_allowlist(self, ip: str) -> bool:
-        """Check if ip addres is in the allowlist."""
+        """Check if ip address is in the allowlist."""
         logger.debug("Checking if IP already in allowlist...")
         auth_in_list = False
 
@@ -60,7 +60,7 @@ class AllowList:
         self.__check_ip(ip)
 
         if self.is_in_allowlist(ip):
-            logger.info("Duplicate auth! Not adding.")
+            logger.info("Duplicate ip/network, not adding.")
         else:
             new_item = {"username": username, "ip": ip, "date": str(datetime.datetime.now())}
             self.allowlist.append(new_item)

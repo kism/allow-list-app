@@ -56,6 +56,7 @@ class NGINXAllowlist:
         result = None
         try:
             result = subprocess.run(self.reload_nginx_command, check=True, capture_output=True, text=True)  # noqa: S603 Input has been validated
+            logger.info("Nginx reloaded")
         except subprocess.CalledProcessError:
             err = (
                 "❌ Couldn't restart nginx, either: \n"
