@@ -17,10 +17,10 @@ class NGINXAllowlist:
     def __init__(self) -> True:
         """Init config for the NGINX Allowlist Writer."""
         # Monitor Writing
-        self.writing = False
+        self._writing = False
 
         # Monitor Reloading
-        self.nginx_reloading = False
+        self._nginx_reloading = False
         self.user_account = pwd.getpwuid(os.getuid())[0]
 
         self.reload_nginx_command = ["systemctl", "reload", "nginx"]
@@ -30,7 +30,7 @@ class NGINXAllowlist:
     def write(self, ala_conf: dict, allowlist: list) -> None:
         """Write NGINX allowlist."""
         logger.debug("Writing nginx allowlist: %s", ala_conf["app"]["allowlist_path"])
-        while self.writing:
+        while self._writing:
             time.sleep(1)
 
         env = Environment(
@@ -42,20 +42,19 @@ class NGINXAllowlist:
         with open(ala_conf["app"]["allowlist_path"], "w", encoding="utf8") as conf_file:
             conf_file.write(rendered_template)
 
-        self.writing = False
+        self._writing = False
         logger.debug("Finished writing nginx allowlist")
-        self.__reload()
+        self._reload()
 
-    def __reload(self) -> None:
+    def _reload(self) -> None:
         """Reload NGINX."""
-        while self.nginx_reloading:
+        while self._nginx_reloading:
             time.sleep(1)
 
-        self.nginx_reloading = True
+        self._nginx_reloading = True
         logger.info("Reloading nginx")
-        result = None
         try:
-            result = subprocess.run(self.reload_nginx_command, check=True, capture_output=True, text=True)  # noqa: S603 Input has been validated
+            subprocess.run(self.reload_nginx_command, check=True, capture_output=True, text=True)  # noqa: S603 Input has been validated
             logger.info("Nginx reloaded")
         except subprocess.CalledProcessError:
             err = (
@@ -70,7 +69,7 @@ class NGINXAllowlist:
             logger.exception(err)
 
         finally:
-            self.nginx_reloading = False
+            self._nginx_reloading = False
 
 
 logger.debug("Loaded module: %s", __name__)

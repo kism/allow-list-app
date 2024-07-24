@@ -1,7 +1,4 @@
-"""Test ngnix reloading.
-
-This has two underscores due to test pollution that I can't figure out...
-"""
+"""Test ngnix reloading."""
 
 import time
 import logging
