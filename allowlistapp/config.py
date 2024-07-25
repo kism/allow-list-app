@@ -18,16 +18,17 @@ ph = PasswordHasher()
 # Default config dictionary, also works as a schema
 DEFAULT_CONFIG = {
     "app": {
-        "allowlist_path": "ipallowlist.conf",
         "allowed_subnets": [],
         "auth_type": "static",
-        "remote_auth_url": "",
-        "services": ["nginx"],
-        "static_password_cleartext": "",
-        "static_password_hashed": "",
         "revert_daily": True,
         "redirect_url": "",
         "db_path": "",
+    },
+    "services": {"nginx": {"enabled": True, "allowlist_path": ""}},
+    "auth_remote": {"url": ""},
+    "auth_static": {
+        "password_cleartext": "",
+        "password_hashed": "",
     },
     "logging": {
         "level": "INFO",
