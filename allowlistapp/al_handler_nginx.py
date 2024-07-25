@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class NGINXAllowlist:
     """Object to handle writing NGINX allowlist."""
 
-    def __init__(self) -> True:
+    def __init__(self) -> None:
         """Init config for the NGINX Allowlist Writer."""
         # Monitor Writing
         self._writing = False
