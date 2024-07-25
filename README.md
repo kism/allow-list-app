@@ -1,5 +1,11 @@
 # Allowlist App
 
+![Check](https://github.com/kism/allow-list-app/actions/workflows/check.yml/badge.svg)
+![Test](https://github.com/kism/allow-list-app/actions/workflows/test.yml/badge.svg)
+[![codecov](https://codecov.io/gh/kism/allow-list-app/graph/badge.svg?token=2376WBPJE6)](https://codecov.io/gh/kism/allow-list-app)
+
+
+
 ## Run
 
 ### Dev
