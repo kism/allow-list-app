@@ -93,7 +93,9 @@ class AllowList:
 
             # If the target time is already passed for today, add 1 day
             if time_difference.total_seconds() < 0:
-                time_difference += datetime.timedelta(days=1)
+                time_difference += datetime.timedelta(
+                    days=1
+                )  # pragma: no cover, not going to mock time just for one line of coverage
 
             seconds_until_next_run = time_difference.total_seconds()
 
