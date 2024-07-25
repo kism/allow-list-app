@@ -39,6 +39,7 @@ poetry install --only main
 
 ### Todo
 
+- make that one line covered no matter what time of dat
 - database and file checking in tests
 - remove some globals
 - make settings better, nginx needs it's own path
