@@ -234,14 +234,14 @@ class AllowListAppConfig:
 
     def _check_config_url_auth(self) -> None:
         """Check the remote parameters in the settings."""
-        if "http" not in self._config["auth"]["remote"]["url"]:
-            err_text = "Please set the auth url, including http(s)://"
-            raise ConfigUrlAuthError(err_text)
-
         if self._config["app"]["auth_type"] not in VALID_URL_AUTH_TYPES:
             err_text = (
                 f"Invalid auth type: {self._config['app']['auth_type']}\nValid Auth types: {VALID_URL_AUTH_TYPES}"
             )
+            raise ConfigUrlAuthError(err_text)
+
+        if "http" not in self._config["auth"]["remote"]["url"]:
+            err_text = "Please set the auth url, including http(s)://"
             raise ConfigUrlAuthError(err_text)
 
 

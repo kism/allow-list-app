@@ -5,6 +5,8 @@ import os
 import threading
 import time
 
+import pytest
+
 from allowlistapp import al_handler_nginx
 
 
@@ -21,7 +23,7 @@ def mock_finish_reload(nginx_allowlist):
 
 
 def test_conflicting_writes(tmp_path, fp, caplog):
-    """TKTKTKTKTKTKT."""
+    """Test writing the allowlist when the object has a pending write."""
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
 
     al_handler_nginx.logger.setLevel(logging.DEBUG)
@@ -58,8 +60,8 @@ def test_conflicting_writes(tmp_path, fp, caplog):
         assert item["ip"] in nginx_conf
 
 
-def test_conflicting_reloads(tmp_path):
-    """TKTKTKTKTKTKT."""
+def test_conflicting_reloads():
+    """Test reloading the object has a pending reload."""
     nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 
     nginx_allowlist._nginx_reloading = True
@@ -70,3 +72,30 @@ def test_conflicting_reloads(tmp_path):
     nginx_allowlist._reload()
 
     thread.join()
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_log"),
+    [
+        ("", "In the config, please enter a path for the NGINX allowlist file."),
+        ("PATH/THAT/DOES/NOT/EXIST", "Could not write NGINX allowlist file to path: PATH/THAT/DOES/NOT/EXIST"),
+    ],
+)
+def test_invalid_allowlist_path(path, expected_log, fp, caplog):
+    """Test writing the allowlist when the object has a pending write."""
+    al_handler_nginx.logger.setLevel(logging.DEBUG)
+
+    ala_conf = {
+        "services": {
+            "nginx": {"allowlist_path": path},
+        },
+    }
+    allowlist = []
+
+    nginx_allowlist = al_handler_nginx.NGINXAllowlist()
+
+    with pytest.raises(FileNotFoundError):
+        nginx_allowlist.write(ala_conf, allowlist)
+
+    with caplog.at_level(logging.CRITICAL):
+        assert expected_log in caplog.text
