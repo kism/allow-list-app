@@ -57,6 +57,8 @@ def test_conflicting_writes(tmp_path, fp, caplog):
         nginx_conf = f.read()
 
     for item in allowlist:
+        assert item["date"] in nginx_conf
+        assert item["username"] in nginx_conf
         assert item["ip"] in nginx_conf
 
 
