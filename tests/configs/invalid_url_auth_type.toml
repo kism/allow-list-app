@@ -1,7 +1,5 @@
 [app]
 auth_type = "INVALID"
-services = []
-remote_auth_url = "https://test.example.com"
 db_path = ""
 
 [logging]

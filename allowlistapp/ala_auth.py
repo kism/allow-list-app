@@ -9,7 +9,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, current_app, request
 
-from . import al_handler
+from . import al_handler, ala_auth_types
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
@@ -18,24 +18,7 @@ ph = PasswordHasher()
 
 al = None
 
-
-dynamic_auth_types = {
-    "jellyfin": {
-        "endpoint": "Users/authenticatebyname",
-        "username_field": "Username",
-        "password_field": "Pw",
-        "headers": {
-            "Authorization": (
-                'MediaBrowser Client="Allowlist App", '
-                'Device="Python Flask", '
-                'DeviceId="lmao", '
-                'Version="0.0", '
-                'Token="lmao"'
-            ),
-            "Content-Type": "application/json",
-        },
-    },
-}
+DYNAMIC_AUTH_TYPES = ala_auth_types.DYNAMIC_AUTH_TYPES
 
 
 @bp.route("/check_auth/", methods=["GET"])
@@ -105,7 +88,7 @@ def start_allowlist_auth() -> None:
 def check_password_static(password: str) -> bool:
     """Check password (secure) (I hope)."""
     password_correct = False
-    hashed = current_app.config["app"]["static_password_hashed"]
+    hashed = current_app.config["auth_static"]["password_hashed"]
     try:
         ph.verify(hashed, password)
         password_correct = True
@@ -120,15 +103,15 @@ def check_password_url(username: str, password: str) -> bool:
     password_correct = False
 
     url = (
-        current_app.config["app"]["remote_auth_url"]
+        current_app.config["auth_remote"]["url"]
         + "/"
-        + dynamic_auth_types[current_app.config["app"]["auth_type"]]["endpoint"]
+        + DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["endpoint"]
     )
-    headers = dynamic_auth_types[current_app.config["app"]["auth_type"]]["headers"]
+    headers = DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["headers"]
 
     data = {
-        dynamic_auth_types[current_app.config["app"]["auth_type"]]["username_field"]: username,
-        dynamic_auth_types[current_app.config["app"]["auth_type"]]["password_field"]: password,
+        DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["username_field"]: username,
+        DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["password_field"]: password,
     }
     json_data = json.dumps(data)
 

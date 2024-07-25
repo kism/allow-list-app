@@ -1,9 +1,10 @@
 [app]
 auth_type = "static"
-services = []
-static_password_hashed = ""
-static_password_cleartext = "hunter2"
 db_path = ""
+
+[auth_static]
+password_cleartext = "hunter2"
+password_hashed = ""
 
 [logging]
 

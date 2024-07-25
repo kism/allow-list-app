@@ -1,8 +1,8 @@
 [app]
 auth_type = "jellyfin"
-services = []
-remote_auth_url = "ftp://test.example.com"
-db_path = ""
+
+[auth_remote]
+url = "ftp://test.example.com"
 
 [logging]
 

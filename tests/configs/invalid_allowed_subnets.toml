@@ -1,8 +1,5 @@
 [app]
 auth_type = "static"
-services = []
-static_password_hashed = ""
-static_password_cleartext = "hunter2"
 revert_daily = true
 db_path = ""
 allowed_subnets = ["TEST_INVALID_IP"]
@@ -10,6 +7,10 @@ allowed_subnets = ["TEST_INVALID_IP"]
 [logging]
 level = "DEBUG"
 path = ""
+
+[auth_static]
+password_cleartext = "hunter2"
+password_hashed = ""
 
 [flask]
 TESTING = true

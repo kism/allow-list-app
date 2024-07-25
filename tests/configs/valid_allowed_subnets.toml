@@ -1,11 +1,12 @@
 [app]
 auth_type = "static"
-services = []
-static_password_hashed = ""
-static_password_cleartext = "hunter2"
 revert_daily = true
 db_path = ""
 allowed_subnets = ["127.0.0.1", "192.168.1.0/24"]
+
+[auth_static]
+password_cleartext = "hunter2"
+password_hashed = ""
 
 [logging]
 level = "DEBUG"

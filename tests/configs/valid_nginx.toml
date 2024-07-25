@@ -1,10 +1,15 @@
 [app]
 auth_type = "static"
-services = ["nginx"]
-static_password_hashed = ""
-static_password_cleartext = "hunter2"
 revert_daily = true
 db_path = ""
+
+[auth_static]
+password_cleartext = "hunter2"
+password_hashed = ""
+
+[services.nginx]
+enabled = true
+allowlist_path = ""
 
 [logging]
 level = "DEBUG"

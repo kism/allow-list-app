@@ -1,9 +1,11 @@
 [app]
 auth_type = "static"
-services = []
-static_password_hashed = "$argon2id$v=19$m=65536,t=3,p=4$J+dLzzpI3W8sXiisUZctpw$MRIr427g87qzJCMOPZz3Rq0Ni8EFz+maH7/MvfR7paA"
-static_password_cleartext = ""
 db_path = ""
+
+[auth_static]
+password_cleartext = ""
+password_hashed = "$argon2id$v=19$m=65536,t=3,p=4$+nV2u4hHAgn+6mRNbHvcJQ$QiNgHD60Mjxs3DG15beYiRtBFAoIQEyj8poi9kgUmSQ" # hunter2
+
 
 [logging]
 

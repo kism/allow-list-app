@@ -135,7 +135,7 @@ def start_allowlist_handler() -> None:
 
     database.start_database()
 
-    if "nginx" in current_app.config["app"]["services"]:
+    if current_app.config["services"]["nginx"]["enabled"]:
         from allowlistapp.al_handler_nginx import NGINXAllowlist
 
         nginx_allowlist = NGINXAllowlist()

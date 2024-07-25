@@ -29,7 +29,7 @@ class NGINXAllowlist:
 
     def write(self, ala_conf: dict, allowlist: list) -> None:
         """Write NGINX allowlist."""
-        logger.debug("Writing nginx allowlist: %s", ala_conf["app"]["allowlist_path"])
+        logger.debug("Writing nginx allowlist: %s", ala_conf["services"]["nginx"]["allowlist_path"])
         while self._writing:
             time.sleep(0.2)
 
@@ -39,8 +39,16 @@ class NGINXAllowlist:
         template = env.get_template("nginx.conf.j2")
         rendered_template = template.render(allowlist=allowlist)
 
-        with open(ala_conf["app"]["allowlist_path"], "w", encoding="utf8") as conf_file:
-            conf_file.write(rendered_template)
+        allowlist_path = ala_conf["services"]["nginx"]["allowlist_path"]
+        try:
+            with open(allowlist_path, "w", encoding="utf8") as conf_file:
+                conf_file.write(rendered_template)
+        except FileNotFoundError as exc:
+            msg = f"Could not write NGINX allowlist file to path: {allowlist_path}"
+            if allowlist_path == "":
+                msg = "In the config, please enter a path for the NGINX allowlist file."
+            logger.exception(msg)
+            raise FileNotFoundError(msg) from exc
 
         self._writing = False
         logger.debug("Finished writing nginx allowlist")
