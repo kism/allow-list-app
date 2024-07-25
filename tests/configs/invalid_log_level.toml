@@ -5,7 +5,7 @@ db_path = ""
 [logging]
 level = "INVALID"
 
-[auth_static]
+[auth.static]
 password_cleartext = "hunter2"
 password_hashed = ""
 

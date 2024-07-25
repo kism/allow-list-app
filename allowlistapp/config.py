@@ -25,10 +25,12 @@ DEFAULT_CONFIG = {
         "db_path": "",
     },
     "services": {"nginx": {"enabled": False, "allowlist_path": ""}},
-    "auth_remote": {"url": ""},
-    "auth_static": {
-        "password_cleartext": "",
-        "password_hashed": "",
+    "auth": {
+        "remote": {"url": ""},
+        "static": {
+            "password_cleartext": "",
+            "password_hashed": "",
+        },
     },
     "logging": {
         "level": "INFO",
@@ -143,8 +145,8 @@ class AllowListAppConfig:
 
         if self._config["app"]["auth_type"] == "static":
             (
-                self._config["auth_static"]["password_cleartext"],
-                self._config["auth_static"]["password_hashed"],
+                self._config["auth"]["static"]["password_cleartext"],
+                self._config["auth"]["static"]["password_hashed"],
             ) = self._check_config_static_password(self._config)
         else:
             self._check_config_url_auth()
@@ -214,25 +216,25 @@ class AllowListAppConfig:
 
     def _check_config_static_password(self, config: dict) -> str:
         """Check the password parameters in the config."""
-        if config["auth_static"]["password_cleartext"] == "" and config["auth_static"]["password_hashed"] == "":
+        if config["auth"]["static"]["password_cleartext"] == "" and config["auth"]["static"]["password_hashed"] == "":
             err_text = f"Please set password in: {self._config_path}"
             raise ConfigPasswordError(err_text)
 
         # Hash password if there is a plaintext password set
-        if config["auth_static"]["password_cleartext"] != "":
+        if config["auth"]["static"]["password_cleartext"] != "":
             logger.info("Plaintext password set, hashing and removing from config file")
-            plaintext = config["auth_static"]["password_cleartext"]
+            plaintext = config["auth"]["static"]["password_cleartext"]
             hashed = ph.hash(plaintext)
-            config["auth_static"]["password_hashed"] = hashed
-            config["auth_static"]["password_cleartext"] = ""
+            config["auth"]["static"]["password_hashed"] = hashed
+            config["auth"]["static"]["password_cleartext"] = ""
         else:
             logger.info("Found hashed password, probably")
 
-        return config["auth_static"]["password_cleartext"], config["auth_static"]["password_hashed"]
+        return config["auth"]["static"]["password_cleartext"], config["auth"]["static"]["password_hashed"]
 
     def _check_config_url_auth(self) -> None:
         """Check the remote parameters in the settings."""
-        if "http" not in self._config["auth_remote"]["url"]:
+        if "http" not in self._config["auth"]["remote"]["url"]:
             err_text = "Please set the auth url, including http(s)://"
             raise ConfigUrlAuthError(err_text)
 

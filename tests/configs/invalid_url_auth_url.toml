@@ -1,7 +1,7 @@
 [app]
 auth_type = "jellyfin"
 
-[auth_remote]
+[auth.remote]
 url = "ftp://test.example.com"
 
 [logging]

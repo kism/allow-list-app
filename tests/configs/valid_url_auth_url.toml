@@ -2,7 +2,7 @@
 auth_type = "jellyfin"
 db_path = ""
 
-[auth_remote]
+[auth.remote]
 url = "https://jf.example.com"
 
 [logging]

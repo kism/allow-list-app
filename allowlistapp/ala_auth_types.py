@@ -1,6 +1,6 @@
 """This is specifically for this one variable since its a bit major."""
 
-DYNAMIC_AUTH_TYPES = {
+REMOTE_AUTH_TYPES = {
     "jellyfin": {
         "endpoint": "Users/authenticatebyname",
         "username_field": "Username",

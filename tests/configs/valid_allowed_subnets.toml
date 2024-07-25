@@ -4,7 +4,7 @@ revert_daily = true
 db_path = ""
 allowed_subnets = ["127.0.0.1", "192.168.1.0/24"]
 
-[auth_static]
+[auth.static]
 password_cleartext = "hunter2"
 password_hashed = ""
 

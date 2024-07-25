@@ -8,7 +8,7 @@ allowed_subnets = ["TEST_INVALID_IP"]
 level = "DEBUG"
 path = ""
 
-[auth_static]
+[auth.static]
 password_cleartext = "hunter2"
 password_hashed = ""
 

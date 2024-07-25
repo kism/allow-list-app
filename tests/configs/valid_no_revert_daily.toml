@@ -3,7 +3,7 @@ auth_type = "static"
 db_path = ""
 revert_daily = false
 
-[auth_static]
+[auth.static]
 password_cleartext = "hunter2"
 password_hashed = ""
 

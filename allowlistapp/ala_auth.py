@@ -11,14 +11,12 @@ from flask import Blueprint, current_app, request
 
 from . import al_handler, ala_auth_types
 
+REMOTE_AUTH_TYPES = ala_auth_types.REMOTE_AUTH_TYPES
+
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
-
-
 al = None
-
-DYNAMIC_AUTH_TYPES = ala_auth_types.DYNAMIC_AUTH_TYPES
 
 
 @bp.route("/check_auth/", methods=["GET"])
@@ -88,7 +86,7 @@ def start_allowlist_auth() -> None:
 def check_password_static(password: str) -> bool:
     """Check password (secure) (I hope)."""
     password_correct = False
-    hashed = current_app.config["auth_static"]["password_hashed"]
+    hashed = current_app.config["auth"]["static"]["password_hashed"]
     try:
         ph.verify(hashed, password)
         password_correct = True
@@ -103,15 +101,15 @@ def check_password_url(username: str, password: str) -> bool:
     password_correct = False
 
     url = (
-        current_app.config["auth_remote"]["url"]
+        current_app.config["auth"]["remote"]["url"]
         + "/"
-        + DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["endpoint"]
+        + REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["endpoint"]
     )
-    headers = DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["headers"]
+    headers = REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["headers"]
 
     data = {
-        DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["username_field"]: username,
-        DYNAMIC_AUTH_TYPES[current_app.config["app"]["auth_type"]]["password_field"]: password,
+        REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["username_field"]: username,
+        REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["password_field"]: password,
     }
     json_data = json.dumps(data)
 
