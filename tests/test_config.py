@@ -1,7 +1,6 @@
 """Test launching the app and config."""
 
 import logging
-import os
 
 import pytest
 

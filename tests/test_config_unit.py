@@ -1,7 +1,5 @@
 """Unit testing for the config module."""
 
-import os
-
 import pytest
 import pytest_mock
 
