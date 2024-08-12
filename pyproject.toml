@@ -25,6 +25,8 @@ pytest-random-order = "*"
 pytest-subprocess = "*"
 responses = "*"
 jinja2 = "*"                # Flask depends on this, I have it here since config loading is templated for tests.
+mypy = "*"
+types-requests = "*"
 
 [tool.poetry.group.dev.dependencies]
 pylance = "^0.10.18"
@@ -97,3 +99,16 @@ testpaths = ["tests"]
 
 [tool.coverage.html]
 show_contexts = true
+
+[tool.mypy]
+files = ["allowlistapp", "tests"]
+namespace_packages = true
+explicit_package_bases = true
+show_error_codes = true
+strict = false
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+    "type-arg",
+]

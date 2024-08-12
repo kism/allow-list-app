@@ -11,17 +11,18 @@ from flask import Blueprint, current_app, request
 
 from . import al_handler, ala_auth_types
 
-REMOTE_AUTH_TYPES = ala_auth_types.REMOTE_AUTH_TYPES
+REMOTE_AUTH_TYPES: dict = ala_auth_types.REMOTE_AUTH_TYPES
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
-al = None
+al: al_handler.AllowList | None = None
 
 
 @bp.route("/check_auth/", methods=["GET"])
-def check_auth() -> int:
+def check_auth() -> tuple[str, int]:
     """Test Authenticate."""
+    assert al is not None  # noqa: S101 Appease mypy
     if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
         ip = request.environ["REMOTE_ADDR"]
     else:
@@ -37,8 +38,9 @@ def check_auth() -> int:
 
 
 @bp.route("/authenticate/", methods=["POST"])
-def authenticate() -> str:
+def authenticate() -> tuple[str, int]:
     """Post da password."""
+    assert al is not None  # noqa: S101 Appease mypy
     username = request.form["username"]
     password = request.form["password"]
 
@@ -77,6 +79,7 @@ def authenticate() -> str:
 def start_allowlist_auth() -> None:
     """Start the allowlist."""
     global al  # noqa: PLW0603 Needed due to how flask loads modules
+    al = None  # Prevents tests from getting weird
 
     al_handler.start_allowlist_handler()
 
@@ -105,7 +108,7 @@ def check_password_url(username: str, password: str) -> bool:
         + "/"
         + REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["endpoint"]
     )
-    headers = REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["headers"]
+    headers: dict[str, str] = REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["headers"]
 
     data = {
         REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["username_field"]: username,

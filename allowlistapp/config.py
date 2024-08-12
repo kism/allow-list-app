@@ -4,6 +4,7 @@ import contextlib
 import logging
 import os
 import pwd
+import typing
 
 import tomlkit
 from argon2 import PasswordHasher
@@ -16,7 +17,7 @@ ph = PasswordHasher()
 
 
 # Default config dictionary, also works as a schema
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG: dict[str, dict] = {
     "app": {
         "allowed_subnets": [],
         "auth_type": "static",
@@ -79,9 +80,9 @@ class AllowListAppConfig:
             instance_path: The flask instance path, should be always from app.instance_path
             config: If provided config won't be loaded from a file.
         """
-        self._config_path = None
-        self._config = DEFAULT_CONFIG
-        self.instance_path = instance_path
+        self._config_path: str | None = None
+        self._config: dict = DEFAULT_CONFIG
+        self.instance_path: str = instance_path
 
         self._get_config_file_path()
 
@@ -103,11 +104,11 @@ class AllowListAppConfig:
     https://gist.github.com/turicas/1510860
     """
 
-    def __getitem__(self, key: str) -> any:
+    def __getitem__(self, key: str) -> typing.Any:  # noqa: ANN401 Yes this will return Any, but it's a dict.
         """Get item from config like a dictionary."""
         return self._config[key]
 
-    def __contains__(self, key: str) -> str:
+    def __contains__(self, key: str) -> bool:
         """Check if key is 'in' the configuration."""
         return key in self._config
 
@@ -115,12 +116,16 @@ class AllowListAppConfig:
         """Return string representation of the config."""
         return repr(self._config)
 
-    def items(self) -> list[str, any]:
+    def items(self) -> typing.ItemsView[typing.Any, typing.Any]:
         """Return dictionary items of configuration."""
         return self._config.items()
 
     def _write_config(self) -> None:
         """Write configuration to a file."""
+        if not self._config_path:  # Appease mypy
+            msg = "Config path not set, cannot write config"
+            raise ValueError(msg, self._config_path)
+
         try:
             with open(self._config_path, "w", encoding="utf8") as toml_file:
                 tomlkit.dump(self._config, toml_file)
@@ -132,17 +137,25 @@ class AllowListAppConfig:
     def _validate_config(self) -> None:
         """Validate Config. Exit the program if they don't validate."""
         # This is to assure that you don't accidentally test without the tmp_dir fixture.
+        failed_items = []
+
         if self._config["flask"]["TESTING"] and not any(
             substring in str(self.instance_path) for substring in ["tmp", "temp", "TMP", "TEMP"]
         ):
             error = "['flask']['TESTING'] is True but instance_path is not a tmp_path"
-            raise ConfigValidationError(error)
+            failed_items.append(error)
 
         self._warn_unexpected_keys(DEFAULT_CONFIG, self._config, "<root>")
 
+        # If the config doesn't validate, we exit.
+        if len(failed_items) != 0:
+            raise ConfigValidationError(failed_items)
+
+        # Ensure database path is set
         if self._config["app"]["db_path"] == "":
             self._config["app"]["db_path"] = os.path.join(self.instance_path, "database.csv")
 
+        # Now we check the passwords
         if self._config["app"]["auth_type"] == "static":
             (
                 self._config["auth"]["static"]["password_cleartext"],
@@ -211,10 +224,14 @@ class AllowListAppConfig:
 
     def _load_file(self) -> dict:
         """Load configuration from a file."""
+        if not self._config_path:  # Appease mypy
+            msg = "Config path not set, cannot load config"
+            raise ValueError(msg, self._config_path)
+
         with open(self._config_path, encoding="utf8") as toml_file:
             return tomlkit.load(toml_file)
 
-    def _check_config_static_password(self, config: dict) -> str:
+    def _check_config_static_password(self, config: dict) -> tuple[str, str]:
         """Check the password parameters in the config."""
         if config["auth"]["static"]["password_cleartext"] == "" and config["auth"]["static"]["password_hashed"] == "":
             err_text = f"Please set password in: {self._config_path}"

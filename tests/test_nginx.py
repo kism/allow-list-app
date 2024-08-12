@@ -2,7 +2,6 @@
 
 import logging
 import os
-import time
 
 import pytest
 
@@ -36,15 +35,11 @@ def test_nginx_reload_success(fp, tmp_path, get_test_config, caplog: pytest.LogC
 @pytest.fixture()
 def sleepless(monkeypatch):
     """Patched function for no sleep."""
-
-    def sleep(seconds) -> None:
-        """No sleep."""
-
-    monkeypatch.setattr(time, "sleep", sleep)
+    monkeypatch.setattr("time.sleep", lambda _: None)
 
 
 def test_nginx_reload_revert_daily(sleepless, fp, tmp_path, get_test_config, caplog: pytest.LogCaptureFixture):
-    """Test that reload works."""
+    """Test that nginx reload works."""
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
 
     config_nginx = get_test_config("valid_nginx.toml")

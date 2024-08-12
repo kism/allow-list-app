@@ -1,7 +1,5 @@
 """Unit testing for the config module."""
 
-import os
-
 import pytest
 import pytest_mock
 
@@ -10,14 +8,9 @@ import allowlistapp
 DEFAULT_CONFIG = allowlistapp.config.DEFAULT_CONFIG
 
 
-def test_config_permissions_error_read(tmp_path, mocker: pytest_mock.plugin.MockerFixture):
+def test_config_permissions_error_read(tmp_path, place_test_config, mocker: pytest_mock.plugin.MockerFixture):
     """Mock a Permissions error with mock_open."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
-        config_contents = f.read()
-
-    tmp_f = tmp_path / "config.toml"
-
-    tmp_f.write_text(config_contents)
+    place_test_config("valid_testing_true.toml", tmp_path)
 
     mock_open_func = mocker.mock_open(read_data="")
     mock_open_func.side_effect = PermissionError("Permission denied")
@@ -29,14 +22,9 @@ def test_config_permissions_error_read(tmp_path, mocker: pytest_mock.plugin.Mock
         allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
 
 
-def test_config_permissions_error_write(tmp_path, mocker: pytest_mock.plugin.MockerFixture):
+def test_config_permissions_error_write(tmp_path, place_test_config, mocker: pytest_mock.plugin.MockerFixture):
     """Mock a Permissions error with mock_open."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
-        config_contents = f.read()
-
-    tmp_f = tmp_path / "config.toml"
-
-    tmp_f.write_text(config_contents)
+    place_test_config("valid_testing_true.toml", tmp_path)
 
     conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
 
@@ -50,14 +38,9 @@ def test_config_permissions_error_write(tmp_path, mocker: pytest_mock.plugin.Moc
         conf._write_config()
 
 
-def test_dictionary_functions_of_config(tmp_path):
+def test_dictionary_functions_of_config(tmp_path, place_test_config):
     """Test the functions in the config object that let it behave like a dictionary."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
-        config_contents = f.read()
-
-    tmp_f = tmp_path / "config.toml"
-
-    tmp_f.write_text(config_contents)
+    place_test_config("valid_testing_true.toml", tmp_path)
 
     conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
 
@@ -76,14 +59,9 @@ def test_dictionary_functions_of_config(tmp_path):
     assert isinstance(conf.items(), ItemsView), ".items() method of config object doesn't work"
 
 
-def test_config_dictionary_merge(tmp_path, get_test_config):
+def test_config_dictionary_merge(tmp_path, place_test_config, get_test_config):
     """Unit test the dictionary merge in _merge_with_defaults."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
-        config_contents = f.read()
-
-    tmp_f = tmp_path / "config.toml"
-
-    tmp_f.write_text(config_contents)
+    place_test_config("valid_testing_true.toml", tmp_path)
 
     conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
 
@@ -108,14 +86,9 @@ def test_config_dictionary_merge(tmp_path, get_test_config):
     assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
 
 
-def test_config_dictionary_not_in_schema(tmp_path, caplog: pytest.LogCaptureFixture):
+def test_config_dictionary_not_in_schema(tmp_path, place_test_config, caplog: pytest.LogCaptureFixture):
     """Unit test _warn_unexpected_keys."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
-        config_contents = f.read()
-
-    tmp_f = tmp_path / "config.toml"
-
-    tmp_f.write_text(config_contents)
+    place_test_config("valid_testing_true.toml", tmp_path)
 
     conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
 
@@ -128,3 +101,20 @@ def test_config_dictionary_not_in_schema(tmp_path, caplog: pytest.LogCaptureFixt
     conf._warn_unexpected_keys(DEFAULT_CONFIG, test_config, "<root>")
     assert "Config entry key <root>[TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text
     assert "Config entry key [app][TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text
+
+
+def test_load_write_no_config_path(place_test_config, tmp_path):
+    """Unit test the dictionary merge in _merge_with_defaults."""
+    place_test_config("valid_testing_true.toml", tmp_path)
+
+    conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
+
+    conf._config_path = None
+
+    # TEST: PermissionsError is raised.
+    with pytest.raises(ValueError, match="Config path not set, cannot load config"):
+        conf._load_file()
+
+    # TEST: PermissionsError is raised.
+    with pytest.raises(ValueError, match="Config path not set, cannot write config"):
+        conf._write_config()

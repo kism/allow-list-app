@@ -3,8 +3,9 @@ name: Test (PyTest)
 
 on:
   push:
-    paths-ignore:
-      - "**/*.md"
+    branches:
+      - main
+      - test
 
 jobs:
   test_app:
