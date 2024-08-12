@@ -63,14 +63,9 @@ def test_config_file_creation(tmp_path, get_test_config, caplog: pytest.LogCaptu
         assert "No configuration file found, creating at default location:" in caplog.text
 
 
-def test_config_file_loading(tmp_path, caplog: pytest.LogCaptureFixture):
+def test_config_file_loading(tmp_path, place_test_config, caplog: pytest.LogCaptureFixture):
     """Tests relating to config file."""
-    with open(os.path.join(pytest.TEST_CONFIGS_LOCATION, "valid_testing_true.toml")) as f:
-        config_contents = f.read()
-
-    tmp_f = tmp_path / "config.toml"
-
-    tmp_f.write_text(config_contents)
+    place_test_config("valid_testing_true.toml", tmp_path)
 
     # TEST: that file is created when no config is provided.
     caplog.set_level(logging.INFO)

@@ -1,4 +1,4 @@
-"""Handles the Databse of the app."""
+"""Handles the database of the app."""
 
 import csv
 import logging
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 
-database_path = None
+database_path: str | None = None
 
 
 def start_database() -> None:
@@ -22,6 +22,7 @@ def start_database() -> None:
 
 def db_get_allowlist() -> list:
     """Get the allowlist as a dict."""
+    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
     allowlist = []
 
     logger.debug("Building allowlist list from file...")
@@ -36,6 +37,7 @@ def db_get_allowlist() -> list:
 
 def db_write_allowlist(allowlist: list) -> None:
     """Insert an IP into the allowlist, returns if an IP has been inserted."""
+    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
     with open(database_path, "w", newline="") as csv_file:
         csv_writer = csv.DictWriter(
             csv_file,
@@ -53,6 +55,7 @@ def db_write_allowlist(allowlist: list) -> None:
 
 def db_check() -> None:
     """Check the 'schema' of the database."""
+    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
     try:
         with open(database_path, newline="") as csv_file:
             msg = f"Database found at: {database_path}"
@@ -75,6 +78,7 @@ def db_check() -> None:
 
 def db_reset() -> None:
     """Clear the database."""
+    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
     logger.info("CLEARING THE DATABASE...")
     with open(database_path, "w", newline="") as csv_file:
         csv_writer = csv.DictWriter(

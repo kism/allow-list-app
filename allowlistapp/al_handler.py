@@ -134,6 +134,7 @@ class AllowList:
 def start_allowlist_handler() -> None:
     """Start the allowlist handler to handle the allowlists."""
     global nginx_allowlist  # noqa: PLW0603 Needed for how flask loads modules.
+    nginx_allowlist = None  # Prevents tests from getting weird
 
     database.start_database()
 

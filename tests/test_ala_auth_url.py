@@ -6,12 +6,14 @@ from http import HTTPStatus
 import pytest
 import requests
 import responses
+from flask.testing import FlaskClient
+from responses import RequestsMock
 
 AUTHENTICATE_ENDPOINT = "https://jf.example.com/Users/authenticatebyname"
 
 
 @pytest.fixture()
-def client_url_auth(tmp_path, get_test_config) -> any:
+def client_url_auth(tmp_path, get_test_config) -> FlaskClient:
     """This fixture uses the default config within the flask app."""
     from allowlistapp import create_app
 
@@ -33,7 +35,7 @@ def mock_response_success():
         yield mocked_response
 
 
-def test_auth_success(client_url_auth, mock_response_success: any, get_test_config):
+def test_auth_success(client_url_auth, mock_response_success: RequestsMock, get_test_config):
     """TEST: Successful auth via URL."""
     result = client_url_auth.post("/authenticate/", data={"username": "test", "password": "test"})
 
@@ -53,7 +55,7 @@ def mock_response_failure():
         yield mocked_response
 
 
-def test_auth_failure(client_url_auth, mock_response_failure: any, get_test_config):
+def test_auth_failure(client_url_auth, mock_response_failure: RequestsMock, get_test_config):
     """TEST: Failed auth via URL."""
     result = client_url_auth.post("/authenticate/", data={"username": "test", "password": "test"})
 
@@ -73,7 +75,7 @@ def mock_response_connection_error():
 
 
 def test_auth_connection_error(
-    client_url_auth, mock_response_connection_error: any, get_test_config, caplog: pytest.LogCaptureFixture
+    client_url_auth, mock_response_connection_error: RequestsMock, get_test_config, caplog: pytest.LogCaptureFixture
 ):
     """TEST: Failed auth via URL."""
     with caplog.at_level(logging.ERROR):
@@ -95,7 +97,9 @@ def mock_response_timeout():
         yield mocked_response
 
 
-def test_auth_timeout(client_url_auth, mock_response_timeout: any, get_test_config, caplog: pytest.LogCaptureFixture):
+def test_auth_timeout(
+    client_url_auth, mock_response_timeout: RequestsMock, get_test_config, caplog: pytest.LogCaptureFixture
+):
     """TEST: Failed auth via URL."""
     with caplog.at_level(logging.ERROR):
         result = client_url_auth.post("/authenticate/", data={"username": "test", "password": "test"})
@@ -117,7 +121,7 @@ def mock_response_uncaught_exception():
 
 
 def test_auth_uncaught_exception(
-    client_url_auth, mock_response_uncaught_exception: any, get_test_config, caplog: pytest.LogCaptureFixture
+    client_url_auth, mock_response_uncaught_exception: RequestsMock, get_test_config, caplog: pytest.LogCaptureFixture
 ):
     """TEST: Failed auth via URL."""
     with caplog.at_level(logging.ERROR):
