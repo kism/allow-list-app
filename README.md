@@ -12,7 +12,7 @@
 ### Dev
 
 ```bash
-flask --app allowlist run
+flask --app allowlistapp run
 ```
 
 ### Prod
@@ -21,7 +21,7 @@ Simple
 
 ```bash
 poetry install --only main
-.venv/bin/waitress-serve --host 127.0.0.1 --call allowlist:create_app
+.venv/bin/waitress-serve --host 127.0.0.1 --call allowlistapp:create_app
 ```
 
 Complex
