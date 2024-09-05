@@ -6,20 +6,9 @@ from http import HTTPStatus
 import pytest
 import requests
 import responses
-from flask.testing import FlaskClient
 from responses import RequestsMock
 
 AUTHENTICATE_ENDPOINT = "https://jf.example.com/Users/authenticatebyname"
-
-
-@pytest.fixture()
-def client_url_auth(tmp_path, get_test_config) -> FlaskClient:
-    """This fixture uses the default config within the flask app."""
-    from allowlistapp import create_app
-
-    app = create_app(get_test_config("valid_url_auth_url.toml"), instance_path=tmp_path)
-
-    return app.test_client()
 
 
 @pytest.fixture()

@@ -47,6 +47,7 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     app.register_blueprint(ala_auth.bp)
 
     # Setup vars for template
+    hide_username = False
     if ala_conf["app"]["auth_type"] == "static":
         hide_username = True
     redirect_url = ala_conf["app"]["redirect_url"]
