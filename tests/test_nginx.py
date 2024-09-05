@@ -32,7 +32,7 @@ def test_nginx_reload_success(fp, tmp_path, get_test_config, caplog: pytest.LogC
         assert "Nginx reloaded" in caplog.text
 
 
-@pytest.fixture()
+@pytest.fixture
 def sleepless(monkeypatch):
     """Patched function for no sleep."""
     monkeypatch.setattr("time.sleep", lambda _: None)

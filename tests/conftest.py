@@ -16,25 +16,35 @@ from allowlistapp import create_app
 TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
 
 
-@pytest.fixture()
+@pytest.fixture
 def app(tmp_path, get_test_config) -> Flask:
     """This fixture uses the default config within the flask app."""
     return create_app(get_test_config("valid_testing_true.toml"), instance_path=tmp_path)
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(app: Flask) -> FlaskClient:
     """This returns a test client for the default app()."""
     return app.test_client()
 
 
-@pytest.fixture()
+@pytest.fixture
+def client_url_auth(tmp_path, get_test_config) -> FlaskClient:
+    """This fixture uses the default config within the flask app."""
+    from allowlistapp import create_app
+
+    app = create_app(get_test_config("valid_url_auth_url.toml"), instance_path=tmp_path)
+
+    return app.test_client()
+
+
+@pytest.fixture
 def runner(app: Flask) -> FlaskCliRunner:
     """TODO?????"""
     return app.test_cli_runner()
 
 
-@pytest.fixture()
+@pytest.fixture
 def get_test_config() -> Callable:
     """Function returns a function, which is how it needs to be."""
 
@@ -48,7 +58,7 @@ def get_test_config() -> Callable:
     return _get_test_config
 
 
-@pytest.fixture()
+@pytest.fixture
 def place_test_config(get_test_config) -> Callable:
     """Function returns a function, which is how it needs to be."""
 
