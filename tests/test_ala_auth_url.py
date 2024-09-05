@@ -11,7 +11,7 @@ from responses import RequestsMock
 AUTHENTICATE_ENDPOINT = "https://jf.example.com/Users/authenticatebyname"
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_response_success():
     """Mock a Jellyfin auth success."""
     with responses.RequestsMock() as mocked_response:
@@ -31,7 +31,7 @@ def test_auth_success(client_url_auth, mock_response_success: RequestsMock, get_
     assert result.status_code == HTTPStatus.OK, "Login should have succeeded"
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_response_failure():
     """Mock a Jellyfin auth failure."""
     with responses.RequestsMock() as mocked_response:
@@ -51,7 +51,7 @@ def test_auth_failure(client_url_auth, mock_response_failure: RequestsMock, get_
     assert result.status_code == HTTPStatus.FORBIDDEN, "Login should have failed"
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_response_connection_error():
     """Mock a Jellyfin auth failure."""
     with responses.RequestsMock() as mocked_response:
@@ -74,7 +74,7 @@ def test_auth_connection_error(
     assert result.status_code == HTTPStatus.FORBIDDEN
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_response_timeout():
     """Mock a Jellyfin auth failure."""
     with responses.RequestsMock() as mocked_response:
@@ -97,7 +97,7 @@ def test_auth_timeout(
     assert result.status_code == HTTPStatus.FORBIDDEN
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_response_uncaught_exception():
     """Mock a Jellyfin auth failure."""
     with responses.RequestsMock() as mocked_response:
