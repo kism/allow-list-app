@@ -77,6 +77,8 @@ ignore = [
     "S311",   # KG I'll assume no real crypto will be done in PyTest.
 ]
 
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
