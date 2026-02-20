@@ -1,40 +1,41 @@
-[tool.poetry]
+[project]
 name = "allowlistapp"
 version = "0.1.2"
 description = "Flask webapp to allowlist IPs on nginx"
-authors = ["Kieran Gee <kieran.lost.the.game@gmail.com>"]
-license = "MIT"
+authors = [{name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com"}]
+license = {text = "MIT"}
 readme = "README.md"
-package-mode = true
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0.3,<4",
+    "argon2-cffi>=23.1.0,<24",
+    "waitress>=3.0.0,<4",
+    "pyyaml>=6.0.1,<7",
+    "requests>=2.32.3,<3",    # TODO, see if you can just use flask.client
+    "tomlkit>=0.12,<1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-flask = "^3.0.3"
-argon2-cffi = "^23.1.0"
-waitress = "^3.0.0"
-pyyaml = "^6.0.1"
-requests = "^2.32.3"    # TODO, see if you can just use flask.client
-tomlkit = "^0.12"
-
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-cov = "*"
-pytest-mock = "*"
-detect-test-pollution = "*"
-pytest-random-order = "*"
-pytest-subprocess = "*"
-responses = "*"
-jinja2 = "*"                # Flask depends on this, I have it here since config loading is templated for tests.
-mypy = "*"
-types-requests = "*"
-
-[tool.poetry.group.dev.dependencies]
-pylance = "^0.10.18"
-ruff = "^0.4.4"
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "detect-test-pollution",
+    "pytest-random-order",
+    "pytest-subprocess",
+    "responses",
+    "jinja2",                # Flask depends on this, I have it here since config loading is templated for tests.
+    "mypy",
+    "types-requests",
+]
+dev = [
+    "pylance>=0.10.18,<1",
+    "ruff>=0.4.4,<1",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
