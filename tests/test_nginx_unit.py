@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from pytest_subprocess import FakeProcess
 
-from allowlistapp.instances import nginx as al_handler_nginx
+from allowlistapp.services import nginx as al_handler_nginx
 
 
 def mock_finish_write(nginx_allowlist: al_handler_nginx.NGINXAllowlist) -> None:

@@ -9,7 +9,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, request
 
-from allowlistapp.instances.allowlist import AllowList, init_allowlist
+from allowlistapp.instances.allowlist import get_allowlist, init_allowlist
 from allowlistapp.instances.config import get_ala_config
 
 from . import auth_types
@@ -19,13 +19,12 @@ REMOTE_AUTH_TYPES = auth_types.REMOTE_AUTH_TYPES
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
 ph = PasswordHasher()
-al: AllowList | None = None
 
 
 @bp.route("/check_auth/", methods=["GET"])
 def check_auth() -> tuple[str, int]:
     """Test Authenticate."""
-    assert al is not None  # noqa: S101 Appease mypy
+    al = get_allowlist()
     if request.environ.get("HTTP_X_FORWARDED_FOR") is None:
         ip = request.environ["REMOTE_ADDR"]
     else:
@@ -43,7 +42,7 @@ def check_auth() -> tuple[str, int]:
 @bp.route("/authenticate/", methods=["POST"])
 def authenticate() -> tuple[str, int]:
     """Post da password."""
-    assert al is not None  # noqa: S101 Appease mypy
+    al = get_allowlist()
     username = request.form["username"]
     password = request.form["password"]
 
@@ -81,12 +80,7 @@ def authenticate() -> tuple[str, int]:
 
 def start_allowlist_auth() -> None:
     """Start the allowlist."""
-    global al  # noqa: PLW0603 Needed due to how flask loads modules
-    al = None  # Prevents tests from getting weird
-
     init_allowlist()
-
-    al = AllowList()
 
 
 def check_password_static(password: str) -> bool:
