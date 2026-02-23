@@ -2,8 +2,8 @@
 name = "allowlistapp"
 version = "0.1.2"
 description = "Flask webapp to allowlist IPs on nginx"
-authors = [{name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com"}]
-license = {text = "MIT"}
+authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -11,7 +11,7 @@ dependencies = [
     "argon2-cffi>=23.1.0,<24",
     "waitress>=3.0.0,<4",
     "pyyaml>=6.0.1,<7",
-    "requests>=2.32.3,<3",    # TODO, see if you can just use flask.client
+    "requests>=2.32.3,<3",     # TODO, see if you can just use flask.client
     "tomlkit>=0.12,<1",
 ]
 
@@ -25,13 +25,10 @@ test = [
     "pytest-subprocess",
     "responses",
     "jinja2",                # Flask depends on this, I have it here since config loading is templated for tests.
-    "mypy",
-    "types-requests",
 ]
-dev = [
-    "pylance>=0.10.18,<1",
-    "ruff>=0.4.4,<1",
-]
+type = ["mypy", "types-requests", "ty"]
+
+dev = ["ruff>=0.15.0,<1"]
 
 [build-system]
 requires = ["hatchling"]
