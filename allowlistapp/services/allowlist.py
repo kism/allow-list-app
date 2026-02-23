@@ -8,7 +8,7 @@ import time
 from typing import TYPE_CHECKING
 
 from allowlistapp.instances.config import get_ala_config
-from allowlistapp.instances.database import get_database
+from allowlistapp.services.database import Database
 
 if TYPE_CHECKING:
     from allowlistapp.services.nginx import NGINXAllowlist
@@ -23,7 +23,9 @@ class AllowList:
         """Initialise the AllowList."""
         self._nginx_allowlist = nginx_allowlist
         ala_conf = get_ala_config()
-        self.allowlist = get_database().get_allowlist()
+
+        self._database = Database(ala_conf.app.db_path)
+        self.allowlist = self._database.get_allowlist()
 
         # See if we need to revert the allowlist daily
         if ala_conf.app.revert_daily:
@@ -69,7 +71,7 @@ class AllowList:
             added = True
             logger.info("Added ip: %s to allowlist", ip)
 
-            get_database().write_allowlist(self.allowlist)
+            self._database.write_allowlist(self.allowlist)
             self._write_app_allowlist_files()
 
         return added
@@ -79,7 +81,7 @@ class AllowList:
         while True:
             logger.info("Adding subnets/ips from config file")
 
-            get_database().reset()
+            self._database.reset()
 
             # Get the current time
             current_time = datetime.datetime.now().time()

@@ -2,9 +2,8 @@
 
 import csv
 import logging
+from pathlib import Path
 from typing import Any
-
-from allowlistapp.instances.config import get_ala_config
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +13,8 @@ CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 class Database:
     """Manages the CSV allowlist database."""
 
-    def __init__(self) -> None:
+    def __init__(self, db_path: Path | None) -> None:
         """Initialise the database, verifying it exists and has the correct schema."""
-        db_path = get_ala_config().app.db_path
         if db_path is None:
             msg = "db_path not configured"
             raise ValueError(msg)
