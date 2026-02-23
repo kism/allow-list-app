@@ -2,6 +2,8 @@
 
 import logging
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from typing import Protocol
 
 from flask import Flask
 
@@ -20,12 +22,16 @@ logger = logging.getLogger(__name__)  # This is where we log to in this module, 
 
 
 # Pass in the whole app object to make it obvious we are configuring the logger object within the app object.
-def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | None = None) -> None:
+def setup_logger(
+    app: Flask,
+    logging_conf: "LoggingConf",
+    in_logger: logging.Logger | None = None,
+) -> None:
     """Setup the logger, set configuration per logging_conf.
 
     Args:
         app: The Flask app, needed to get the app's logger object.
-        logging_conf: The logging configuration {"level": "", "path": ""}
+        logging_conf: The logging configuration object with level and path attributes.
         in_logger: Logger to configure, useful for testing.
     """
     if not in_logger:  # in_logger should only exist when testing with PyTest.
@@ -38,11 +44,11 @@ def setup_logger(app: Flask, logging_conf: dict, in_logger: logging.Logger | Non
     if not _has_console_handler(in_logger):
         _add_console_handler(in_logger)
 
-    _set_log_level(in_logger, logging_conf["level"])
+    _set_log_level(in_logger, logging_conf.level)
 
     # If we are logging to a file
-    if not _has_file_handler(in_logger) and logging_conf["path"] != "":
-        _add_file_handler(in_logger, logging_conf["path"])
+    if not _has_file_handler(in_logger) and logging_conf.path is not None:
+        _add_file_handler(in_logger, logging_conf.path)
 
     # Configure modules that are external and have their own loggers
     logging.getLogger("waitress").setLevel(logging.INFO)  # Prod web server, info has useful info.
@@ -88,7 +94,7 @@ def _set_log_level(in_logger: logging.Logger, log_level: int | str) -> None:
         in_logger.setLevel(log_level)
 
 
-def _add_file_handler(in_logger: logging.Logger, log_path: str) -> None:
+def _add_file_handler(in_logger: logging.Logger, log_path: Path) -> None:
     """Add a file handler to the logger."""
     try:
         file_handler = RotatingFileHandler(log_path, maxBytes=1000000, backupCount=5)
@@ -96,10 +102,18 @@ def _add_file_handler(in_logger: logging.Logger, log_path: str) -> None:
         err = "You are trying to log to a directory, try a file"
         raise IsADirectoryError(err) from exc
     except PermissionError as exc:
-        err = "The user running this does not have access to the file: " + log_path
+        err = "The user running this does not have access to the file: " + str(log_path)
         raise PermissionError(err) from exc
 
     formatter = logging.Formatter(LOG_FORMAT)
     file_handler.setFormatter(formatter)
     in_logger.addHandler(file_handler)
     logger.info("Logging to file: %s", log_path)
+
+
+# Avoid circular import: structural Protocol for duck typing
+class LoggingConf(Protocol):
+    """Protocol for logging configuration objects."""
+
+    level: str
+    path: Path | None

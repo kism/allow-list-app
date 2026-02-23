@@ -21,7 +21,7 @@ dependencies = [
     { name = "waitress" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "ruff" },
 ]
@@ -44,32 +44,27 @@ type = [
 [package.metadata]
 requires-dist = [
     { name = "argon2-cffi", specifier = ">=23.1.0,<24" },
+    { name = "detect-test-pollution", marker = "extra == 'test'" },
     { name = "flask", specifier = ">=3.0.3,<4" },
+    { name = "jinja2", marker = "extra == 'test'" },
+    { name = "mypy", marker = "extra == 'type'" },
     { name = "pydantic", specifier = ">=2.0,<3" },
     { name = "pydantic-settings", specifier = ">=2.0,<3" },
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "pytest-cov", marker = "extra == 'test'" },
+    { name = "pytest-mock", marker = "extra == 'test'" },
+    { name = "pytest-random-order", marker = "extra == 'test'" },
+    { name = "pytest-subprocess", marker = "extra == 'test'" },
     { name = "pyyaml", specifier = ">=6.0.1,<7" },
     { name = "requests", specifier = ">=2.32.3,<3" },
+    { name = "responses", marker = "extra == 'test'" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.0,<1" },
     { name = "tomlkit", specifier = ">=0.12,<1" },
+    { name = "ty", marker = "extra == 'type'" },
+    { name = "types-requests", marker = "extra == 'type'" },
     { name = "waitress", specifier = ">=3.0.0,<4" },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "ruff", specifier = ">=0.15.0,<1" }]
-test = [
-    { name = "detect-test-pollution" },
-    { name = "jinja2" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "pytest-random-order" },
-    { name = "pytest-subprocess" },
-    { name = "responses" },
-]
-type = [
-    { name = "mypy" },
-    { name = "ty" },
-    { name = "types-requests" },
-]
+provides-extras = ["test", "type", "dev"]
 
 [[package]]
 name = "annotated-types"

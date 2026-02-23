@@ -8,6 +8,7 @@ import time
 import pytest
 
 from allowlistapp import al_handler_nginx
+from allowlistapp.config import NginxConfig, ServicesConfig
 
 
 def mock_finish_write(nginx_allowlist):
@@ -29,9 +30,7 @@ def test_conflicting_writes(tmp_path, fp, caplog):
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
     ala_conf = {
-        "services": {
-            "nginx": {"allowlist_path": os.path.join(tmp_path, "ipallowlist.conf")},
-        },
+        "services": ServicesConfig(nginx=NginxConfig(allowlist_path=tmp_path / "ipallowlist.conf")),
     }
     allowlist = [
         {"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"},
@@ -88,9 +87,7 @@ def test_invalid_allowlist_path(path, expected_log, fp, caplog):
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
     ala_conf = {
-        "services": {
-            "nginx": {"allowlist_path": path},
-        },
+        "services": ServicesConfig(nginx=NginxConfig(allowlist_path=path)),
     }
     allowlist = []
 

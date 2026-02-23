@@ -1,6 +1,8 @@
 """This is specifically for this one variable since its a bit major."""
 
-REMOTE_AUTH_TYPES: dict = {
+from typing import Any
+
+REMOTE_AUTH_TYPES: dict[str, Any] = {
     "jellyfin": {
         "endpoint": "Users/authenticatebyname",
         "username_field": "Username",

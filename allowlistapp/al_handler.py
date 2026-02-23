@@ -5,6 +5,7 @@ import ipaddress
 import logging
 import threading
 import time
+from typing import Any
 
 from flask import current_app
 
@@ -18,18 +19,18 @@ nginx_allowlist = None
 class AllowList:
     """This is the allowlist object, init from database, query from memory, write to database."""
 
-    def __init__(self, ala_conf: dict) -> None:
+    def __init__(self, ala_conf: dict[str, Any]) -> None:
         """Initialise the AllowList."""
         self.ala_conf = ala_conf
         self.allowlist = database.db_get_allowlist()
 
         # See if we need to revert the allowlist daily
-        if self.ala_conf["app"]["revert_daily"]:
+        if self.ala_conf["app"].revert_daily:
             thread = threading.Thread(target=self._revert_list_daily, args=(), daemon=True)
             thread.start()
 
         logger.info("Initialising the database...")
-        for subnet in self.ala_conf["app"]["allowed_subnets"]:
+        for subnet in self.ala_conf["app"].allowed_subnets:
             self.add_to_allowlist("default", subnet)
         logger.info("Done initialising the database")
 
@@ -138,7 +139,7 @@ def start_allowlist_handler() -> None:
 
     database.start_database()
 
-    if current_app.config["services"]["nginx"]["enabled"]:
+    if current_app.config["services"].nginx.enabled:
         from allowlistapp.al_handler_nginx import NGINXAllowlist
 
         nginx_allowlist = NGINXAllowlist()

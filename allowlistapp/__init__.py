@@ -1,17 +1,18 @@
 """Flask webapp allowlistapp."""
 
 from pprint import pformat
+from typing import Any
 
 from flask import Flask, render_template
 
 from . import ala_auth, config, logger
 
 
-def create_app(test_config: dict | None = None, instance_path: str | None = None) -> Flask:
+def create_app(test_config: dict[str, Any] | None = None, instance_path: str | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)  # Create Flask app object
 
-    logger.setup_logger(app, config.LoggingConfig().model_dump())  # Setup logger with defaults defined in config module
+    logger.setup_logger(app, config.LoggingConfig())  # Setup logger with defaults defined in config module
 
     if test_config:  # For Python testing we will often pass in a config
         if not instance_path:
@@ -23,15 +24,15 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
 
     app.logger.debug("Instance path is: %s", app.instance_path)
 
-    logger.setup_logger(app, ala_conf.logging.model_dump())  # Setup logger with config
+    logger.setup_logger(app, ala_conf.logging)  # Setup logger with loaded config
 
     # Flask config, at the root of the config object.
     app.config.from_mapping(ala_conf.flask.model_dump())
 
-    # Other sections handled by config.py
-    for key, value in ala_conf.model_dump().items():
+    # Store each Pydantic model object directly in Flask config for attribute access
+    for key in type(ala_conf).model_fields:
         if key != "flask":
-            app.config[key] = value
+            app.config[key] = getattr(ala_conf, key)
 
     # Do some debug logging of config
     app_config_str = ">>>\nFlask config:"

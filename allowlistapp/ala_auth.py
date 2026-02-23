@@ -3,6 +3,7 @@
 import json
 import logging
 from http import HTTPStatus
+from typing import Any
 
 import requests
 from argon2 import PasswordHasher
@@ -11,7 +12,7 @@ from flask import Blueprint, current_app, request
 
 from . import al_handler, ala_auth_types
 
-REMOTE_AUTH_TYPES: dict = ala_auth_types.REMOTE_AUTH_TYPES
+REMOTE_AUTH_TYPES: dict[str, Any] = ala_auth_types.REMOTE_AUTH_TYPES
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
@@ -47,7 +48,7 @@ def authenticate() -> tuple[str, int]:
     # Check the auth depending on if we are using static auth, or checking via an external url
     result = (
         check_password_static(password)
-        if current_app.config["app"]["auth_type"] == "static"
+        if current_app.config["app"].auth_type == "static"
         else check_password_url(username, password)
     )
 
@@ -89,7 +90,7 @@ def start_allowlist_auth() -> None:
 def check_password_static(password: str) -> bool:
     """Check password (secure) (I hope)."""
     password_correct = False
-    hashed = current_app.config["auth"]["static"]["password_hashed"]
+    hashed = current_app.config["auth"].static.password_hashed
     try:
         ph.verify(hashed, password)
         password_correct = True
@@ -104,15 +105,13 @@ def check_password_url(username: str, password: str) -> bool:
     password_correct = False
 
     url = (
-        current_app.config["auth"]["remote"]["url"]
-        + "/"
-        + REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["endpoint"]
+        current_app.config["auth"].remote.url + "/" + REMOTE_AUTH_TYPES[current_app.config["app"].auth_type]["endpoint"]
     )
-    headers: dict[str, str] = REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["headers"]
+    headers: dict[str, str] = REMOTE_AUTH_TYPES[current_app.config["app"].auth_type]["headers"]
 
     data = {
-        REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["username_field"]: username,
-        REMOTE_AUTH_TYPES[current_app.config["app"]["auth_type"]]["password_field"]: password,
+        REMOTE_AUTH_TYPES[current_app.config["app"].auth_type]["username_field"]: username,
+        REMOTE_AUTH_TYPES[current_app.config["app"].auth_type]["password_field"]: password,
     }
     json_data = json.dumps(data)
 

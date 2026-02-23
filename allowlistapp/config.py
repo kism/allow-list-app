@@ -4,10 +4,12 @@ import contextlib
 import logging
 import os
 import pwd
+from pathlib import Path
+from typing import Any
 
 import tomlkit
 from argon2 import PasswordHasher
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ class ConfigUrlAuthError(Exception):
 class ConfigValidationError(Exception):
     """Error to raise if there is a config validation error."""
 
-    def __init__(self, failure: list) -> None:
+    def __init__(self, failure: list[str]) -> None:
         """Raise exception with list of config issues."""
         super().__init__(failure)
 
@@ -47,7 +49,20 @@ class LoggingConfig(BaseModel):
     """Logging configuration."""
 
     level: str = "INFO"
-    path: str = ""
+    path: Path | None = None
+
+    @field_validator("path", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v: str | Path | None) -> Path | None:
+        """Convert empty string to None."""
+        if v == "" or v is None:
+            return None
+        return Path(v) if isinstance(v, str) else v
+
+    @field_serializer("path")
+    def serialize_path(self, v: Path | None) -> str:
+        """Serialize Path to str for TOML, None to empty string."""
+        return "" if v is None else str(v)
 
 
 class FlaskConfig(BaseModel):
@@ -61,7 +76,20 @@ class NginxConfig(BaseModel):
     """NGINX service configuration."""
 
     enabled: bool = False
-    allowlist_path: str = ""
+    allowlist_path: Path | None = None
+
+    @field_validator("allowlist_path", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v: str | Path | None) -> Path | None:
+        """Convert empty string to None."""
+        if v == "" or v is None:
+            return None
+        return Path(v) if isinstance(v, str) else v
+
+    @field_serializer("allowlist_path")
+    def serialize_allowlist_path(self, v: Path | None) -> str:
+        """Serialize Path to str for TOML, None to empty string."""
+        return "" if v is None else str(v)
 
 
 class ServicesConfig(BaseModel):
@@ -97,7 +125,20 @@ class AppConfig(BaseModel):
     auth_type: str = "static"
     revert_daily: bool = True
     redirect_url: str = ""
-    db_path: str = ""
+    db_path: Path | None = None
+
+    @field_validator("db_path", mode="before")
+    @classmethod
+    def empty_str_to_none(cls, v: str | Path | None) -> Path | None:
+        """Convert empty string to None."""
+        if v == "" or v is None:
+            return None
+        return Path(v) if isinstance(v, str) else v
+
+    @field_serializer("db_path")
+    def serialize_db_path(self, v: Path | None) -> str:
+        """Serialize Path to str for TOML, None to empty string."""
+        return "" if v is None else str(v)
 
 
 class AllowListAppConfig(BaseSettings):
@@ -111,25 +152,25 @@ class AllowListAppConfig(BaseSettings):
     logging: LoggingConfig = LoggingConfig()
     flask: FlaskConfig = FlaskConfig()
 
-    def write_config(self, config_path: str) -> None:
+    def write_config(self, config_path: Path) -> None:
         """Write configuration to a TOML file."""
         try:
-            with open(config_path, "w", encoding="utf8") as toml_file:
-                tomlkit.dump(self.model_dump(), toml_file)
+            with config_path.open("w", encoding="utf8") as toml_file:
+                tomlkit.dump(self.model_dump(mode="json"), toml_file)
         except PermissionError as exc:
             user_account = pwd.getpwuid(os.getuid())[0]
             err = f"Fix permissions: chown {user_account} {config_path}"
             raise PermissionError(err) from exc
 
     @classmethod
-    def load(cls, instance_path: str, config_data: dict | None = None) -> "AllowListAppConfig":
+    def load(cls, instance_path: str | Path, config_data: dict[str, Any] | None = None) -> "AllowListAppConfig":
         """Load, validate, and return config.
 
         Args:
             instance_path: The flask instance path.
             config_data: If provided, config won't be loaded from a file.
         """
-        config_path = cls._resolve_config_path(instance_path)
+        config_path = cls._resolve_config_path(Path(instance_path))
 
         if config_data is None:
             config_data = cls._load_file(config_path)
@@ -138,7 +179,7 @@ class AllowListAppConfig(BaseSettings):
 
         config.write_config(config_path)
 
-        config._post_validate(instance_path, config_path)
+        config._post_validate(Path(instance_path), config_path)
 
         config.write_config(config_path)
 
@@ -146,7 +187,7 @@ class AllowListAppConfig(BaseSettings):
 
         return config
 
-    def _post_validate(self, instance_path: str, config_path: str) -> None:
+    def _post_validate(self, instance_path: Path, config_path: Path) -> None:
         """Post-load validation and processing."""
         failed_items = []
 
@@ -158,15 +199,15 @@ class AllowListAppConfig(BaseSettings):
         if failed_items:
             raise ConfigValidationError(failed_items)
 
-        if self.app.db_path == "":
-            self.app.db_path = os.path.join(str(instance_path), "database.csv")
+        if self.app.db_path is None:
+            self.app.db_path = instance_path / "database.csv"
 
         if self.app.auth_type == "static":
             self._process_static_password(config_path)
         else:
             self._check_url_auth()
 
-    def _process_static_password(self, config_path: str) -> None:
+    def _process_static_password(self, config_path: Path) -> None:
         """Hash cleartext password if present, validate password is set."""
         if self.auth.static.password_cleartext == "" and self.auth.static.password_hashed == "":
             err_text = f"Please set password in: {config_path}"
@@ -190,17 +231,17 @@ class AllowListAppConfig(BaseSettings):
             raise ConfigUrlAuthError(err_text)
 
     @staticmethod
-    def _resolve_config_path(instance_path: str) -> str:
+    def _resolve_config_path(instance_path: Path) -> Path:
         """Determine the config file path, creating defaults if none found."""
         paths = [
-            os.path.join(str(instance_path), "config.toml"),
-            os.path.expanduser("~/.config/allowlistapp/config.toml"),
-            "/etc/allowlistapp/config.toml",
+            instance_path / "config.toml",
+            Path.home() / ".config" / "allowlistapp" / "config.toml",
+            Path("/etc/allowlistapp/config.toml"),
         ]
 
         config_path = None
         for path in paths:
-            if os.path.isfile(path):
+            if path.is_file():
                 logger.info("Found config at path: %s", path)
                 if not config_path:
                     logger.info("Using this path as it's the first one that was found")
@@ -212,10 +253,10 @@ class AllowListAppConfig(BaseSettings):
             config_path = paths[0]
             logger.warning("No configuration file found, creating at default location: %s", config_path)
             with contextlib.suppress(FileExistsError):
-                os.makedirs(str(instance_path))
+                instance_path.mkdir(parents=True)
             try:
-                with open(config_path, "w", encoding="utf8") as toml_file:
-                    tomlkit.dump(AllowListAppConfig().model_dump(), toml_file)
+                with config_path.open("w", encoding="utf8") as toml_file:
+                    tomlkit.dump(AllowListAppConfig().model_dump(mode="json"), toml_file)
             except PermissionError as exc:
                 user_account = pwd.getpwuid(os.getuid())[0]
                 err = f"Fix permissions: chown {user_account} {config_path}"
@@ -224,9 +265,9 @@ class AllowListAppConfig(BaseSettings):
         return config_path
 
     @staticmethod
-    def _load_file(config_path: str) -> dict:
+    def _load_file(config_path: Path) -> dict[str, Any]:
         """Load configuration from a TOML file."""
-        with open(config_path, encoding="utf8") as toml_file:
+        with config_path.open(encoding="utf8") as toml_file:
             return dict(tomlkit.load(toml_file))
 
 

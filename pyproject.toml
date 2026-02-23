@@ -17,7 +17,7 @@ dependencies = [
     "pydantic-settings>=2.0,<3",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 test = [
     "pytest",
     "pytest-cov",
@@ -106,7 +106,7 @@ files = ["allowlistapp", "tests"]
 namespace_packages = true
 explicit_package_bases = true
 show_error_codes = true
-strict = false
+strict = true
 enable_error_code = [
     "ignore-without-code",
     "redundant-expr",
