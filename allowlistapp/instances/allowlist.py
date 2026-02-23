@@ -3,8 +3,7 @@
 import logging
 
 from allowlistapp.instances.config import get_ala_config
-from allowlistapp.instances.database import init_database
-from allowlistapp.instances.nginx import get_nginx_allowlist, init_nginx
+from allowlistapp.instances.nginx import get_nginx_allowlist
 from allowlistapp.services.allowlist import AllowList
 
 logger = logging.getLogger(__name__)
@@ -25,11 +24,8 @@ def init_allowlist() -> None:
     global _allowlist  # noqa: PLW0603
     _allowlist = None
 
-    init_database()
-
     nginx_instance = None
     if get_ala_config().services.nginx.enabled:
-        init_nginx()
         nginx_instance = get_nginx_allowlist()
 
     _allowlist = AllowList(nginx_instance)
