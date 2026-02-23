@@ -37,7 +37,8 @@ class NGINXAllowlist:
             time.sleep(0.2)
 
         env = Environment(
-            loader=FileSystemLoader(Path.cwd() / "allowlistapp" / "templates"), autoescape=True
+            loader=FileSystemLoader(Path.cwd() / "allowlistapp" / "templates"),
+            autoescape=True,
         )
         template = env.get_template("nginx.conf.j2")
         rendered_template = template.render(allowlist=allowlist)
