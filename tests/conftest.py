@@ -14,7 +14,7 @@ from flask.testing import FlaskClient, FlaskCliRunner
 
 from allowlistapp import create_app
 
-TEST_CONFIGS_LOCATION = Path.cwd() / "tests" / "configs"
+TEST_CONFIGS_LOCATION = Path(__file__).parent / "configs"
 
 
 @pytest.fixture

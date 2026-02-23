@@ -5,10 +5,11 @@ import os
 import pwd
 import subprocess
 import time
-from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
+
+from .constants import TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class NGINXAllowlist:
             time.sleep(0.2)
 
         env = Environment(
-            loader=FileSystemLoader(Path.cwd() / "allowlistapp" / "templates"),
+            loader=FileSystemLoader(TEMPLATES_DIR),
             autoescape=True,
         )
         template = env.get_template("nginx.conf.j2")
