@@ -1,7 +1,6 @@
 """Test ngnix reloading."""
 
 import logging
-import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -18,7 +17,7 @@ def test_nginx_reload_failure(
     """Test that nginx reload fails, assumes that nginx isn't on the host testing this lol."""
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=1)
     config_nginx = get_test_config("valid_nginx.toml")
-    config_nginx["services"]["nginx"]["allowlist_path"] = os.path.join(tmp_path, "ipallowlist.conf")
+    config_nginx["services"]["nginx"]["allowlist_path"] = str(tmp_path / "ipallowlist.conf")
     create_app(config_nginx, tmp_path)
     with caplog.at_level(logging.INFO):
         assert "Reverting allowlist in" in caplog.text
@@ -32,7 +31,7 @@ def test_nginx_reload_success(
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
 
     config_nginx = get_test_config("valid_nginx.toml")
-    config_nginx["services"]["nginx"]["allowlist_path"] = os.path.join(tmp_path, "ipallowlist.conf")
+    config_nginx["services"]["nginx"]["allowlist_path"] = str(tmp_path / "ipallowlist.conf")
 
     create_app(config_nginx, tmp_path)
 
@@ -57,7 +56,7 @@ def test_nginx_reload_revert_daily(
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
 
     config_nginx = get_test_config("valid_nginx.toml")
-    config_nginx["services"]["nginx"]["allowlist_path"] = os.path.join(tmp_path, "ipallowlist.conf")
+    config_nginx["services"]["nginx"]["allowlist_path"] = str(tmp_path / "ipallowlist.conf")
 
     create_app(config_nginx, tmp_path)
 

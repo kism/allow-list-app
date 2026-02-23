@@ -1,7 +1,6 @@
 """PyTest, Tests the hello API endpoint."""
 
 import csv
-import os
 from http import HTTPStatus
 from pathlib import Path
 
@@ -37,7 +36,7 @@ def test_auth_static_success(tmp_path: Path, headers: dict[str, str], expected_e
     assert response.data == b"yep", "Check auth should have said that user is logged in."
     assert response.status_code == HTTPStatus.OK
 
-    with open(os.path.join(tmp_path, "database.csv")) as f:
+    with (tmp_path / "database.csv").open() as f:
         csv_reader = csv.DictReader(f, quoting=csv.QUOTE_MINIMAL)
         allowlist = list(csv_reader).copy()
 

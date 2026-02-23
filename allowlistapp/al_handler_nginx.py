@@ -5,6 +5,7 @@ import os
 import pwd
 import subprocess
 import time
+from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
@@ -36,21 +37,21 @@ class NGINXAllowlist:
             time.sleep(0.2)
 
         env = Environment(
-            loader=FileSystemLoader(os.path.join(os.getcwd(), "allowlistapp", "templates")), autoescape=True
+            loader=FileSystemLoader(Path.cwd() / "allowlistapp" / "templates"), autoescape=True
         )
         template = env.get_template("nginx.conf.j2")
         rendered_template = template.render(allowlist=allowlist)
 
+        if allowlist_path is None:
+            msg = "In the config, please enter a path for the NGINX allowlist file."
+            logger.exception(msg)
+            raise FileNotFoundError(msg)
+
         try:
-            if allowlist_path is None:
-                msg = "In the config, please enter a path for the NGINX allowlist file."
-                raise FileNotFoundError(msg)
             with allowlist_path.open("w", encoding="utf8") as conf_file:
                 conf_file.write(rendered_template)
         except FileNotFoundError as exc:
             msg = f"Could not write NGINX allowlist file to path: {allowlist_path}"
-            if allowlist_path is None:
-                msg = "In the config, please enter a path for the NGINX allowlist file."
             logger.exception(msg)
             raise FileNotFoundError(msg) from exc
 

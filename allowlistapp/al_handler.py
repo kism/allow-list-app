@@ -140,7 +140,7 @@ def start_allowlist_handler() -> None:
     database.start_database()
 
     if current_app.config["services"].nginx.enabled:
-        from allowlistapp.al_handler_nginx import NGINXAllowlist
+        from allowlistapp.al_handler_nginx import NGINXAllowlist  # noqa: PLC0415
 
         nginx_allowlist = NGINXAllowlist()
 

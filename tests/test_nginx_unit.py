@@ -1,7 +1,6 @@
 """Unit test ngnix reloading."""
 
 import logging
-import os
 import threading
 import time
 from pathlib import Path
@@ -54,7 +53,7 @@ def test_conflicting_writes(tmp_path: Path, fp: FakeProcess, caplog: pytest.LogC
     with caplog.at_level(logging.DEBUG):
         assert "Finished writing nginx allowlist" in caplog.text
 
-    with open(os.path.join(tmp_path, "ipallowlist.conf")) as f:
+    with (tmp_path / "ipallowlist.conf").open() as f:
         nginx_conf = f.read()
 
     for item in allowlist:
@@ -84,7 +83,9 @@ def test_conflicting_reloads() -> None:
         ("PATH/THAT/DOES/NOT/EXIST", "Could not write NGINX allowlist file to path: PATH/THAT/DOES/NOT/EXIST"),
     ],
 )
-def test_invalid_allowlist_path(path: str, expected_log: str, fp: FakeProcess, caplog: pytest.LogCaptureFixture) -> None:
+def test_invalid_allowlist_path(
+    path: str, expected_log: str, fp: FakeProcess, caplog: pytest.LogCaptureFixture
+) -> None:
     """Test writing the allowlist when the object has a pending write."""
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 

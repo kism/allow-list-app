@@ -12,7 +12,9 @@ from allowlistapp import create_app
 from allowlistapp.config import LoggingConfig
 
 
-def test_config_invalid_log_level(tmp_path: Path, get_test_config: FunctionType, caplog: pytest.LogCaptureFixture) -> None:
+def test_config_invalid_log_level(
+    tmp_path: Path, get_test_config: FunctionType, caplog: pytest.LogCaptureFixture
+) -> None:
     """Test if logging to file works."""
     with caplog.at_level(logging.WARNING):
         create_app(get_test_config("invalid_log_level.toml"), instance_path=tmp_path)
