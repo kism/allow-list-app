@@ -8,8 +8,7 @@ from pathlib import Path
 import pytest
 from pytest_subprocess import FakeProcess
 
-from allowlistapp import al_handler_nginx
-from allowlistapp.config import NginxConfig, ServicesConfig
+from allowlistapp.instances import nginx as al_handler_nginx
 
 
 def mock_finish_write(nginx_allowlist: al_handler_nginx.NGINXAllowlist) -> None:
@@ -30,9 +29,7 @@ def test_conflicting_writes(tmp_path: Path, fp: FakeProcess, caplog: pytest.LogC
 
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
-    ala_conf = {
-        "services": ServicesConfig(nginx=NginxConfig(allowlist_path=tmp_path / "ipallowlist.conf")),
-    }
+    allowlist_path = tmp_path / "ipallowlist.conf"
     allowlist: list[dict[str, str]] = [
         {"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"},
         {"date": "2023-01-01", "ip": "192.168.0.1", "username": "TESTUSER2"},
@@ -46,14 +43,14 @@ def test_conflicting_writes(tmp_path: Path, fp: FakeProcess, caplog: pytest.LogC
     thread = threading.Thread(target=mock_finish_write, args=(nginx_allowlist,))
     thread.start()
 
-    nginx_allowlist.write(ala_conf, allowlist)
+    nginx_allowlist.write(allowlist_path, allowlist)
 
     thread.join()
 
     with caplog.at_level(logging.DEBUG):
         assert "Finished writing nginx allowlist" in caplog.text
 
-    with (tmp_path / "ipallowlist.conf").open() as f:
+    with allowlist_path.open() as f:
         nginx_conf = f.read()
 
     for item in allowlist:
@@ -79,25 +76,22 @@ def test_conflicting_reloads() -> None:
 @pytest.mark.parametrize(
     ("path", "expected_log"),
     [
-        ("", "In the config, please enter a path for the NGINX allowlist file."),
-        ("PATH/THAT/DOES/NOT/EXIST", "Could not write NGINX allowlist file to path: PATH/THAT/DOES/NOT/EXIST"),
+        (None, "In the config, please enter a path for the NGINX allowlist file."),
+        (Path("PATH/THAT/DOES/NOT/EXIST"), "Could not write NGINX allowlist file to path: PATH/THAT/DOES/NOT/EXIST"),
     ],
 )
 def test_invalid_allowlist_path(
-    path: str, expected_log: str, fp: FakeProcess, caplog: pytest.LogCaptureFixture
+    path: Path | None, expected_log: str, fp: FakeProcess, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test writing the allowlist when the object has a pending write."""
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
-    ala_conf = {
-        "services": ServicesConfig(nginx=NginxConfig(allowlist_path=path)),  # type: ignore[arg-type]
-    }
     allowlist: list[dict[str, str]] = []
 
     nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 
     with pytest.raises(FileNotFoundError):
-        nginx_allowlist.write(ala_conf, allowlist)
+        nginx_allowlist.write(path, allowlist)
 
     with caplog.at_level(logging.CRITICAL):
         assert expected_log in caplog.text

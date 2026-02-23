@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from flask import current_app
+from allowlistapp.instances.config import get_ala_config
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def get_database_path() -> Path:
 def start_database() -> None:
     """Start this module."""
     global _database_path  # noqa: PLW0603 Needed due to how flask loads modules.
-    _database_path = current_app.config.app.db_path
+    _database_path = get_ala_config().app.db_path
     db_check()
 
 

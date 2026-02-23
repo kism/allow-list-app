@@ -5,11 +5,12 @@ import os
 import pwd
 import subprocess
 import time
+from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
-from .constants import TEMPLATES_DIR
+from allowlistapp.constants import TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +31,8 @@ class NGINXAllowlist:
         if self.user_account != "root":
             self.reload_nginx_command = ["sudo", "systemctl", "reload", "nginx"]
 
-    def write(self, ala_conf: dict[str, Any], allowlist: list[dict[str, Any]]) -> None:
+    def write(self, allowlist_path: Path | None, allowlist: list[dict[str, Any]]) -> None:
         """Write NGINX allowlist."""
-        allowlist_path = ala_conf["services"].nginx.allowlist_path
         logger.debug("Writing nginx allowlist: %s", allowlist_path)
         while self._writing:
             time.sleep(0.2)

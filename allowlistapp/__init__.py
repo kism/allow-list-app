@@ -6,7 +6,8 @@ from typing import Any
 
 from flask import Flask, render_template
 
-from . import ala_auth, config, logger
+from . import auth, config, logger
+from .instances.config import get_ala_config
 from .version import __version__
 
 
@@ -17,13 +18,14 @@ def create_app(test_config: dict[str, Any] | None = None, instance_path: str | P
 
     logger.setup_logger(app, config.LoggingConfig())  # Setup logger with defaults defined in config module
 
-    if test_config:  # For Python testing we will often pass in a config
-        if not instance_path:
-            app.logger.critical("When testing supply both test_config and instance_path!")
-            raise AttributeError(instance_path)
-        ala_conf = config.AllowListAppConfig.load(config_data=test_config, instance_path=app.instance_path)
-    else:
-        ala_conf = config.AllowListAppConfig.load(instance_path=app.instance_path)  # Loads app config from disk
+    if test_config and not instance_path:  # For Python testing we will often pass in a config
+        app.logger.critical("When testing supply both test_config and instance_path!")
+        raise AttributeError(instance_path)
+
+    ala_conf = get_ala_config(
+        instance_path=Path(app.instance_path),
+        config_data=test_config,
+    )
 
     app.logger.debug("Instance path is: %s", app.instance_path)
 
@@ -31,11 +33,6 @@ def create_app(test_config: dict[str, Any] | None = None, instance_path: str | P
 
     # Flask config, at the root of the config object.
     app.config.from_mapping(ala_conf.flask.model_dump())
-
-    # Store each Pydantic model object directly in Flask config for attribute access
-    for key in type(ala_conf).model_fields:
-        if key != "flask":
-            app.config[key] = getattr(ala_conf, key)
 
     # Do some debug logging of config
     app_config_str = ">>>\nFlask config:"
@@ -45,10 +42,10 @@ def create_app(test_config: dict[str, Any] | None = None, instance_path: str | P
     app.logger.debug(app_config_str)
 
     with app.app_context():
-        ala_auth.start_allowlist_auth()
+        auth.start_allowlist_auth()
 
     # Register the authentication endpoint
-    app.register_blueprint(ala_auth.bp)
+    app.register_blueprint(auth.bp)
 
     # Setup vars for template
     hide_username = ala_conf.app.auth_type == "static"
