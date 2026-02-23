@@ -9,7 +9,7 @@ from flask import Flask, render_template
 from . import auth, config, logger
 from .instances.allowlist import get_allowlist
 from .instances.config import get_ala_config
-from .version import __version__
+from .version import __version__, MODULE_NAME_NICE
 
 
 def create_app(test_config: dict[str, Any] | None = None, instance_path: str | Path | None = None) -> Flask:
@@ -51,11 +51,15 @@ def create_app(test_config: dict[str, Any] | None = None, instance_path: str | P
     hide_username = ala_conf.app.auth_type == "static"
     redirect_url = ala_conf.app.redirect_url
 
+    version_str = f"{MODULE_NAME_NICE} v{__version__}"
+
     @app.route("/")
     def home() -> str:
         """Flask Home."""
-        return render_template("home.html.j2", hide_username=hide_username, redirect_url=redirect_url)
+        return render_template(
+            "home.html.j2", hide_username=hide_username, redirect_url=redirect_url, footer_text=version_str
+        )
 
-    app.logger.info("AllowListApp version %s", __version__)
+    app.logger.info(version_str)
 
     return app

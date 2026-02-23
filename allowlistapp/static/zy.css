@@ -78,12 +78,21 @@ body {
     sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 18px;
   font-weight: 500;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   max-width: 700px;
   background-color: black;
   color: silver;
   line-height: 1.5;
   padding-left: 15px;
   padding-right: 15px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 hr {
@@ -217,6 +226,7 @@ small {
 footer {
   font-size: smaller;
   margin: 20px 0 16px;
+  margin-top: auto;
 }
 
 footer p {
