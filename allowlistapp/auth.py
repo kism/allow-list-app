@@ -9,7 +9,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from flask import Blueprint, request
 
-from allowlistapp.instances.allowlist import get_allowlist, init_allowlist
+from allowlistapp.instances.allowlist import get_allowlist
 from allowlistapp.instances.config import get_ala_config
 
 from . import auth_types
@@ -76,11 +76,6 @@ def authenticate() -> tuple[str, int]:
         al.add_to_allowlist(username, ip)
 
     return message, status
-
-
-def start_allowlist_auth() -> None:
-    """Start the allowlist."""
-    init_allowlist()
 
 
 def check_password_static(password: str) -> bool:

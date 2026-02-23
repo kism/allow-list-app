@@ -13,22 +13,14 @@ _allowlist: AllowList | None = None
 
 def get_allowlist() -> AllowList:
     """Get the AllowList singleton instance."""
-    if _allowlist is None:
-        msg = "AllowList not initialized, call init_allowlist() first"
-        raise ValueError(msg)
-    return _allowlist
-
-
-def init_allowlist() -> None:
-    """Initialize the AllowList singleton."""
     global _allowlist  # noqa: PLW0603
-    _allowlist = None
 
-    nginx_instance = None
-    if get_ala_config().services.nginx.enabled:
-        nginx_instance = get_nginx_allowlist()
+    if _allowlist is None:
+        if get_ala_config().services.nginx.enabled:
+            nginx_instance = get_nginx_allowlist()
 
-    _allowlist = AllowList(nginx_instance)
+        _allowlist = AllowList(nginx_allowlist=nginx_instance)
+    return _allowlist
 
 
 logger.debug("Loaded module: %s", __name__)

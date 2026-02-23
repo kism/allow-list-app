@@ -41,9 +41,6 @@ def create_app(test_config: dict[str, Any] | None = None, instance_path: str | P
 
     app.logger.debug(app_config_str)
 
-    with app.app_context():
-        auth.start_allowlist_auth()
-
     # Register the authentication endpoint
     app.register_blueprint(auth.bp)
 
