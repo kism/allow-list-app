@@ -5,31 +5,35 @@ import ipaddress
 import logging
 import threading
 import time
+from typing import TYPE_CHECKING
 
-from flask import current_app
+from allowlistapp.instances.config import get_ala_config
+from allowlistapp.services.database import Database
 
-from . import database
+if TYPE_CHECKING:
+    from allowlistapp.services.nginx import NGINXAllowlist
 
 logger = logging.getLogger(__name__)
-
-nginx_allowlist = None
 
 
 class AllowList:
     """This is the allowlist object, init from database, query from memory, write to database."""
 
-    def __init__(self, ala_conf: dict) -> None:
+    def __init__(self, nginx_allowlist: "NGINXAllowlist | None" = None) -> None:
         """Initialise the AllowList."""
-        self.ala_conf = ala_conf
-        self.allowlist = database.db_get_allowlist()
+        self._nginx_allowlist = nginx_allowlist
+        ala_conf = get_ala_config()
+
+        self._database = Database(ala_conf.app.db_path)
+        self.allowlist = self._database.get_allowlist()
 
         # See if we need to revert the allowlist daily
-        if self.ala_conf["app"]["revert_daily"]:
+        if ala_conf.app.revert_daily:
             thread = threading.Thread(target=self._revert_list_daily, args=(), daemon=True)
             thread.start()
 
         logger.info("Initialising the database...")
-        for subnet in self.ala_conf["app"]["allowed_subnets"]:
+        for subnet in ala_conf.app.allowed_subnets:
             self.add_to_allowlist("default", subnet)
         logger.info("Done initialising the database")
 
@@ -67,7 +71,7 @@ class AllowList:
             added = True
             logger.info("Added ip: %s to allowlist", ip)
 
-            database.db_write_allowlist(self.allowlist)
+            self._database.write_allowlist(self.allowlist)
             self._write_app_allowlist_files()
 
         return added
@@ -77,7 +81,7 @@ class AllowList:
         while True:
             logger.info("Adding subnets/ips from config file")
 
-            database.db_reset()
+            self._database.reset()
 
             # Get the current time
             current_time = datetime.datetime.now().time()
@@ -111,8 +115,8 @@ class AllowList:
 
     def _write_app_allowlist_files(self) -> None:
         """Write to the nginx allowlist conf file."""
-        if nginx_allowlist:
-            nginx_allowlist.write(self.ala_conf, self.allowlist)
+        if self._nginx_allowlist:
+            self._nginx_allowlist.write(get_ala_config().services.nginx.allowlist_path, self.allowlist)
 
     def _check_ip(self, in_ip_or_network: str) -> bool:
         """Check if string is valid IP or Network."""
@@ -129,19 +133,6 @@ class AllowList:
             logger.error(err)
 
         return valid_ip
-
-
-def start_allowlist_handler() -> None:
-    """Start the allowlist handler to handle the allowlists."""
-    global nginx_allowlist  # noqa: PLW0603 Needed for how flask loads modules.
-    nginx_allowlist = None  # Prevents tests from getting weird
-
-    database.start_database()
-
-    if current_app.config["services"]["nginx"]["enabled"]:
-        from allowlistapp.al_handler_nginx import NGINXAllowlist
-
-        nginx_allowlist = NGINXAllowlist()
 
 
 logger.debug("Loaded module: %s", __name__)

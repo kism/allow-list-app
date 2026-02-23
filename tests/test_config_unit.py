@@ -1,120 +1,100 @@
 """Unit testing for the config module."""
 
+from collections.abc import Callable
+from pathlib import Path
+
 import pytest
 import pytest_mock
 
-import allowlistapp
-
-DEFAULT_CONFIG = allowlistapp.config.DEFAULT_CONFIG
+from allowlistapp.config import AllowListAppConfig, AppConfig, AuthConfig, FlaskConfig, LoggingConfig, ServicesConfig
 
 
-def test_config_permissions_error_read(tmp_path, place_test_config, mocker: pytest_mock.plugin.MockerFixture):
+def test_config_permissions_error_read(
+    tmp_path: Path, place_test_config: Callable[[str, Path | str], None], mocker: pytest_mock.plugin.MockerFixture
+) -> None:
     """Mock a Permissions error with mock_open."""
     place_test_config("valid_testing_true.toml", tmp_path)
 
-    mock_open_func = mocker.mock_open(read_data="")
-    mock_open_func.side_effect = PermissionError("Permission denied")
-
-    mocker.patch("builtins.open", mock_open_func)
+    mocker.patch("pathlib.Path.open", side_effect=PermissionError("Permission denied"))
 
     # TEST: PermissionsError is raised.
     with pytest.raises(PermissionError):
-        allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
+        AllowListAppConfig.load(instance_path=tmp_path)
 
 
-def test_config_permissions_error_write(tmp_path, place_test_config, mocker: pytest_mock.plugin.MockerFixture):
+def test_config_permissions_error_write(
+    tmp_path: Path, place_test_config: Callable[[str, Path | str], None], mocker: pytest_mock.plugin.MockerFixture
+) -> None:
     """Mock a Permissions error with mock_open."""
     place_test_config("valid_testing_true.toml", tmp_path)
 
-    conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
+    conf = AllowListAppConfig.load(instance_path=tmp_path)
 
-    mock_open_func = mocker.mock_open(read_data="")
-    mock_open_func.side_effect = PermissionError("Permission denied")
-
-    mocker.patch("builtins.open", mock_open_func)
+    mocker.patch("pathlib.Path.open", side_effect=PermissionError("Permission denied"))
 
     # TEST: PermissionsError is raised.
     with pytest.raises(PermissionError):
-        conf._write_config()
+        conf.write_config(tmp_path / "config.toml")
 
 
-def test_dictionary_functions_of_config(tmp_path, place_test_config):
-    """Test the functions in the config object that let it behave like a dictionary."""
+def test_config_attribute_access(tmp_path: Path, place_test_config: Callable[[str, Path | str], None]) -> None:
+    """Test that config fields are accessible as typed attributes."""
     place_test_config("valid_testing_true.toml", tmp_path)
 
-    conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
+    conf = AllowListAppConfig.load(instance_path=tmp_path)
 
-    # TEST: __contains__ method.
-    assert "app" in conf, "__contains__ method of config object doesn't work"
+    # TEST: fields are accessible as typed Pydantic model instances.
+    assert isinstance(conf.app, AppConfig), "conf.app should be an AppConfig"
+    assert isinstance(conf.logging, LoggingConfig), "conf.logging should be a LoggingConfig"
+    assert isinstance(conf.flask, FlaskConfig), "conf.flask should be a FlaskConfig"
+    assert isinstance(conf.auth, AuthConfig), "conf.auth should be an AuthConfig"
+    assert isinstance(conf.services, ServicesConfig), "conf.services should be a ServicesConfig"
 
-    # TEST: __repr__ method.
-    assert isinstance(str(conf), str), "__repr__ method of config object doesn't work"
-
-    # TEST: __getitem__ method.
-    assert isinstance(conf["app"], dict), "__getitem__ method of config object doesn't work"
-
-    from collections.abc import ItemsView
-
-    # TEST: .items() method.
-    assert isinstance(conf.items(), ItemsView), ".items() method of config object doesn't work"
+    # TEST: model_dump() returns nested dicts suitable for TOML serialization.
+    dumped = conf.model_dump()
+    assert isinstance(dumped["app"], dict)
+    assert isinstance(dumped["logging"], dict)
+    assert isinstance(dumped["flask"], dict)
 
 
-def test_config_dictionary_merge(tmp_path, place_test_config, get_test_config):
-    """Unit test the dictionary merge in _merge_with_defaults."""
+def test_config_defaults_filled(tmp_path: Path, place_test_config: Callable[[str, Path | str], None]) -> None:
+    """Test that partial configs are filled in with defaults."""
     place_test_config("valid_testing_true.toml", tmp_path)
 
-    conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
+    conf = AllowListAppConfig.load(instance_path=tmp_path)
 
-    test_dictionaries = [
-        {},
-        get_test_config("invalid_log_level.toml"),
-        get_test_config("valid_testing_true.toml"),
-    ]
-
-    for test_dictionary in test_dictionaries:
-        result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, test_dictionary)
-
-        # TEST: Check that the resulting config after ensuring default is valid
-        assert isinstance(result_dict["app"], dict)
-        assert isinstance(result_dict["logging"], dict)
-        assert isinstance(result_dict["logging"]["path"], str)
-        assert isinstance(result_dict["logging"]["level"], str)
-        assert isinstance(result_dict["flask"], dict)
-
-    # TEST: If an item isn't in the schema, it still ends up around, not that this is a good idea...
-    result_dict = conf._merge_with_defaults(DEFAULT_CONFIG, {"TEST_CONFIG_ENTRY_NOT_IN_SCHEMA": "lmao"})
-    assert result_dict["TEST_CONFIG_ENTRY_NOT_IN_SCHEMA"]
+    # TEST: Fields missing from the TOML are populated with defaults.
+    assert conf.logging.path is None or isinstance(conf.logging.path, Path)
+    assert isinstance(conf.logging.level, str)
+    assert isinstance(conf.app.revert_daily, bool)
+    assert isinstance(conf.services.nginx.enabled, bool)
+    assert isinstance(conf.app.allowed_subnets, list)
+    # db_path gets set to a real path after post-validation
+    assert isinstance(conf.app.db_path, Path)
 
 
-def test_config_dictionary_not_in_schema(tmp_path, place_test_config, caplog: pytest.LogCaptureFixture):
-    """Unit test _warn_unexpected_keys."""
+def test_config_extra_keys_ignored(tmp_path: Path, place_test_config: Callable[[str, Path | str], None]) -> None:
+    """Test that unknown keys in config are silently ignored (extra='ignore')."""
     place_test_config("valid_testing_true.toml", tmp_path)
 
-    conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
-
-    test_config = {
-        "TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA": "",
-        "app": {"TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA": ""},
-    }
-
-    # TEST: Warning when config loaded has a key that is not in the schema
-    conf._warn_unexpected_keys(DEFAULT_CONFIG, test_config, "<root>")
-    assert "Config entry key <root>[TEST_CONFIG_ROOT_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text
-    assert "Config entry key [app][TEST_CONFIG_APP_ENTRY_NOT_IN_SCHEMA] not in schema" in caplog.text
+    # TEST: Extra keys do not raise a validation error.
+    conf = AllowListAppConfig(unknown_key="value", app=AppConfig(auth_type="static", db_path=tmp_path))  # type: ignore[call-arg]
+    assert not hasattr(conf, "unknown_key")
+    assert isinstance(conf.app, AppConfig)
 
 
-def test_load_write_no_config_path(place_test_config, tmp_path):
-    """Unit test the dictionary merge in _merge_with_defaults."""
+def test_config_write_and_load_file(tmp_path: Path, place_test_config: Callable[[str, Path | str], None]) -> None:
+    """Test write_config and _load_file round-trip."""
     place_test_config("valid_testing_true.toml", tmp_path)
 
-    conf = allowlistapp.config.AllowListAppConfig(instance_path=tmp_path)
+    conf = AllowListAppConfig.load(instance_path=tmp_path)
+    config_path = tmp_path / "config.toml"
 
-    conf._config_path = None
+    # TEST: write_config should not raise.
+    conf.write_config(config_path)
 
-    # TEST: PermissionsError is raised.
-    with pytest.raises(ValueError, match="Config path not set, cannot load config"):
-        conf._load_file()
-
-    # TEST: PermissionsError is raised.
-    with pytest.raises(ValueError, match="Config path not set, cannot write config"):
-        conf._write_config()
+    # TEST: _load_file returns a valid dict with expected keys.
+    loaded = AllowListAppConfig._load_file(config_path)
+    assert isinstance(loaded, dict)
+    assert "app" in loaded
+    assert "logging" in loaded

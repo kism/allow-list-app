@@ -1,24 +1,27 @@
 """Test launching the app and config."""
 
 import logging
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
 import pytest
 
 from allowlistapp import config, create_app
 
 
-def test_config_valid(tmp_path, get_test_config):
+def test_config_valid(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> None:
     """Test passing config to app."""
     # TEST: Assert that the config dictionary can set config attributes successfully.
-    assert not create_app(
-        get_test_config("valid_testing_false.toml"), instance_path=tmp_path
-    ).testing, "Flask testing config item not being set correctly."
-    assert create_app(
-        get_test_config("valid_testing_true.toml"), instance_path=tmp_path
-    ).testing, "Flask testing config item not being set correctly."
+    assert not create_app(get_test_config("valid_testing_false.toml"), instance_path=tmp_path).testing, (
+        "Flask testing config item not being set correctly."
+    )
+    assert create_app(get_test_config("valid_testing_true.toml"), instance_path=tmp_path).testing, (
+        "Flask testing config item not being set correctly."
+    )
 
 
-def test_config_static_invalid(tmp_path, get_test_config):
+def test_config_static_invalid(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> None:
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     with pytest.raises(config.ConfigPasswordError) as exc_info:
@@ -27,7 +30,7 @@ def test_config_static_invalid(tmp_path, get_test_config):
     assert isinstance(exc_info.type, type(config.ConfigPasswordError)), "App did not exit on config validation failure."
 
 
-def test_config_invalid_auth_url(tmp_path, get_test_config):
+def test_config_invalid_auth_url(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> None:
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     with pytest.raises(config.ConfigUrlAuthError) as exc_info:
@@ -36,7 +39,7 @@ def test_config_invalid_auth_url(tmp_path, get_test_config):
     assert isinstance(exc_info.type, type(config.ConfigUrlAuthError)), "App did not exit on config validation failure."
 
 
-def test_config_invalid_auth_type(tmp_path, get_test_config):
+def test_config_invalid_auth_type(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> None:
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     with pytest.raises(config.ConfigUrlAuthError) as exc_info:
@@ -45,7 +48,9 @@ def test_config_invalid_auth_type(tmp_path, get_test_config):
     assert isinstance(exc_info.type, type(config.ConfigUrlAuthError)), "App did not exit on config validation failure."
 
 
-def test_config_valid_hashed_password(tmp_path, get_test_config, caplog):
+def test_config_valid_hashed_password(
+    tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]], caplog: pytest.LogCaptureFixture
+) -> None:
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     create_app(get_test_config("valid_testing_static_auth.toml"), instance_path=tmp_path)
@@ -54,7 +59,9 @@ def test_config_valid_hashed_password(tmp_path, get_test_config, caplog):
         assert "Found hashed password" in caplog.text
 
 
-def test_config_file_creation(tmp_path, get_test_config, caplog: pytest.LogCaptureFixture):
+def test_config_file_creation(
+    tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]], caplog: pytest.LogCaptureFixture
+) -> None:
     """Tests relating to config file."""
     # TEST: that file is created when no config is provided.
     with caplog.at_level(logging.WARNING):
@@ -62,7 +69,9 @@ def test_config_file_creation(tmp_path, get_test_config, caplog: pytest.LogCaptu
         assert "No configuration file found, creating at default location:" in caplog.text
 
 
-def test_config_file_loading(tmp_path, place_test_config, caplog: pytest.LogCaptureFixture):
+def test_config_file_loading(
+    tmp_path: Path, place_test_config: Callable[[str, Path | str], None], caplog: pytest.LogCaptureFixture
+) -> None:
     """Tests relating to config file."""
     place_test_config("valid_testing_true.toml", tmp_path)
 
@@ -72,7 +81,9 @@ def test_config_file_loading(tmp_path, place_test_config, caplog: pytest.LogCapt
     assert "Using this path as it's the first one that was found" in caplog.text
 
 
-def test_config_valid_allowed_subnets(tmp_path, get_test_config, caplog):
+def test_config_valid_allowed_subnets(
+    tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]], caplog: pytest.LogCaptureFixture
+) -> None:
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     create_app(get_test_config("valid_allowed_subnets.toml"), instance_path=tmp_path)
@@ -88,7 +99,9 @@ def test_config_valid_allowed_subnets(tmp_path, get_test_config, caplog):
         assert "Invalid IP/network address" not in caplog.text
 
 
-def test_config_valid_allowed_subnets_duplicate(tmp_path, get_test_config, caplog):
+def test_config_valid_allowed_subnets_duplicate(
+    tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]], caplog: pytest.LogCaptureFixture
+) -> None:
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     create_app(get_test_config("valid_allowed_subnets_duplicate.toml"), instance_path=tmp_path)
@@ -97,7 +110,9 @@ def test_config_valid_allowed_subnets_duplicate(tmp_path, get_test_config, caplo
         assert "Duplicate ip/network, not adding." in caplog.text
 
 
-def test_config_invalid_allowed_subnets(tmp_path, get_test_config, caplog):
+def test_config_invalid_allowed_subnets(
+    tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]], caplog: pytest.LogCaptureFixture
+) -> None:
     """Test that program exits when given invalid config."""
     # TEST: Assert that the program exists when provided an invalid config dictionary.
     create_app(get_test_config("invalid_allowed_subnets.toml"), instance_path=tmp_path)

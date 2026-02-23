@@ -1,39 +1,30 @@
 ---
-    name: Type Check (Mypy)
+name: Type Check (Mypy)
 
-    on:
-      push:
-        branches:
-          - main
-          - test
+on:
+  push:
+    branches:
+      - main
+      - test
 
-    jobs:
-      mypy:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-          - name: Set up Python
-            uses: actions/setup-python@v5
-            with:
-              python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-          - name: Run image
-            uses: abatilo/actions-poetry@v2
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
-          - name: Configure Poetry to install dependencies in virtualenv
-            run: |
-              poetry config virtualenvs.create true --local
-              poetry config virtualenvs.in-project true --local
+      - name: Install dependencies
+        run: uv sync --extra type --extra test
 
-          - name: Define a cache for the virtual environment based on the dependencies lock file
-            uses: actions/cache@v4
-            with:
-              path: ./.venv
-              key: venv-${{ hashFiles('poetry.lock') }}
-
-          - name: Install dependencies
-            run: poetry install --without dev
-
-          - name: Check types with mypy
-            run: .venv/bin/mypy
+      - name: Check types with mypy
+        run: .venv/bin/mypy

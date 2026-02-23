@@ -3,8 +3,9 @@
 Fixtures defined in a conftest.py can be used by any test in that package without needing to import them.
 """
 
-import os
 from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
 import pytest
 import tomlkit
@@ -13,11 +14,11 @@ from flask.testing import FlaskClient, FlaskCliRunner
 
 from allowlistapp import create_app
 
-TEST_CONFIGS_LOCATION = os.path.join(os.getcwd(), "tests", "configs")
+TEST_CONFIGS_LOCATION = Path(__file__).parent / "configs"
 
 
 @pytest.fixture
-def app(tmp_path, get_test_config) -> Flask:
+def app(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> Flask:
     """This fixture uses the default config within the flask app."""
     return create_app(get_test_config("valid_testing_true.toml"), instance_path=tmp_path)
 
@@ -29,10 +30,8 @@ def client(app: Flask) -> FlaskClient:
 
 
 @pytest.fixture
-def client_url_auth(tmp_path, get_test_config) -> FlaskClient:
+def client_url_auth(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> FlaskClient:
     """This fixture uses the default config within the flask app."""
-    from allowlistapp import create_app
-
     app = create_app(get_test_config("valid_url_auth_url.toml"), instance_path=tmp_path)
 
     return app.test_client()
@@ -45,31 +44,31 @@ def runner(app: Flask) -> FlaskCliRunner:
 
 
 @pytest.fixture
-def get_test_config() -> Callable:
+def get_test_config() -> Callable[[str], dict[str, Any]]:
     """Function returns a function, which is how it needs to be."""
 
-    def _get_test_config(config_name: str) -> dict:
+    def _get_test_config(config_name: str) -> dict[str, Any]:
         """Load all the .toml configs into a single dict."""
-        filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
+        filepath = TEST_CONFIGS_LOCATION / config_name
 
-        with open(filepath) as file:
+        with filepath.open() as file:
             return tomlkit.load(file)
 
     return _get_test_config
 
 
 @pytest.fixture
-def place_test_config(get_test_config) -> Callable:
+def place_test_config(get_test_config: Callable[[str], dict[str, Any]]) -> Callable[[str, Path | str], None]:
     """Function returns a function, which is how it needs to be."""
 
-    def _place_test_config(config_name: str, out_path: str) -> None:
+    def _place_test_config(config_name: str, out_path: Path | str) -> None:
         """Place a test config in the tmp_path."""
-        filepath = os.path.join(TEST_CONFIGS_LOCATION, config_name)
+        filepath = TEST_CONFIGS_LOCATION / config_name
 
-        with open(filepath) as file:
+        with filepath.open() as file:
             config = tomlkit.load(file)
 
-        with open(os.path.join(out_path, "config.toml"), "w") as file:
+        with (Path(out_path) / "config.toml").open("w") as file:
             tomlkit.dump(config, file)
 
     return _place_test_config

@@ -1,14 +1,14 @@
 """PyTest, Tests the hello API endpoint."""
 
 import csv
-import os
 from http import HTTPStatus
+from pathlib import Path
 
 import pytest
 from flask.testing import FlaskClient
 
 
-def test_auth_static_fail(client: FlaskClient):
+def test_auth_static_fail(client: FlaskClient) -> None:
     """Test static authentication failure."""
     response = client.post("/authenticate/", data={"username": "", "password": "hunter3"})
     assert response.data == b"nope", "Auth should have failed"
@@ -27,7 +27,7 @@ def test_auth_static_fail(client: FlaskClient):
         ({"X-Forwarded-For": "192.168.0.1"}, "192.168.0.1"),
     ],
 )
-def test_auth_static_success(tmp_path, headers, expected_entry, client: FlaskClient):
+def test_auth_static_success(tmp_path: Path, headers: dict[str, str], expected_entry: str, client: FlaskClient) -> None:
     """Test auth with the static authentication backend."""
     response = client.post("/authenticate/", data={"username": "", "password": "hunter2"}, headers=headers)
     assert response.status_code == HTTPStatus.OK
@@ -36,7 +36,7 @@ def test_auth_static_success(tmp_path, headers, expected_entry, client: FlaskCli
     assert response.data == b"yep", "Check auth should have said that user is logged in."
     assert response.status_code == HTTPStatus.OK
 
-    with open(os.path.join(tmp_path, "database.csv")) as f:
+    with (tmp_path / "database.csv").open() as f:
         csv_reader = csv.DictReader(f, quoting=csv.QUOTE_MINIMAL)
         allowlist = list(csv_reader).copy()
 

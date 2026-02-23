@@ -5,8 +5,12 @@ import os
 import pwd
 import subprocess
 import time
+from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
+
+from allowlistapp.constants import TEMPLATES_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -27,26 +31,29 @@ class NGINXAllowlist:
         if self.user_account != "root":
             self.reload_nginx_command = ["sudo", "systemctl", "reload", "nginx"]
 
-    def write(self, ala_conf: dict, allowlist: list) -> None:
+    def write(self, allowlist_path: Path | None, allowlist: list[dict[str, Any]]) -> None:
         """Write NGINX allowlist."""
-        logger.debug("Writing nginx allowlist: %s", ala_conf["services"]["nginx"]["allowlist_path"])
+        logger.debug("Writing nginx allowlist: %s", allowlist_path)
         while self._writing:
             time.sleep(0.2)
 
         env = Environment(
-            loader=FileSystemLoader(os.path.join(os.getcwd(), "allowlistapp", "templates")), autoescape=True
+            loader=FileSystemLoader(TEMPLATES_DIR),
+            autoescape=True,
         )
         template = env.get_template("nginx.conf.j2")
         rendered_template = template.render(allowlist=allowlist)
 
-        allowlist_path = ala_conf["services"]["nginx"]["allowlist_path"]
+        if allowlist_path is None:
+            msg = "In the config, please enter a path for the NGINX allowlist file."
+            logger.exception(msg)
+            raise FileNotFoundError(msg)
+
         try:
-            with open(allowlist_path, "w", encoding="utf8") as conf_file:
+            with allowlist_path.open("w", encoding="utf8") as conf_file:
                 conf_file.write(rendered_template)
         except FileNotFoundError as exc:
             msg = f"Could not write NGINX allowlist file to path: {allowlist_path}"
-            if allowlist_path == "":
-                msg = "In the config, please enter a path for the NGINX allowlist file."
             logger.exception(msg)
             raise FileNotFoundError(msg) from exc
 

@@ -9,40 +9,42 @@ Tests should always use the tmp_path fixture as an instance_path as it means the
 And thus in the boilerplate I have some checks to ensure that your tests aren't possibly getting polluted.
 """
 
+import contextlib
+import random
+import shutil
+import string
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
+
 import pytest
 
 from allowlistapp import create_app
 from allowlistapp.config import ConfigValidationError
 
 
-def test_instance_path_check(get_test_config):
+def test_instance_path_check(get_test_config: Callable[[str], dict[str, Any]]) -> None:
     """TEST: When passed a dictionary as a config, the instance path must be specified."""
     with pytest.raises(AttributeError):
         create_app(get_test_config("valid_testing_false.toml"))
 
 
-def test_config_validate_test_instance_path(get_test_config):
+def test_config_validate_test_instance_path(get_test_config: Callable[[str], dict[str, Any]]) -> None:
     """My boilerplate catches when you forget to use tmp_path in testing.
 
     This test exists because I spent so much time troubleshooting why some tests are using the default instance path.
     """
-    import contextlib
-    import os
-    import random
-    import shutil
-    import string
-
     # Please always use tmp_path and never do this outside of this test.
-    repo_instance_path = os.path.join(os.getcwd(), "instance")
-    incorrect_instance_root = os.path.join(repo_instance_path, "_TEST")
+    repo_instance_path = Path.cwd() / "instance"
+    incorrect_instance_root = repo_instance_path / "_TEST"
     random_string = "".join(random.choice(string.ascii_uppercase) for _ in range(8))
-    incorrect_instance_path = os.path.join(incorrect_instance_root, random_string)
+    incorrect_instance_path = incorrect_instance_root / random_string
 
     with contextlib.suppress(FileNotFoundError, FileExistsError):
-        os.mkdir(repo_instance_path)
+        repo_instance_path.mkdir()
         shutil.rmtree(incorrect_instance_root)
-        os.mkdir(incorrect_instance_root)
-        os.mkdir(incorrect_instance_path)
+        incorrect_instance_root.mkdir()
+        incorrect_instance_path.mkdir()
 
     # TEST: The program exits when in testing mode and the instance path is not a temp path.
     with pytest.raises(ConfigValidationError) as exc_info:

@@ -1,40 +1,39 @@
-[tool.poetry]
+[project]
 name = "allowlistapp"
-version = "0.1.2"
+version = "0.2.0"
 description = "Flask webapp to allowlist IPs on nginx"
-authors = ["Kieran Gee <kieran.lost.the.game@gmail.com>"]
-license = "MIT"
+authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
+license = { text = "MIT" }
 readme = "README.md"
-package-mode = true
+requires-python = ">=3.11"
+dependencies = [
+    "flask>=3.1.3,<4",
+    "argon2-cffi>=25.1.0,<26",
+    "waitress>=3.0.2,<4",
+    "requests>=2.32.5,<3",     # TODO, see if you can just use flask.client
+    "tomlkit>=0.14,<1",
+    "pydantic>=2.0,<3",
+    "pydantic-settings>=2.0,<3",
+]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-flask = "^3.0.3"
-argon2-cffi = "^23.1.0"
-waitress = "^3.0.0"
-pyyaml = "^6.0.1"
-requests = "^2.32.3"    # TODO, see if you can just use flask.client
-tomlkit = "^0.12"
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "detect-test-pollution",
+    "pytest-random-order",
+    "pytest-subprocess",
+    "responses",
+    "jinja2",                # Flask depends on this, I have it here since config loading is templated for tests.
+]
+type = ["mypy", "types-requests", "ty"]
 
-[tool.poetry.group.test.dependencies]
-pytest = "*"
-pytest-cov = "*"
-pytest-mock = "*"
-detect-test-pollution = "*"
-pytest-random-order = "*"
-pytest-subprocess = "*"
-responses = "*"
-jinja2 = "*"                # Flask depends on this, I have it here since config loading is templated for tests.
-mypy = "*"
-types-requests = "*"
-
-[tool.poetry.group.dev.dependencies]
-pylance = "^0.10.18"
-ruff = "^0.4.4"
+dev = ["ruff>=0.15.0,<1"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
@@ -50,11 +49,9 @@ select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
     "DJ",  # KG Django not required
-    "PTH", # KG builtin 'open' is fine, not going to use pathlib
     "DTZ", # KG no need to specify timezone for time objects
 
     # Specific rules
-    "ANN101", # KG Why define self type for object functions...
     "TD002",  # KG Verbose TODO, only I work on this project
     "TD003",  # KG Verbose TODO, only I work on this project
     "ISC001", # KG conflict in the formatter
@@ -73,8 +70,10 @@ ignore = [
     "SLF001", # KG Accessing private members is needed for testing.
     "INP001", # KG __init__.py not needed for PyTest.
     "PT004",  # KG monkeypatches don't return.
-    "ANN001", # KG Type annotations get really weird in testing
     "S311",   # KG I'll assume no real crypto will be done in PyTest.
+]
+"allowlistapp/auth/auth_types.py" = [
+    "S106", # Not a hardcoded password
 ]
 
 [tool.ruff.lint.flake8-pytest-style]
@@ -107,7 +106,7 @@ files = ["allowlistapp", "tests"]
 namespace_packages = true
 explicit_package_bases = true
 show_error_codes = true
-strict = false
+strict = true
 enable_error_code = [
     "ignore-without-code",
     "redundant-expr",
