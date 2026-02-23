@@ -72,6 +72,9 @@ ignore = [
     "PT004",  # KG monkeypatches don't return.
     "S311",   # KG I'll assume no real crypto will be done in PyTest.
 ]
+"allowlistapp/auth/auth_types.py" = [
+    "S106", # Not a hardcoded password
+]
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

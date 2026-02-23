@@ -12,9 +12,7 @@ from flask import Blueprint, request
 from allowlistapp.instances.allowlist import get_allowlist
 from allowlistapp.instances.config import get_ala_config
 
-from . import auth_types
-
-REMOTE_AUTH_TYPES = auth_types.REMOTE_AUTH_TYPES
+from .auth_types import REMOTE_AUTH_TYPES
 
 logger = logging.getLogger(__name__)
 bp = Blueprint("auth", __name__)
@@ -96,12 +94,13 @@ def check_password_url(username: str, password: str) -> bool:
     password_correct = False
 
     ala_conf = get_ala_config()
-    url = ala_conf.auth.remote.url + "/" + REMOTE_AUTH_TYPES[ala_conf.app.auth_type]["endpoint"]
-    headers: dict[str, str] = REMOTE_AUTH_TYPES[ala_conf.app.auth_type]["headers"]
+    auth_type = REMOTE_AUTH_TYPES[ala_conf.app.auth_type]
+    url = ala_conf.auth.remote.url + "/" + auth_type.endpoint
+    headers = auth_type.headers
 
     data = {
-        REMOTE_AUTH_TYPES[ala_conf.app.auth_type]["username_field"]: username,
-        REMOTE_AUTH_TYPES[ala_conf.app.auth_type]["password_field"]: password,
+        auth_type.username_field: username,
+        auth_type.password_field: password,
     }
     json_data = json.dumps(data)
 

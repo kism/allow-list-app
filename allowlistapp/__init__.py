@@ -7,6 +7,7 @@ from typing import Any
 from flask import Flask, render_template
 
 from . import auth, config, logger
+from .instances.allowlist import get_allowlist
 from .instances.config import get_ala_config
 from .version import __version__
 
@@ -43,6 +44,8 @@ def create_app(test_config: dict[str, Any] | None = None, instance_path: str | P
 
     # Register the authentication endpoint
     app.register_blueprint(auth.bp)
+
+    get_allowlist()
 
     # Setup vars for template
     hide_username = ala_conf.app.auth_type == "static"
