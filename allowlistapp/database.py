@@ -12,19 +12,27 @@ logger = logging.getLogger(__name__)
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 
-database_path: Path | None = None
+_database_path: Path | None = None
+
+
+def get_database_path() -> Path:
+    """Get the path to the database."""
+    if _database_path is None:
+        msg = "Database path not set, did you call start_database()?"
+        raise ValueError(msg)
+    return _database_path
 
 
 def start_database() -> None:
     """Start this module."""
-    global database_path  # noqa: PLW0603 Needed due to how flask loads modules.
-    database_path = current_app.config["app"].db_path
+    global _database_path  # noqa: PLW0603 Needed due to how flask loads modules.
+    _database_path = current_app.config.app.db_path
     db_check()
 
 
 def db_get_allowlist() -> list[dict[str, Any]]:
     """Get the allowlist as a dict."""
-    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
+    database_path = get_database_path()
     allowlist = []
 
     logger.debug("Building allowlist list from file...")
@@ -39,7 +47,7 @@ def db_get_allowlist() -> list[dict[str, Any]]:
 
 def db_write_allowlist(allowlist: list[dict[str, Any]]) -> None:
     """Insert an IP into the allowlist, returns if an IP has been inserted."""
-    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
+    database_path = get_database_path()
 
     with database_path.open("w", newline="") as csv_file:
         csv_writer = csv.DictWriter(
@@ -58,7 +66,7 @@ def db_write_allowlist(allowlist: list[dict[str, Any]]) -> None:
 
 def db_check() -> None:
     """Check the 'schema' of the database."""
-    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
+    database_path = get_database_path()
     try:
         with database_path.open(newline="") as csv_file:
             msg = f"Database found at: {database_path}"
@@ -81,7 +89,7 @@ def db_check() -> None:
 
 def db_reset() -> None:
     """Clear the database."""
-    assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
+    database_path = get_database_path()
     logger.info("CLEARING THE DATABASE...")
     with database_path.open("w", newline="") as csv_file:
         csv_writer = csv.DictWriter(
