@@ -2,8 +2,8 @@
 
 import logging
 
-from allowlistapp.instances import database
 from allowlistapp.instances.config import get_ala_config
+from allowlistapp.instances.database import init_database
 from allowlistapp.instances.nginx import get_nginx_allowlist, init_nginx
 from allowlistapp.services.allowlist import AllowList
 
@@ -25,7 +25,7 @@ def init_allowlist() -> None:
     global _allowlist  # noqa: PLW0603
     _allowlist = None
 
-    database.start_database()
+    init_database()
 
     nginx_instance = None
     if get_ala_config().services.nginx.enabled:
