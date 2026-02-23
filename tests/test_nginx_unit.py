@@ -4,26 +4,28 @@ import logging
 import os
 import threading
 import time
+from pathlib import Path
 
 import pytest
+from pytest_subprocess import FakeProcess
 
 from allowlistapp import al_handler_nginx
 from allowlistapp.config import NginxConfig, ServicesConfig
 
 
-def mock_finish_write(nginx_allowlist):
+def mock_finish_write(nginx_allowlist: al_handler_nginx.NGINXAllowlist) -> None:
     """This mocks an allowlist which is currently writing, thus we need to wait for it to finish."""
     time.sleep(0.5)
     nginx_allowlist._writing = False
 
 
-def mock_finish_reload(nginx_allowlist):
+def mock_finish_reload(nginx_allowlist: al_handler_nginx.NGINXAllowlist) -> None:
     """This mocks an allowlist which is currently reloading, thus we need to wait for it to finish."""
     time.sleep(0.5)
     nginx_allowlist._nginx_reloading = False
 
 
-def test_conflicting_writes(tmp_path, fp, caplog):
+def test_conflicting_writes(tmp_path: Path, fp: FakeProcess, caplog: pytest.LogCaptureFixture) -> None:
     """Test writing the allowlist when the object has a pending write."""
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
 
@@ -32,7 +34,7 @@ def test_conflicting_writes(tmp_path, fp, caplog):
     ala_conf = {
         "services": ServicesConfig(nginx=NginxConfig(allowlist_path=tmp_path / "ipallowlist.conf")),
     }
-    allowlist = [
+    allowlist: list[dict[str, str]] = [
         {"date": "1970-01-01", "ip": "127.0.0.1", "username": "TESTUSER"},
         {"date": "2023-01-01", "ip": "192.168.0.1", "username": "TESTUSER2"},
         {"date": "2024-01-01", "ip": "192.168.0.2", "username": "TESTUSER3"},
@@ -61,7 +63,7 @@ def test_conflicting_writes(tmp_path, fp, caplog):
         assert item["ip"] in nginx_conf
 
 
-def test_conflicting_reloads():
+def test_conflicting_reloads() -> None:
     """Test reloading the object has a pending reload."""
     nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 
@@ -82,14 +84,14 @@ def test_conflicting_reloads():
         ("PATH/THAT/DOES/NOT/EXIST", "Could not write NGINX allowlist file to path: PATH/THAT/DOES/NOT/EXIST"),
     ],
 )
-def test_invalid_allowlist_path(path, expected_log, fp, caplog):
+def test_invalid_allowlist_path(path: str, expected_log: str, fp: FakeProcess, caplog: pytest.LogCaptureFixture) -> None:
     """Test writing the allowlist when the object has a pending write."""
     al_handler_nginx.logger.setLevel(logging.DEBUG)
 
     ala_conf = {
-        "services": ServicesConfig(nginx=NginxConfig(allowlist_path=path)),
+        "services": ServicesConfig(nginx=NginxConfig(allowlist_path=path)),  # type: ignore[arg-type]
     }
-    allowlist = []
+    allowlist: list[dict[str, str]] = []
 
     nginx_allowlist = al_handler_nginx.NGINXAllowlist()
 

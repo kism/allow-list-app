@@ -1,6 +1,7 @@
 """Test the logger of the app."""
 
 import logging
+from pathlib import Path
 from types import FunctionType
 
 import pytest
@@ -11,7 +12,7 @@ from allowlistapp import create_app
 from allowlistapp.config import LoggingConfig
 
 
-def test_config_invalid_log_level(tmp_path, get_test_config: FunctionType, caplog: pytest.LogCaptureFixture):
+def test_config_invalid_log_level(tmp_path: Path, get_test_config: FunctionType, caplog: pytest.LogCaptureFixture) -> None:
     """Test if logging to file works."""
     with caplog.at_level(logging.WARNING):
         create_app(get_test_config("invalid_log_level.toml"), instance_path=tmp_path)
@@ -20,7 +21,7 @@ def test_config_invalid_log_level(tmp_path, get_test_config: FunctionType, caplo
     assert "Invalid logging level" in caplog.text
 
 
-def test_handlers_added(tmp_path, app: Flask):
+def test_handlers_added(tmp_path: Path, app: Flask) -> None:
     """Test passing config to app."""
     # TEST: Assert that the config dictionary can set config attributes successfully.
 

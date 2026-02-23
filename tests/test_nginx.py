@@ -2,13 +2,19 @@
 
 import logging
 import os
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
 import pytest
+from pytest_subprocess import FakeProcess
 
 from allowlistapp import create_app
 
 
-def test_nginx_reload_failure(fp, tmp_path, get_test_config, caplog: pytest.LogCaptureFixture):
+def test_nginx_reload_failure(
+    fp: FakeProcess, tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]], caplog: pytest.LogCaptureFixture
+) -> None:
     """Test that nginx reload fails, assumes that nginx isn't on the host testing this lol."""
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=1)
     config_nginx = get_test_config("valid_nginx.toml")
@@ -19,7 +25,9 @@ def test_nginx_reload_failure(fp, tmp_path, get_test_config, caplog: pytest.LogC
         assert "Couldn't restart nginx" in caplog.text
 
 
-def test_nginx_reload_success(fp, tmp_path, get_test_config, caplog: pytest.LogCaptureFixture):
+def test_nginx_reload_success(
+    fp: FakeProcess, tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]], caplog: pytest.LogCaptureFixture
+) -> None:
     """Test that reload works."""
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
 
@@ -33,12 +41,18 @@ def test_nginx_reload_success(fp, tmp_path, get_test_config, caplog: pytest.LogC
 
 
 @pytest.fixture
-def sleepless(monkeypatch):
+def sleepless(monkeypatch: pytest.MonkeyPatch) -> None:
     """Patched function for no sleep."""
     monkeypatch.setattr("time.sleep", lambda _: None)
 
 
-def test_nginx_reload_revert_daily(sleepless, fp, tmp_path, get_test_config, caplog: pytest.LogCaptureFixture):
+def test_nginx_reload_revert_daily(
+    sleepless: None,
+    fp: FakeProcess,
+    tmp_path: Path,
+    get_test_config: Callable[[str], dict[str, Any]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Test that nginx reload works."""
     fp.register(["sudo", "systemctl", "reload", "nginx"], returncode=0)
 

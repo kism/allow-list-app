@@ -1,5 +1,6 @@
 """Flask webapp allowlistapp."""
 
+from pathlib import Path
 from pprint import pformat
 from typing import Any
 
@@ -8,9 +9,10 @@ from flask import Flask, render_template
 from . import ala_auth, config, logger
 
 
-def create_app(test_config: dict[str, Any] | None = None, instance_path: str | None = None) -> Flask:
+def create_app(test_config: dict[str, Any] | None = None, instance_path: str | Path | None = None) -> Flask:
     """Create and configure an instance of the Flask application."""
-    app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)  # Create Flask app object
+    instance_path_str = str(instance_path) if instance_path is not None else None
+    app = Flask(__name__, instance_relative_config=True, instance_path=instance_path_str)  # Create Flask app object
 
     logger.setup_logger(app, config.LoggingConfig())  # Setup logger with defaults defined in config module
 
