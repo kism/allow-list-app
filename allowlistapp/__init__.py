@@ -11,25 +11,25 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True, instance_path=instance_path)  # Create Flask app object
 
-    logger.setup_logger(app, config.DEFAULT_CONFIG["logging"])  # Setup logger with defaults defined in config module
+    logger.setup_logger(app, config.LoggingConfig().model_dump())  # Setup logger with defaults defined in config module
 
     if test_config:  # For Python testing we will often pass in a config
         if not instance_path:
             app.logger.critical("When testing supply both test_config and instance_path!")
             raise AttributeError(instance_path)
-        ala_conf = config.AllowListAppConfig(config=test_config, instance_path=app.instance_path)
+        ala_conf = config.AllowListAppConfig.load(config_data=test_config, instance_path=app.instance_path)
     else:
-        ala_conf = config.AllowListAppConfig(instance_path=app.instance_path)  # Loads app config from disk
+        ala_conf = config.AllowListAppConfig.load(instance_path=app.instance_path)  # Loads app config from disk
 
     app.logger.debug("Instance path is: %s", app.instance_path)
 
-    logger.setup_logger(app, ala_conf["logging"])  # Setup logger with config
+    logger.setup_logger(app, ala_conf.logging.model_dump())  # Setup logger with config
 
     # Flask config, at the root of the config object.
-    app.config.from_mapping(ala_conf["flask"])
+    app.config.from_mapping(ala_conf.flask.model_dump())
 
     # Other sections handled by config.py
-    for key, value in ala_conf.items():
+    for key, value in ala_conf.model_dump().items():
         if key != "flask":
             app.config[key] = value
 
@@ -47,8 +47,8 @@ def create_app(test_config: dict | None = None, instance_path: str | None = None
     app.register_blueprint(ala_auth.bp)
 
     # Setup vars for template
-    hide_username = ala_conf["app"]["auth_type"] == "static"
-    redirect_url = ala_conf["app"]["redirect_url"]
+    hide_username = ala_conf.app.auth_type == "static"
+    redirect_url = ala_conf.app.redirect_url
 
     @app.route("/")
     def home() -> str:
