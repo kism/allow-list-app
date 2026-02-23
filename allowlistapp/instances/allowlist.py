@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 
 from allowlistapp.instances.config import get_ala_config
-from allowlistapp.instances.nginx import get_nginx_allowlist
 from allowlistapp.services.allowlist import AllowList
+from allowlistapp.services.nginx import NGINXAllowlist
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def get_allowlist() -> AllowList:
     if _allowlist is None or _allowlist_db_path != db_path:
         nginx_instance = None
         if get_ala_config().services.nginx.enabled:
-            nginx_instance = get_nginx_allowlist()
+            nginx_instance = NGINXAllowlist()
 
         _allowlist = AllowList(nginx_allowlist=nginx_instance)
         _allowlist_db_path = db_path
