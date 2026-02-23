@@ -7,6 +7,7 @@ from typing import Any
 from flask import Flask, render_template
 
 from . import ala_auth, config, logger
+from .version import __version__
 
 
 def create_app(test_config: dict[str, Any] | None = None, instance_path: str | Path | None = None) -> Flask:
@@ -58,6 +59,6 @@ def create_app(test_config: dict[str, Any] | None = None, instance_path: str | P
         """Flask Home."""
         return render_template("home.html.j2", hide_username=hide_username, redirect_url=redirect_url)
 
-    app.logger.info("Starting Web Server")
+    app.logger.info("AllowListApp version %s", __version__)
 
     return app
