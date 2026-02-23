@@ -38,6 +38,7 @@ def db_get_allowlist() -> list:
 def db_write_allowlist(allowlist: list) -> None:
     """Insert an IP into the allowlist, returns if an IP has been inserted."""
     assert database_path is not None  # noqa: S101 Appease mypy, this module should be an object
+
     with open(database_path, "w", newline="") as csv_file:
         csv_writer = csv.DictWriter(
             csv_file,

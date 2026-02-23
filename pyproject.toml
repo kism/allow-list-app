@@ -50,7 +50,6 @@ select = ["ALL"] # KG Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
     "DJ",  # KG Django not required
-    "PTH", # KG builtin 'open' is fine, not going to use pathlib
     "DTZ", # KG no need to specify timezone for time objects
 
     # Specific rules
