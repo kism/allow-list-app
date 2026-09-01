@@ -27,7 +27,7 @@ test = [
     "responses",
     "jinja2",                # Flask depends on this, I have it here since config loading is templated for tests.
 ]
-type = ["mypy", "types-requests", "ty"]
+type = ["types-requests", "ty"]
 
 dev = ["ruff>=0.15.0,<1"]
 
@@ -37,7 +37,6 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
-target-version = "py311"
 line-length = 120
 
 [tool.ruff.lint]
@@ -101,16 +100,3 @@ testpaths = ["tests"]
 
 [tool.coverage.html]
 show_contexts = true
-
-[tool.mypy]
-files = ["allowlistapp", "tests"]
-namespace_packages = true
-explicit_package_bases = true
-show_error_codes = true
-strict = true
-enable_error_code = [
-    "ignore-without-code",
-    "redundant-expr",
-    "truthy-bool",
-    "type-arg",
-]

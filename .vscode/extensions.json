@@ -1,12 +1,9 @@
 {
     "recommendations": [
-        "esbenp.prettier-vscode",
         "ms-python.python",
-        "ms-python.vscode-pylance",
-        "vscode-icons-team.vscode-icons",
         "samuelcolvin.jinjahtml",
         "charliermarsh.ruff",
         "mechatroner.rainbow-csv",
-        "matangover.mypy"
+        "astral-sh.ty",
     ]
 }
