@@ -14,15 +14,15 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"] # Don't bother with beta versions, slow on github. https://github.com/actions/python-versions/releases
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Run image
-        uses: abatilo/actions-poetry@v2
+        uses: abatilo/actions-poetry@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -36,6 +36,6 @@ jobs:
         run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other settings from pyproject.toml
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
