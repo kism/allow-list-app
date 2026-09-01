@@ -9,7 +9,7 @@ from flask import Flask, render_template
 from . import auth, config, logger
 from .instances.allowlist import get_allowlist
 from .instances.config import get_ala_config
-from .version import __version__, MODULE_NAME_NICE
+from .version import MODULE_NAME_NICE, __version__
 
 
 def create_app(test_config: dict[str, Any] | None = None, instance_path: str | Path | None = None) -> Flask:

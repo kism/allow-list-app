@@ -78,7 +78,7 @@ def test_config_extra_keys_ignored(tmp_path: Path, place_test_config: Callable[[
     place_test_config("valid_testing_true.toml", tmp_path)
 
     # TEST: Extra keys do not raise a validation error.
-    conf = AllowListAppConfig(unknown_key="value", app=AppConfig(auth_type="static", db_path=tmp_path))  # type: ignore[call-arg]
+    conf = AllowListAppConfig(unknown_key="value", app=AppConfig(auth_type="static", db_path=tmp_path))  # ty: ignore[unknown-argument]
     assert not hasattr(conf, "unknown_key")
     assert isinstance(conf.app, AppConfig)
 

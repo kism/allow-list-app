@@ -46,7 +46,7 @@ class NGINXAllowlist:
 
         if allowlist_path is None:
             msg = "In the config, please enter a path for the NGINX allowlist file."
-            logger.exception(msg)
+            logger.error(msg)
             raise FileNotFoundError(msg)
 
         try:

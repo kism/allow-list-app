@@ -10,7 +10,7 @@ dependencies = [
     "flask>=3.1.3,<4",
     "argon2-cffi>=25.1.0,<26",
     "waitress>=3.0.2,<4",
-    "requests>=2.32.5,<3",     # TODO, see if you can just use flask.client
+    "requests>=2.32.5,<3",
     "tomlkit>=0.14,<1",
     "pydantic>=2.0,<3",
     "pydantic-settings>=2.0,<3",
@@ -50,6 +50,7 @@ ignore = [
     # Modules
     "DJ",  # KG Django not required
     "DTZ", # KG no need to specify timezone for time objects
+    "CPY", # Copyright in pyproject.toml
 
     # Specific rules
     "TD002",  # KG Verbose TODO, only I work on this project
