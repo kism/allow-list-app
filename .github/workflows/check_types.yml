@@ -22,7 +22,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra type --extra test
+        run: uv sync --group type --group test
 
       - name: Check types with ty
         run: .venv/bin/ty check

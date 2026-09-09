@@ -16,7 +16,7 @@ dependencies = [
     "pydantic-settings>=2.0,<3",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
     "pytest",
     "pytest-cov",
@@ -28,12 +28,16 @@ test = [
     "jinja2",                # Flask depends on this, I have it here since config loading is templated for tests.
 ]
 type = ["types-requests", "ty"]
-
-dev = ["ruff>=0.15.0,<1"]
+lint = ["ruff>=0.15.0,<1"]
+dev = [{ include-group = "test" }, { include-group = "type" }, { include-group = "lint" }]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "allowlistapp"
+module-root = ""
 
 [tool.ruff]
 cache-dir = "~/.cache/ruff"

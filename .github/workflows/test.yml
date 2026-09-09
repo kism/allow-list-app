@@ -30,7 +30,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra test
+        run: uv sync --group test
 
       - name: Test with pytest
         run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other settings from pyproject.toml
