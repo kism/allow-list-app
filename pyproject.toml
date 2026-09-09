@@ -35,10 +35,6 @@ dev = [{ include-group = "test" }, { include-group = "type" }, { include-group =
 requires = ["uv_build>=0.12,<0.13"]
 build-backend = "uv_build"
 
-[tool.uv.build-backend]
-module-name = "allowlistapp"
-module-root = ""
-
 [tool.ruff]
 cache-dir = "~/.cache/ruff"
 line-length = 120
@@ -76,7 +72,7 @@ ignore = [
     "PT004",  # KG monkeypatches don't return.
     "S311",   # KG I'll assume no real crypto will be done in PyTest.
 ]
-"allowlistapp/auth/auth_types.py" = [
+"src/allowlistapp/auth/auth_types.py" = [
     "S106", # Not a hardcoded password
 ]
 
