@@ -1,7 +1,7 @@
 # Allowlist App
 
-[![Check](https://github.com/kism/allow-list-app/actions/workflows/check.yml/badge.svg)](https://github.com/kism/allow-list-app/actions/workflows/check.yml)
-[![Check Types](https://github.com/kism/allow-list-app/actions/workflows/check_types.yml/badge.svg)](https://github.com/kism/allow-list-app/actions/workflows/check_types.yml)
+[![Lint](https://github.com/kism/allow-list-app/actions/workflows/check.yml/badge.svg)](https://github.com/kism/allow-list-app/actions/workflows/check.yml)
+[![Type Check](https://github.com/kism/allow-list-app/actions/workflows/check_types.yml/badge.svg)](https://github.com/kism/allow-list-app/actions/workflows/check_types.yml)
 [![Test](https://github.com/kism/allow-list-app/actions/workflows/test.yml/badge.svg)](https://github.com/kism/allow-list-app/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/kism/allow-list-app/graph/badge.svg?token=2376WBPJE6)](https://codecov.io/gh/kism/allow-list-app)
 
