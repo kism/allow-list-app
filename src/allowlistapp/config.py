@@ -1,274 +1,135 @@
-"""Config Processing."""
+"""Config loading, validating, writing."""
 
-import contextlib
-import logging
-import os
-import pwd
-from pathlib import Path
-from typing import Any
+from pathlib import (
+    Path,  # ruff: ignore[typing-only-standard-library-import] # Cannot be put in type checking block due to pydantic
+)
+from typing import Annotated, Literal, Self
 
-import tomlkit
+import argon2
 from argon2 import PasswordHasher
-from pydantic import BaseModel, field_serializer, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AfterValidator, BaseModel, Field, HttpUrl, model_validator
 
-logger = logging.getLogger(__name__)
+from .services.allowlist import normalise_ip
+from .utils.logger import get_logger
+
+# Logging should be all done at INFO level or higher as the log level hasn't been set yet
+logger = get_logger(__name__)
+
+CONFIG_FILE_NAME = "config.json"
 
 ph = PasswordHasher()
 
-VALID_AUTH_TYPES = ["static", "jellyfin"]
+
+def _write_private(path: Path, text: str) -> None:
+    """Write a file only the owner can read, it holds the password hash."""
+    path.touch(mode=0o600, exist_ok=True)
+    path.chmod(0o600)  # touch doesn't change the mode of an existing file
+    path.write_text(text, encoding="utf8")
 
 
-class ConfigPasswordError(Exception):
-    """Custom exception for password issues."""
+class AppConf(BaseModel):
+    """Application configuration definition."""
 
-    def __init__(self, message: str) -> None:
-        """Exception code."""
-        super().__init__(message)
-        self.message = message
-
-
-class ConfigUrlAuthError(Exception):
-    """Custom exception for URL auth issues."""
-
-    def __init__(self, message: str) -> None:
-        """Exception code."""
-        super().__init__(message)
-        self.message = message
+    allowed_subnets: list[Annotated[str, AfterValidator(normalise_ip)]] = []  # Host bits are dropped
+    auth_type: Literal["static", "jellyfin"] = "static"
+    revert_daily: bool = True
+    redirect_url: str = ""
+    db_path: Path | None = None  # instance_path / database.csv if None
 
 
-class ConfigValidationError(Exception):
-    """Error to raise if there is a config validation error."""
-
-    def __init__(self, failure: list[str]) -> None:
-        """Raise exception with list of config issues."""
-        super().__init__(failure)
-
-
-class LoggingConfig(BaseModel):
-    """Logging configuration."""
-
-    level: str = "INFO"
-    path: Path | None = None
-
-    @field_validator("path", mode="before")
-    @classmethod
-    def empty_str_to_none(cls, v: str | Path | None) -> Path | None:
-        """Convert empty string to None."""
-        if v == "" or v is None:
-            return None
-        return Path(v) if isinstance(v, str) else v
-
-    @field_serializer("path")
-    def serialize_path(self, v: Path | None) -> str:
-        """Serialize Path to str for TOML, None to empty string."""
-        return "" if v is None else str(v)
-
-
-class FlaskConfig(BaseModel):
-    """Flask configuration."""
-
-    DEBUG: bool = False
-    TESTING: bool = False
-
-
-class NginxConfig(BaseModel):
-    """NGINX service configuration."""
+class NginxConf(BaseModel):
+    """NGINX service configuration definition."""
 
     enabled: bool = False
     allowlist_path: Path | None = None
 
-    @field_validator("allowlist_path", mode="before")
-    @classmethod
-    def empty_str_to_none(cls, v: str | Path | None) -> Path | None:
-        """Convert empty string to None."""
-        if v == "" or v is None:
-            return None
-        return Path(v) if isinstance(v, str) else v
-
-    @field_serializer("allowlist_path")
-    def serialize_allowlist_path(self, v: Path | None) -> str:
-        """Serialize Path to str for TOML, None to empty string."""
-        return "" if v is None else str(v)
+    @model_validator(mode="after")
+    def path_set_if_enabled(self) -> Self:
+        """An enabled nginx service needs somewhere to write."""
+        if self.enabled and self.allowlist_path is None:
+            msg = "NginxConf: allowlist_path must be set when nginx is enabled"
+            raise ValueError(msg)
+        return self
 
 
-class ServicesConfig(BaseModel):
-    """Services configuration."""
+class ServicesConf(BaseModel):
+    """Services configuration definition."""
 
-    nginx: NginxConfig = NginxConfig()
+    nginx: NginxConf = Field(default_factory=NginxConf)
 
 
-class StaticAuthConfig(BaseModel):
-    """Static authentication configuration."""
+class StaticAuthConf(BaseModel):
+    """Static authentication configuration definition."""
 
     password_cleartext: str = ""
     password_hashed: str = ""
 
 
-class RemoteAuthConfig(BaseModel):
-    """Remote authentication configuration."""
+class RemoteAuthConf(BaseModel):
+    """Remote authentication configuration definition."""
 
-    url: str = ""
-
-
-class AuthConfig(BaseModel):
-    """Authentication configuration."""
-
-    remote: RemoteAuthConfig = RemoteAuthConfig()
-    static: StaticAuthConfig = StaticAuthConfig()
+    url: HttpUrl | None = None
 
 
-class AppConfig(BaseModel):
-    """Application configuration."""
+class AuthConf(BaseModel):
+    """Authentication configuration definition."""
 
-    allowed_subnets: list[str] = []
-    auth_type: str = "static"
-    revert_daily: bool = True
-    redirect_url: str = ""
-    db_path: Path | None = None
-
-    @field_validator("db_path", mode="before")
-    @classmethod
-    def empty_str_to_none(cls, v: str | Path | None) -> Path | None:
-        """Convert empty string to None."""
-        if v == "" or v is None:
-            return None
-        return Path(v) if isinstance(v, str) else v
-
-    @field_serializer("db_path")
-    def serialize_db_path(self, v: Path | None) -> str:
-        """Serialize Path to str for TOML, None to empty string."""
-        return "" if v is None else str(v)
+    remote: RemoteAuthConf = Field(default_factory=RemoteAuthConf)
+    static: StaticAuthConf = Field(default_factory=StaticAuthConf)
 
 
-class AllowListAppConfig(BaseSettings):
-    """Config Object."""
+class LoggingConf(BaseModel):
+    """Logging configuration definition."""
 
-    model_config = SettingsConfigDict(extra="ignore")
+    level: str = "INFO"
+    path: Path | None = None
 
-    app: AppConfig = AppConfig()
-    services: ServicesConfig = ServicesConfig()
-    auth: AuthConfig = AuthConfig()
-    logging: LoggingConfig = LoggingConfig()
-    flask: FlaskConfig = FlaskConfig()
 
-    def write_config(self, config_path: Path) -> None:
-        """Write configuration to a TOML file."""
-        try:
-            with config_path.open("w", encoding="utf8") as toml_file:
-                tomlkit.dump(self.model_dump(mode="json"), toml_file)
-        except PermissionError as exc:
-            user_account = pwd.getpwuid(os.getuid())[0]
-            err = f"Fix permissions: chown {user_account} {config_path}"
-            raise PermissionError(err) from exc
+class Config(BaseModel):
+    """Settings loaded from a JSON file in the instance directory."""
+
+    app: AppConf = Field(default_factory=AppConf)
+    services: ServicesConf = Field(default_factory=ServicesConf)
+    auth: AuthConf = Field(default_factory=AuthConf)
+    logging: LoggingConf = Field(default_factory=LoggingConf)
+
+    @model_validator(mode="after")
+    def check_auth(self) -> Self:
+        """Hash a cleartext static password, check the selected auth type has what it needs."""
+        if self.app.auth_type == "static":
+            static = self.auth.static
+            if static.password_cleartext:
+                logger.info("Plaintext password set, hashing and removing from config file")
+                static.password_hashed = ph.hash(static.password_cleartext)
+                static.password_cleartext = ""
+            if not static.password_hashed:
+                msg = "Config: set auth.static.password_cleartext"
+                raise ValueError(msg)
+            try:
+                argon2.extract_parameters(static.password_hashed)
+            except argon2.exceptions.InvalidHashError:
+                msg = "Config: auth.static.password_hashed isn't an argon2 hash, clear it and set password_cleartext"
+                raise ValueError(msg) from None
+        elif self.auth.remote.url is None:
+            msg = "Config: set auth.remote.url, including http(s)://"
+            raise ValueError(msg)
+        return self
 
     @classmethod
-    def load(cls, instance_path: str | Path, config_data: dict[str, Any] | None = None) -> "AllowListAppConfig":
-        """Load, validate, and return config.
+    def load(cls, instance_path: Path) -> Self:
+        """Load the config from the instance directory, writing it back with any missing defaults filled in."""
+        config_path = instance_path / CONFIG_FILE_NAME
+        instance_path.mkdir(parents=True, exist_ok=True)
 
-        Args:
-            instance_path: The flask instance path.
-            config_data: If provided, config won't be loaded from a file.
-        """
-        config_path = cls._resolve_config_path(Path(instance_path))
+        if not config_path.is_file():
+            # The defaults don't validate (no password), write them out so there is a file to fill in.
+            _write_private(config_path, cls.model_construct().model_dump_json(indent=2) + "\n")
+            logger.warning("No config found, wrote defaults to: %s", config_path)
 
-        if config_data is None:
-            config_data = cls._load_file(config_path)
+        config = cls.model_validate_json(config_path.read_text())
 
-        config = cls(**config_data)
-
-        config.write_config(config_path)
-
-        config._post_validate(Path(instance_path), config_path)
-
-        config.write_config(config_path)
-
-        logger.info("Configuration loaded successfully!")
+        # ponytail: no backup of the old file, git/your backups can have that job
+        _write_private(config_path, config.model_dump_json(indent=2) + "\n")
+        logger.info("Config loaded from and written to: %s", config_path)
 
         return config
-
-    def _post_validate(self, instance_path: Path, config_path: Path) -> None:
-        """Post-load validation and processing."""
-        failed_items = []
-
-        if self.flask.TESTING and not any(
-            substring in str(instance_path) for substring in ["tmp", "temp", "TMP", "TEMP"]
-        ):
-            failed_items.append("['flask']['TESTING'] is True but instance_path is not a tmp_path")
-
-        if failed_items:
-            raise ConfigValidationError(failed_items)
-
-        if self.app.db_path is None:
-            self.app.db_path = instance_path / "database.csv"
-
-        if self.app.auth_type == "static":
-            self._process_static_password(config_path)
-        else:
-            self._check_url_auth()
-
-    def _process_static_password(self, config_path: Path) -> None:
-        """Hash cleartext password if present, validate password is set."""
-        if self.auth.static.password_cleartext == "" and self.auth.static.password_hashed == "":
-            err_text = f"Please set password in: {config_path}"
-            raise ConfigPasswordError(err_text)
-
-        if self.auth.static.password_cleartext != "":
-            logger.info("Plaintext password set, hashing and removing from config file")
-            self.auth.static.password_hashed = ph.hash(self.auth.static.password_cleartext)
-            self.auth.static.password_cleartext = ""
-        else:
-            logger.info("Found hashed password, probably")
-
-    def _check_url_auth(self) -> None:
-        """Validate remote URL auth settings."""
-        if self.app.auth_type not in VALID_AUTH_TYPES:
-            err_text = f"Invalid auth type: {self.app.auth_type}\nValid Auth types: {VALID_AUTH_TYPES}"
-            raise ConfigUrlAuthError(err_text)
-
-        if "http" not in self.auth.remote.url:
-            err_text = "Please set the auth url, including http(s)://"
-            raise ConfigUrlAuthError(err_text)
-
-    @staticmethod
-    def _resolve_config_path(instance_path: Path) -> Path:
-        """Determine the config file path, creating defaults if none found."""
-        paths = [
-            instance_path / "config.toml",
-            Path.home() / ".config" / "allowlistapp" / "config.toml",
-            Path("/etc/allowlistapp/config.toml"),
-        ]
-
-        config_path = None
-        for path in paths:
-            if path.is_file():
-                logger.info("Found config at path: %s", path)
-                if not config_path:
-                    logger.info("Using this path as it's the first one that was found")
-                    config_path = path
-            else:
-                logger.info("No config file found at: %s", path)
-
-        if not config_path:
-            config_path = paths[0]
-            logger.warning("No configuration file found, creating at default location: %s", config_path)
-            with contextlib.suppress(FileExistsError):
-                instance_path.mkdir(parents=True)
-            try:
-                with config_path.open("w", encoding="utf8") as toml_file:
-                    tomlkit.dump(AllowListAppConfig().model_dump(mode="json"), toml_file)
-            except PermissionError as exc:
-                user_account = pwd.getpwuid(os.getuid())[0]
-                err = f"Fix permissions: chown {user_account} {config_path}"
-                raise PermissionError(err) from exc
-
-        return config_path
-
-    @staticmethod
-    def _load_file(config_path: Path) -> dict[str, Any]:
-        """Load configuration from a TOML file."""
-        with config_path.open(encoding="utf8") as toml_file:
-            return dict(tomlkit.load(toml_file))
-
-
-logger.debug("Loaded module: %s", __name__)

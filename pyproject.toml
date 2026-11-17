@@ -1,38 +1,44 @@
 [project]
 name = "allowlistapp"
-version = "0.2.0"
-description = "Flask webapp to allowlist IPs on nginx"
+version = "0.3.0"
+description = "FastAPI webapp to allowlist IPs on nginx"
 authors = [{ name = "Kieran Gee", email = "kieran.lost.the.game@gmail.com" }]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14.0,<4"
 dependencies = [
-    "flask>=3.1.3,<4",
+    "fastapi>=0.121",
+    "uvicorn>=0.40",
+    "jinja2>=3.1",
+    "pydantic>=2.12",
     "argon2-cffi>=25.1.0,<26",
-    "waitress>=3.0.2,<4",
     "requests>=2.32.5,<3",
-    "tomlkit>=0.14,<1",
-    "pydantic>=2.0,<3",
-    "pydantic-settings>=2.0,<3",
 ]
 
 [dependency-groups]
+type = ["ty>=0.0.69", "types-requests"]
+
+lint = ["ruff>=0.16.2"]
+
 test = [
-    "pytest",
-    "pytest-cov",
+    "pytest>=9.1.1",
+    "coverage>=7.15.4",
+    "httpx2", # Required by fastapi's TestClient
     "pytest-mock",
-    "detect-test-pollution",
     "pytest-random-order",
     "pytest-subprocess",
     "responses",
-    "jinja2",                # Flask depends on this, I have it here since config loading is templated for tests.
+    "detect-test-pollution",
 ]
-type = ["types-requests", "ty"]
-lint = ["ruff>=0.15.0,<1"]
-dev = [{ include-group = "test" }, { include-group = "type" }, { include-group = "lint" }]
+
+[project.urls]
+Repository = "https://github.com/kism/allow-list-app"
+
+[project.scripts]
+allowlistapp = "allowlistapp.__main__:main"
 
 [build-system]
-requires = ["uv_build>=0.12,<0.13"]
+requires = ["uv_build>=0.12.4,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.ruff]
@@ -40,40 +46,47 @@ cache-dir = "~/.cache/ruff"
 line-length = 120
 
 [tool.ruff.lint]
-extend-fixable = ["B", "I001"] # KG I think this means something...
-extend-unsafe-fixes = [
-    "F401",
-] # KG I don't like that this is fixed automatically (this doesnt work?)
-select = ["ALL"] # KG Include absolutely all of Ruff's rules.
+preview = true          # Optional, these can be unstable, many of these rules exist.
+select = ["ALL"]        # Include absolutely all of Ruff's rules.
 ignore = [
     # Modules
-    "DJ",  # KG Django not required
-    "DTZ", # KG no need to specify timezone for time objects
-    "CPY", # Copyright in pyproject.toml
+    "DJ",  # Django not required
+    "AIR", # Airflow not required
+    "DTZ", # no need to specify timezone for time objects
 
     # Specific rules
-    "TD002",  # KG Verbose TODO, only I work on this project
-    "TD003",  # KG Verbose TODO, only I work on this project
-    "ISC001", # KG conflict in the formatter
-    "COM812", # KG conflict in the formatter
+    "missing-todo-author",                      # Verbose TODO, only I work on this project
+    "missing-todo-link",                        # Verbose TODO, only I work on this project
+    "single-line-implicit-string-concatenation", # conflict in the formatter
+    "missing-trailing-comma",                   # conflict in the formatter
+    "missing-copyright-notice",                 # Copyright lives in pyproject.toml
+    "DOC",                                      # Docstrings yes, Args/Returns/Raises sections only where they help
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = [
     # Modules
-    "ARG", # KG Unused function args -> fixtures nevertheless are functionally relevant
-    "FBT", # KG Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+    "ARG", # Unused function args -> fixtures nevertheless are functionally relevant
+    "FBT", # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+    "ANN", # Don't care about annotations in tests
+    "D",   # Don't care about docstrings in tests
+    "DOC", # Don't care about docstrings in tests
 
     # Specific rules
-    "S101",   # KG asserts allowed in tests.
-    "ANN201", # KG Not really needed for pytest.
-    "SLF001", # KG Accessing private members is needed for testing.
-    "INP001", # KG __init__.py not needed for PyTest.
-    "PT004",  # KG monkeypatches don't return.
-    "S311",   # KG I'll assume no real crypto will be done in PyTest.
+    "assert",                                    # asserts allowed in tests.
+    "private-member-access",                     # Accessing private members is needed for testing.
+    "implicit-namespace-package",                # __init__.py not needed for PyTest.
+    "pytest-missing-fixture-name-underscore",    # monkeypatch doesn't return.
+    "suspicious-non-cryptographic-random-usage", # Regular RNG is fine in tests.
+    "hardcoded-password-string",                 # Hardcoded fake passwords are fine in tests.
+    "hardcoded-password-func-arg",               # Hardcoded fake passwords are fine in tests.
+    "too-many-arguments",                        # Tests can have as many arguments as they want.
+    "blind-except",                              # Tests can use BaseException.
+    "import-private-name",                       # Tests can import private members.
 ]
-"src/allowlistapp/auth/auth_types.py" = [
-    "S106", # Not a hardcoded password
+"src/allowlistapp/services/auth.py" = [
+    "hardcoded-password-string",   # Not a password, the Jellyfin client header
+    "hardcoded-password-func-arg", # Not a password, the Jellyfin field name
 ]
 
 [tool.ruff.lint.flake8-pytest-style]
@@ -89,14 +102,17 @@ docstring-code-format = true
 docstring-code-line-length = 40
 
 [tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-    "--cov-context=test",
-    "--cov=allowlistapp",
-    "--cov-report=term",
-    "--cov-report=html",
-]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+command_line = ".venv/bin/pytest -q"
+source = ["allowlistapp"]
+context = "test"
+
+[tool.coverage.report]
+show_missing = false
+format = "text"
+sort = "-Miss"
 
 [tool.coverage.html]
 show_contexts = true

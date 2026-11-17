@@ -1,138 +1,142 @@
 """Allowlist object and its friends."""
 
-import datetime
+import datetime as dt
 import ipaddress
-import logging
 import threading
-import time
-from typing import TYPE_CHECKING
+from time import sleep
+from typing import TYPE_CHECKING, Any
 
-from allowlistapp.instances.config import get_ala_config
 from allowlistapp.services.database import Database
+from allowlistapp.utils.logger import get_logger
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from allowlistapp.services.nginx import NGINXAllowlist
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
+
+def normalise_ip(value: str) -> str:
+    """Canonical form of an IP or network, host bits are dropped. Raises ValueError if it's neither."""
+    value = value.strip()
+    if "/" in value:
+        return str(ipaddress.ip_network(value, strict=False))
+
+    ip = ipaddress.ip_address(value)
+    if isinstance(ip, ipaddress.IPv6Address) and ip.scope_id:
+        msg = f"IPv6 scope ids aren't valid in nginx: {value}"
+        raise ValueError(msg)
+    return str(ip)
+
+
+def clean_username(username: str) -> str:
+    """Drop anything that could end the nginx comment or a log line."""
+    return "".join(c for c in username if c.isprintable())
+
+
+def _contains(outer: str, inner: ipaddress.IPv4Network | ipaddress.IPv6Network) -> bool:
+    outer_network = ipaddress.ip_network(outer)
+    return outer_network.version == inner.version and inner.subnet_of(outer_network)  # ty: ignore[invalid-argument-type] # Versions checked first
 
 
 class AllowList:
     """This is the allowlist object, init from database, query from memory, write to database."""
 
-    def __init__(self, nginx_allowlist: "NGINXAllowlist | None" = None) -> None:
+    def __init__(
+        self,
+        db_path: Path,
+        allowed_subnets: list[str],
+        *,
+        revert_daily: bool,
+        nginx_allowlist: NGINXAllowlist | None = None,
+    ) -> None:
         """Initialise the AllowList."""
         self._nginx_allowlist = nginx_allowlist
-        ala_conf = get_ala_config()
+        self._allowed_subnets = allowed_subnets
+        # ponytail: one lock around every read, write and nginx reload, plenty at login rates
+        self._lock = threading.Lock()
 
-        self._database = Database(ala_conf.app.db_path)
-        self.allowlist = self._database.get_allowlist()
+        self._database = Database(db_path)
+        self.allowlist: list[dict[str, Any]] = []
 
-        # See if we need to revert the allowlist daily
-        if ala_conf.app.revert_daily:
-            thread = threading.Thread(target=self._revert_list_daily, args=(), daemon=True)
-            thread.start()
+        with self._lock:
+            # The csv can be edited outside of this program, only keep rows that are safe to write to nginx
+            for row in self._database.get_allowlist():
+                try:
+                    row["ip"] = normalise_ip(row["ip"])
+                except ValueError:
+                    logger.error("Dropping invalid row from the database: %r", row)  # ruff: ignore[error-instead-of-exception] # Not worth a traceback
+                    continue
+                row["username"] = clean_username(row["username"])
+                self.allowlist.append(row)
 
-        logger.info("Initialising the database...")
-        for subnet in ala_conf.app.allowed_subnets:
-            self.add_to_allowlist("default", subnet)
-        logger.info("Done initialising the database")
+            for subnet in allowed_subnets:
+                self._add("default", subnet)
 
-        # For safety since in theory the file can be written to outside of this program
-        self._write_app_allowlist_files()
+            self._write()
+
+        if revert_daily:
+            threading.Thread(target=self._revert_list_daily, daemon=True).start()
 
     def is_in_allowlist(self, ip: str) -> bool:
         """Check if ip address is in the allowlist."""
-        logger.debug("Checking if IP already in allowlist...")
-        auth_in_list = False
+        try:
+            network = ipaddress.ip_network(normalise_ip(ip))
+        except ValueError:
+            return False
 
-        for item in self.allowlist:
-            try:
-                # Check if the IP matches directly or is within the network
-                if ip == item["ip"] or ipaddress.ip_address(ip) in ipaddress.ip_network(item["ip"]):
-                    auth_in_list = True
-                    break
-            except ValueError:
-                continue
-
-        return auth_in_list
+        with self._lock:
+            return any(_contains(item["ip"], network) for item in self.allowlist)
 
     def add_to_allowlist(self, username: str, ip: str) -> bool:
-        """Insert an IP into the allowlist, returns if an IP has been inserted."""
-        logger.debug("Trying to insert ip: %s for user: %s", ip, username)
+        """Insert an IP into the allowlist, returns if it was inserted. Raises ValueError for an invalid IP."""
+        with self._lock:
+            added = self._add(username, ip)
+            if added:
+                self._write()
+            return added
 
-        added = False
-        self._check_ip(ip)
+    def revert(self) -> None:
+        """Reset the allowlist to the default subnets."""
+        logger.info("Reverting IP list to default")
+        with self._lock:
+            self.allowlist = []
+            for subnet in self._allowed_subnets:
+                self._add("default", subnet)
+            self._write()
 
-        if self.is_in_allowlist(ip):
-            logger.info("Duplicate ip/network, not adding.")
-        else:
-            new_item = {"username": username, "ip": ip, "date": str(datetime.datetime.now())}
-            self.allowlist.append(new_item)
-            added = True
-            logger.info("Added ip: %s to allowlist", ip)
+    def _add(self, username: str, ip: str) -> bool:
+        """Add without locking or writing, the caller holds the lock."""
+        ip = normalise_ip(ip)
+        network = ipaddress.ip_network(ip)
 
-            self._database.write_allowlist(self.allowlist)
-            self._write_app_allowlist_files()
+        if any(_contains(item["ip"], network) for item in self.allowlist):
+            logger.info("Duplicate ip/network, not adding: %s", ip)
+            return False
 
-        return added
+        self.allowlist.append({"username": clean_username(username), "ip": ip, "date": str(dt.datetime.now())})
+        logger.info("Added ip: %s to allowlist", ip)
+        return True
+
+    def _write(self) -> None:
+        """Write the database and the nginx allowlist, the caller holds the lock."""
+        self._database.write_allowlist(self.allowlist)
+        if self._nginx_allowlist:
+            self._nginx_allowlist.write(self.allowlist)
+
+    @staticmethod
+    def _seconds_until_4am() -> float:
+        now = dt.datetime.now()
+        target = dt.datetime.combine(now.date(), dt.time(4, 0))
+        if target <= now:
+            target += dt.timedelta(days=1)
+        return (target - now).total_seconds()
 
     def _revert_list_daily(self) -> None:
-        """Reset list at 4am."""
+        """Revert the list at 4am, every day."""
         while True:
-            logger.info("Adding subnets/ips from config file")
-
-            self._database.reset()
-
-            # Get the current time
-            current_time = datetime.datetime.now().time()
-
-            # Set the target time (4 AM)
-            target_time = datetime.time(4, 0)
-
-            # Calculate the time difference
-            time_difference = datetime.datetime.combine(datetime.date.today(), target_time) - datetime.datetime.combine(
-                datetime.date.today(),
-                current_time,
-            )
-
-            # If the target time is already passed for today, add 1 day
-            if time_difference.total_seconds() < 0:
-                time_difference += datetime.timedelta(
-                    days=1
-                )  # pragma: no cover, not going to mock time just for one line of coverage
-
-            seconds_until_next_run = time_difference.total_seconds()
-
-            logger.info(
-                "🛌 Reverting allowlist in ~%s minutes",
-                str(int(seconds_until_next_run / 60)),
-            )
-
-            # Sleep until the target time
-            time.sleep(seconds_until_next_run)
-
-            logger.info("It's 4am, reverting IP list to default")
-
-    def _write_app_allowlist_files(self) -> None:
-        """Write to the nginx allowlist conf file."""
-        if self._nginx_allowlist:
-            self._nginx_allowlist.write(get_ala_config().services.nginx.allowlist_path, self.allowlist)
-
-    def _check_ip(self, in_ip_or_network: str) -> bool:
-        """Check if string is valid IP or Network."""
-        valid_ip = False
-        for ip_cls in [ipaddress.IPv4Address, ipaddress.IPv4Network, ipaddress.IPv6Address, ipaddress.IPv6Network]:
-            try:
-                ip_cls(in_ip_or_network)
-                valid_ip = True
-            except (ipaddress.NetmaskValueError, ipaddress.AddressValueError):
-                continue
-
-        if not valid_ip:
-            err = f"Invalid IP/network address: {in_ip_or_network}"
-            logger.error(err)
-
-        return valid_ip
-
-
-logger.debug("Loaded module: %s", __name__)
+            seconds = self._seconds_until_4am()
+            logger.info("🛌 Reverting allowlist in ~%s minutes", int(seconds / 60))
+            sleep(seconds)
+            self.revert()

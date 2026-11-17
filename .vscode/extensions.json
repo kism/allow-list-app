@@ -1,9 +1,3 @@
 {
-    "recommendations": [
-        "ms-python.python",
-        "samuelcolvin.jinjahtml",
-        "charliermarsh.ruff",
-        "mechatroner.rainbow-csv",
-        "astral-sh.ty",
-    ]
+  "recommendations": ["samuelcolvin.jinjahtml", "ms-python.python", "charliermarsh.ruff", "astral-sh.ty"]
 }

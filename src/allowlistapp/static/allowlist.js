@@ -10,7 +10,7 @@ function printFailure(message) {
 }
 
 function checkAuthentication() {
-  fetch("check_auth", {
+  fetch("check_auth/", {
     method: "GET",
   }).then((response) => {
     if (response.ok) {
@@ -22,26 +22,25 @@ function checkAuthentication() {
 document.getElementById("AUTH_FORM").onsubmit = async function (event) {
   event.preventDefault(); // Prevent the default form submission
 
-  // Collect form data
-  const formData = new FormData(this);
+  // Collect form data, sent as json to match the AuthRequest model
+  const formData = Object.fromEntries(new FormData(this));
 
   try {
     // Send form data using Fetch API
-    const response = await fetch("authenticate", {
+    const response = await fetch("authenticate/", {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
     });
 
     // Check if the request was successful
     if (response.ok) {
       printSuccess(`Authenticated!`);
+    } else if (response.status === 429) {
+      printFailure(`Too many failed attempts, try again in a minute`);
     } else {
       printFailure(`Authentication Failure`);
     }
-
-    // // Process the response ∏(e.g., display a success message)
-    // const result = await response.text();
-    // document.getElementById('CONNECTION_TEST').innerText = result;
   } catch (error) {
     // Handle errors (e.g., display an error message)
     printFailure("Form submission failed: " + error.message);

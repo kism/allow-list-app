@@ -1,75 +1,55 @@
 """Module to handle writing the nginx allowlist and reloading nginx."""
 
-import logging
-import os
-import pwd
-import subprocess
-import time
-from pathlib import Path
-from typing import Any
+import getpass
+import subprocess  # ruff: ignore[suspicious-subprocess-import] # Fixed command, no user input
+from typing import TYPE_CHECKING, Any
 
 from jinja2 import Environment, FileSystemLoader
 
 from allowlistapp.constants import TEMPLATES_DIR
+from allowlistapp.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from pathlib import Path
+
+logger = get_logger(__name__)
 
 
 class NGINXAllowlist:
-    """Object to handle writing NGINX allowlist."""
+    """Writes the NGINX allowlist, the AllowList's lock keeps writes and reloads one at a time."""
 
-    def __init__(self) -> None:
+    def __init__(self, allowlist_path: Path) -> None:
         """Init config for the NGINX Allowlist Writer."""
-        # Monitor Writing
-        self._writing = False
-
-        # Monitor Reloading
-        self._nginx_reloading = False
-        self.user_account = pwd.getpwuid(os.getuid())[0]
+        self.allowlist_path = allowlist_path
+        self.user_account = getpass.getuser()
 
         self.reload_nginx_command = ["systemctl", "reload", "nginx"]
         if self.user_account != "root":
             self.reload_nginx_command = ["sudo", "systemctl", "reload", "nginx"]
 
-    def write(self, allowlist_path: Path | None, allowlist: list[dict[str, Any]]) -> None:
-        """Write NGINX allowlist."""
-        logger.debug("Writing nginx allowlist: %s", allowlist_path)
-        while self._writing:
-            time.sleep(0.2)
+        # Not HTML, so no HTML escaping. The AllowList only hands over normalised IPs and printable usernames.
+        env = Environment(loader=FileSystemLoader(TEMPLATES_DIR), autoescape=False)  # ruff: ignore[jinja2-autoescape-false] # Not HTML
+        self._template = env.get_template("nginx.conf.j2")
 
-        env = Environment(
-            loader=FileSystemLoader(TEMPLATES_DIR),
-            autoescape=True,
-        )
-        template = env.get_template("nginx.conf.j2")
-        rendered_template = template.render(allowlist=allowlist)
-
-        if allowlist_path is None:
-            msg = "In the config, please enter a path for the NGINX allowlist file."
-            logger.error(msg)
-            raise FileNotFoundError(msg)
+    def write(self, allowlist: list[dict[str, Any]]) -> None:
+        """Write NGINX allowlist, then reload nginx."""
+        logger.debug("Writing nginx allowlist: %s", self.allowlist_path)
 
         try:
-            with allowlist_path.open("w", encoding="utf8") as conf_file:
-                conf_file.write(rendered_template)
+            self.allowlist_path.write_text(self._template.render(allowlist=allowlist), encoding="utf8")
         except FileNotFoundError as exc:
-            msg = f"Could not write NGINX allowlist file to path: {allowlist_path}"
+            msg = f"Could not write NGINX allowlist file to path: {self.allowlist_path}"
             logger.exception(msg)
             raise FileNotFoundError(msg) from exc
 
-        self._writing = False
         logger.debug("Finished writing nginx allowlist")
         self._reload()
 
     def _reload(self) -> None:
         """Reload NGINX."""
-        while self._nginx_reloading:
-            time.sleep(0.2)
-
-        self._nginx_reloading = True
         logger.info("Reloading nginx")
         try:
-            subprocess.run(self.reload_nginx_command, check=True, capture_output=True, text=True)  # noqa: S603 Input has been validated
+            subprocess.run(self.reload_nginx_command, check=True, capture_output=True, text=True)  # ruff: ignore[subprocess-without-shell-equals-true] Fixed command
             logger.info("Nginx reloaded")
         except subprocess.CalledProcessError:
             err = (
@@ -82,9 +62,3 @@ class NGINXAllowlist:
                 f"And insert the text: {self.user_account} ALL=(root) NOPASSWD: /usr/sbin/systemctl reload nginx...\n\n"
             )
             logger.exception(err)
-
-        finally:
-            self._nginx_reloading = False
-
-
-logger.debug("Loaded module: %s", __name__)

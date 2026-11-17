@@ -1,11 +1,14 @@
 """Database service for the allowlist."""
 
 import csv
-import logging
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-logger = logging.getLogger(__name__)
+from allowlistapp.utils.logger import get_logger
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+logger = get_logger(__name__)
 
 CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 
@@ -13,11 +16,8 @@ CSV_SCHEMA = {"username": "", "ip": "", "date": ""}
 class Database:
     """Manages the CSV allowlist database."""
 
-    def __init__(self, db_path: Path | None) -> None:
+    def __init__(self, db_path: Path) -> None:
         """Initialise the database, verifying it exists and has the correct schema."""
-        if db_path is None:
-            msg = "db_path not configured"
-            raise ValueError(msg)
         self.db_path = db_path
         self._check()
 
@@ -50,35 +50,19 @@ class Database:
 
         logger.info("DB write complete.")
 
-    def reset(self) -> None:
-        """Clear the database."""
-        logger.info("CLEARING THE DATABASE...")
-        with self.db_path.open("w", newline="") as csv_file:
-            csv_writer = csv.DictWriter(
-                csv_file, CSV_SCHEMA.keys(), delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
-            )
-            csv_writer.writeheader()
-
     def _check(self) -> None:
         """Check the 'schema' of the database."""
-        try:
-            with self.db_path.open(newline="") as csv_file:
-                msg = f"Database found at: {self.db_path}"
-                logger.info(msg)
-                csv_reader = csv.DictReader(csv_file, quoting=csv.QUOTE_MINIMAL)
-                allowlist = list(csv_reader).copy()
-
-            msg = f"CSV DictReader as list:\n{allowlist}"
-            logger.debug(msg)
-
-            for row in allowlist:
-                if len(row) != len(CSV_SCHEMA.keys()):
-                    err = f"Row {row} of csv not three columns, fix or delete {self.db_path}"
-                    logger.critical(err)
-                    raise ValueError(err)
-            logger.info("Database checks passed")
-        except FileNotFoundError:
+        if not self.db_path.is_file():
             logger.info("Database file not found, that's okay")
+            return
 
+        logger.info("Database found at: %s", self.db_path)
+        allowlist = self.get_allowlist()
+        logger.debug("CSV DictReader as list:\n%s", allowlist)
 
-logger.debug("Loaded module: %s", __name__)
+        for row in allowlist:
+            if len(row) != len(CSV_SCHEMA):
+                err = f"Row {row} of csv not three columns, fix or delete {self.db_path}"
+                logger.critical(err)
+                raise ValueError(err)
+        logger.info("Database checks passed")

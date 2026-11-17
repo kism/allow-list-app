@@ -1,74 +1,62 @@
 """The conftest.py file serves as a means of providing fixtures for an entire directory.
 
 Fixtures defined in a conftest.py can be used by any test in that package without needing to import them.
+
+Tests should always use the tmp_path fixture as an instance_path so they don't pollute each other.
 """
 
-from collections.abc import Callable
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pytest
-import tomlkit
-from flask import Flask
-from flask.testing import FlaskClient, FlaskCliRunner
+from fastapi.testclient import TestClient
 
 from allowlistapp import create_app
+from allowlistapp.config import AppConf, AuthConf, Config, RemoteAuthConf, StaticAuthConf
 
-TEST_CONFIGS_LOCATION = Path(__file__).parent / "configs"
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from pathlib import Path
 
+    from fastapi import FastAPI
 
-@pytest.fixture
-def app(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> Flask:
-    """This fixture uses the default config within the flask app."""
-    return create_app(get_test_config("valid_testing_true.toml"), instance_path=tmp_path)
-
-
-@pytest.fixture
-def client(app: Flask) -> FlaskClient:
-    """This returns a test client for the default app()."""
-    return app.test_client()
+TEST_PASSWORD = "hunter2"
+JELLYFIN_URL = "https://jf.example.com"
+CLIENT = ("127.0.0.1", 50000)  # TestClient defaults to "testclient", which isn't an IP
 
 
 @pytest.fixture
-def client_url_auth(tmp_path: Path, get_test_config: Callable[[str], dict[str, Any]]) -> FlaskClient:
-    """This fixture uses the default config within the flask app."""
-    app = create_app(get_test_config("valid_url_auth_url.toml"), instance_path=tmp_path)
-
-    return app.test_client()
-
-
-@pytest.fixture
-def runner(app: Flask) -> FlaskCliRunner:
-    """TODO?????"""
-    return app.test_cli_runner()
+def config() -> Config:
+    """Static auth config, no daily revert so no background thread."""
+    return Config(
+        app=AppConf(revert_daily=False),
+        auth=AuthConf(static=StaticAuthConf(password_cleartext=TEST_PASSWORD)),
+    )
 
 
 @pytest.fixture
-def get_test_config() -> Callable[[str], dict[str, Any]]:
-    """Function returns a function, which is how it needs to be."""
-
-    def _get_test_config(config_name: str) -> dict[str, Any]:
-        """Load all the .toml configs into a single dict."""
-        filepath = TEST_CONFIGS_LOCATION / config_name
-
-        with filepath.open() as file:
-            return tomlkit.load(file)
-
-    return _get_test_config
+def config_jellyfin() -> Config:
+    """Jellyfin auth config."""
+    return Config(
+        app=AppConf(auth_type="jellyfin", revert_daily=False),
+        auth=AuthConf(remote=RemoteAuthConf(url=JELLYFIN_URL)),
+    )
 
 
 @pytest.fixture
-def place_test_config(get_test_config: Callable[[str], dict[str, Any]]) -> Callable[[str, Path | str], None]:
-    """Function returns a function, which is how it needs to be."""
+def app(tmp_path: Path, config: Config) -> FastAPI:
+    """App with the static auth config, in a tmp_path instance directory."""
+    return create_app(config=config, instance_path=tmp_path)
 
-    def _place_test_config(config_name: str, out_path: Path | str) -> None:
-        """Place a test config in the tmp_path."""
-        filepath = TEST_CONFIGS_LOCATION / config_name
 
-        with filepath.open() as file:
-            config = tomlkit.load(file)
+@pytest.fixture
+def client(app: FastAPI) -> Generator[TestClient]:
+    """Test client for the app."""
+    with TestClient(app, client=CLIENT) as test_client:
+        yield test_client
 
-        with (Path(out_path) / "config.toml").open("w") as file:
-            tomlkit.dump(config, file)
 
-    return _place_test_config
+@pytest.fixture
+def client_jellyfin(tmp_path: Path, config_jellyfin: Config) -> Generator[TestClient]:
+    """Test client for the app, with jellyfin auth."""
+    with TestClient(create_app(config=config_jellyfin, instance_path=tmp_path), client=CLIENT) as test_client:
+        yield test_client

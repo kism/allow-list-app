@@ -6,36 +6,39 @@ on:
     branches:
       - main
       - test
+    paths-ignore:
+      - "**/README*"
+      - ".github/workflows/check.yml"
+      - ".github/workflows/check_types.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test_app:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"] # Don't bother with beta versions, slow on github. https://github.com/actions/python-versions/releases
+        # Don't bother with beta versions, slow on github.
+        python-version: ["3.14", "3.15"]
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Run image
-        uses: abatilo/actions-poetry@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
+      - name: Install the project
         run: uv sync --group test
 
       - name: Test with pytest
-        run: .venv/bin/pytest --cov-report=xml # xml report needed for codecov, other settings from pyproject.toml
+        run: |
+          .venv/bin/coverage run
+          .venv/bin/coverage xml
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v7.1.1
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
