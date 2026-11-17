@@ -3,8 +3,8 @@
 import ipaddress
 import json
 import threading
-import time
 from http import HTTPStatus
+from time import monotonic
 
 import requests
 from argon2 import PasswordHasher
@@ -95,7 +95,7 @@ class LoginLimiter:
     def is_blocked(self, ip: str) -> bool:
         """Whether this client has too many recent failures."""
         key = self._key(ip)
-        now = time.monotonic()
+        now = monotonic()
         with self._lock:
             recent = [t for t in self._failures.pop(key, []) if now - t < self.window_seconds]
             if recent:
@@ -104,7 +104,7 @@ class LoginLimiter:
 
     def record_failure(self, ip: str) -> None:
         """Count a failed login."""
-        now = time.monotonic()
+        now = monotonic()
         with self._lock:
             self._failures.setdefault(self._key(ip), []).append(now)
             # ponytail: clients that fail once and leave are only pruned when the dict gets big

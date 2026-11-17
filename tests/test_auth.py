@@ -83,7 +83,7 @@ def test_auth_rate_limit(client: TestClient) -> None:
 def test_login_limiter_window(monkeypatch: pytest.MonkeyPatch) -> None:
     """TEST: Failures expire after the window, IPv6 clients are limited per /64."""
     now = [1000.0]
-    monkeypatch.setattr("time.monotonic", lambda: now[0])
+    monkeypatch.setattr("allowlistapp.services.auth.monotonic", lambda: now[0])
     limiter = LoginLimiter(max_failures=2, window_seconds=60)
 
     limiter.record_failure("2001:db8::1")

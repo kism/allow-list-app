@@ -86,7 +86,7 @@ def test_revert_daily(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         if len(sleeps) > 1:
             raise StopLoopError
 
-    monkeypatch.setattr("time.sleep", fake_sleep)
+    monkeypatch.setattr("allowlistapp.services.allowlist.sleep", fake_sleep)
 
     with pytest.raises(StopLoopError):
         al._revert_list_daily()

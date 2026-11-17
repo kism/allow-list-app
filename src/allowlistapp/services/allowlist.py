@@ -1,9 +1,9 @@
 """Allowlist object and its friends."""
 
-import datetime
+import datetime as dt
 import ipaddress
 import threading
-import time
+from time import sleep
 from typing import TYPE_CHECKING, Any
 
 from allowlistapp.services.database import Database
@@ -115,7 +115,7 @@ class AllowList:
             logger.info("Duplicate ip/network, not adding: %s", ip)
             return False
 
-        self.allowlist.append({"username": clean_username(username), "ip": ip, "date": str(datetime.datetime.now())})
+        self.allowlist.append({"username": clean_username(username), "ip": ip, "date": str(dt.datetime.now())})
         logger.info("Added ip: %s to allowlist", ip)
         return True
 
@@ -127,10 +127,10 @@ class AllowList:
 
     @staticmethod
     def _seconds_until_4am() -> float:
-        now = datetime.datetime.now()
-        target = datetime.datetime.combine(now.date(), datetime.time(4, 0))
+        now = dt.datetime.now()
+        target = dt.datetime.combine(now.date(), dt.time(4, 0))
         if target <= now:
-            target += datetime.timedelta(days=1)
+            target += dt.timedelta(days=1)
         return (target - now).total_seconds()
 
     def _revert_list_daily(self) -> None:
@@ -138,5 +138,5 @@ class AllowList:
         while True:
             seconds = self._seconds_until_4am()
             logger.info("🛌 Reverting allowlist in ~%s minutes", int(seconds / 60))
-            time.sleep(seconds)
+            sleep(seconds)
             self.revert()
