@@ -1,0 +1,617 @@
+/* F O N T S */
+
+@font-face {
+  font-family: Chicago; /* Headings */
+  font-style: normal;
+  font-weight: 700;
+  src: local(""), url("/static/fonts/Chicago.woff2") format("woff2");
+}
+
+@font-face {
+  /* Content */
+  font-family: Geneva;
+  font-style: normal;
+  font-weight: 400;
+  src: local(""), url("/static/fonts/Geneva.woff2") format("woff2");
+}
+
+@font-face {
+  /* Monospace */
+  font-family: Monaco;
+  font-style: normal;
+  font-weight: 400;
+  src: local(""), url("/static/fonts/Monaco.woff2") format("woff2");
+}
+
+/* A C T U A L  C S S */
+
+:root {
+  --box-shadow: 2px 2px;
+
+  /* Base Tokens */
+  --sys-color-white: #fff;
+  --sys-color-black: #000;
+  --sys-color-grey: #a5a5a5;
+  --sys-color-darkgrey: #b6b7b8;
+
+  /* Theme Tokens */
+  --primary: var(--sys-color-white);
+  --secondary: var(--sys-color-black);
+  --tertiary: var(--sys-color-grey);
+
+  /* Component Tokens */
+  --disabled: var(--sys-color-darkgrey);
+  --text-box-bg: var(--sys-color-white);
+  --text-box-fg: var(--sys-color-black);
+  --border-colour: var(--secondary);
+  --border-thickness: 2px;
+  --standard-border-radius: 0px;
+
+  background: linear-gradient(90deg, var(--primary) 21px, transparent 1%) center,
+    linear-gradient(var(--primary) 21px, transparent 1%) center, var(--secondary);
+  background-size: 22px 22px;
+  background-attachment: fixed;
+}
+
+/* For the toggle */
+:root.light {
+  --primary: var(--sys-color-white);
+  --secondary: var(--sys-color-black);
+  --tertiary: var(--sys-color-grey);
+
+  /* Component Tokens */
+  --disabled: var(--sys-color-darkgrey);
+}
+
+:root.dark {
+  --primary: var(--sys-color-black);
+  --secondary: var(--sys-color-white);
+  --tertiary: var(--sys-color-darkgrey);
+
+  /* Component Tokens */
+  --disabled: var(--sys-color-grey);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: var(--sys-color-black);
+    --secondary: var(--sys-color-white);
+    --tertiary: var(--sys-color-darkgrey);
+    --disabled: var(--sys-color-grey);
+  }
+}
+
+@media screen and (width <= 450px) {
+  body {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+@media screen and (820px > width > 450px) {
+  body {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    margin: 15px !important;
+  }
+}
+
+body {
+  font-family: Geneva, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 14px;
+  background-color: var(--primary);
+  color: var(--secondary);
+  line-height: 1.5;
+  max-width: 800px;
+  border: var(--border-thickness) solid var(--border-colour);
+  padding: 10px;
+  box-shadow: var(--box-shadow);
+  margin: 30px auto;
+  box-sizing: border-box;
+  cursor: url('cursor.svg') 16 16, auto;
+}
+
+body.non-contained {
+  max-width: 100% !important;
+}
+
+hr {
+  border: 0;
+  border-top: 2px solid var(--secondary);
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: content-box;
+  height: 0;
+  overflow: visible;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: Chicago, Consolas, "Lucida Console", monospace;
+  line-height: 1.2;
+  color: var(--secondary);
+}
+
+h1 {
+  font-size: 40px;
+  margin: 12px 0 8px;
+}
+
+h1.centered {
+  text-align: center;
+}
+
+h2 {
+  font-size: 28px;
+  margin: 12px 0 8px;
+}
+
+h3 {
+  font-size: 24px;
+  margin: 12px 0 8px;
+  font-style: italic;
+}
+
+h4 {
+  font-size: 16px;
+  margin: 12px 0 8px;
+}
+
+h5 {
+  font-style: italic;
+  font-size: 14px;
+  margin: 12px 0 8px;
+}
+
+h6 {
+  font-size: 12px;
+  margin: 12px 0 8px;
+}
+
+p {
+  margin: 0, 0, 16px, 0;
+}
+
+ul,
+ol {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  padding-left: 40px;
+}
+
+dl {
+  margin-bottom: 16px;
+}
+
+dd {
+  margin-left: 40px;
+}
+
+img {
+  height: auto;
+  max-width: 100%;
+  vertical-align: baseline;
+}
+
+code,
+pre {
+  font-family: Monaco, Consolas, "Lucida Console", monospace;
+  font-size: 13px;
+  line-height: inherit;
+  margin: 0;
+  vertical-align: baseline;
+  word-break: break-all;
+  word-wrap: break-word;
+  background-color: var(--tertiary);
+  display: inline-block;
+  padding: 0 4px;
+}
+
+.code-block {
+  display: block;
+  max-width: 100%;
+  width: fit-content;
+  padding: 2px 10px;
+  margin: 3px 0;
+}
+
+embed,
+iframe,
+video {
+  border: 0;
+}
+
+small {
+  vertical-align: bottom;
+}
+
+footer {
+  font-size: smaller;
+  margin: 20px 0 16px;
+}
+
+footer p {
+  margin-bottom: 0;
+}
+
+u {
+  text-decoration: underline;
+}
+
+s {
+  text-decoration: line-through;
+}
+
+sup {
+  font-size: 14px;
+  vertical-align: super;
+}
+
+sub {
+  font-size: 14px;
+  vertical-align: sub;
+}
+
+mark {
+  background: var(--tertiary);
+}
+
+a:link {
+  color: var(--secondary);
+}
+
+a:hover,
+a:focus {
+  text-decoration: none;
+}
+
+a:visited {
+  color: var(--secondary);
+}
+
+/* Tables */
+
+table {
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  box-shadow: var(--box-shadow);
+}
+
+h1 + table,
+h2 + table,
+h3 + table,
+h4 + table,
+h5 + table,
+h6 + table {
+  margin-top: 10px;
+}
+
+tr {
+  /* border-bottom: 2px solid var(--border-colour); */
+  margin-bottom: 8px;
+}
+
+thead tr {
+  /* border-bottom: 1px solid var(--border-colour); */
+  background: var(--tertiary);
+}
+
+caption {
+  padding: 8px 0;
+}
+
+td {
+  padding: 16px;
+  vertical-align: inherit;
+}
+
+td,
+th {
+  border: var(--border-thickness) solid var(--border-colour);
+  text-align: start;
+  padding: 0.5rem;
+}
+
+thead tr th {
+  padding: 10px 4px;
+  vertical-align: inherit;
+  color: var(--primary);
+  text-align: center;
+}
+
+tfoot tr {
+  text-align: left;
+}
+
+tfoot td {
+  font-size: 8px;
+  font-style: italic;
+  padding: 10px 4px;
+}
+
+::selection {
+  color: var(--primary);
+  background: var(--secondary);
+}
+
+strong {
+  font-weight: 400;
+}
+
+em,
+i {
+  font-style: normal;
+}
+
+del {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+/* Ruining the classless dream */
+@media (width >= 400px) {
+  .container {
+    width: 85%;
+    padding: 0;
+  }
+}
+
+@media (width >= 550px) {
+  .container {
+    width: 80%;
+  }
+
+  .column,
+  .columns {
+    margin-left: 4%;
+  }
+
+  .column:first-child,
+  .columns:first-child {
+    margin-left: 0;
+  }
+
+  .one-half.column {
+    width: 48%;
+  }
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.column,
+.columns {
+  width: 100%;
+  float: left;
+  box-sizing: border-box;
+}
+
+.row {
+  max-width: 100%;
+}
+
+/* Basic styles for checkboxes */
+
+/* checkbox and radio button style */
+textarea,
+select,
+input,
+progress {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  vertical-align: middle;
+  position: relative;
+  width: min-content;
+}
+
+input[type="checkbox"] + label,
+input[type="radio"] + label {
+  display: inline-block;
+}
+
+input[type="radio"] {
+  border-radius: 100%;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background-color: var(--secondary);
+}
+
+input[type="checkbox"]:checked::after {
+  /* Creates a rectangle with colored right and bottom borders which is rotated to look like a check mark */
+  content: " ";
+  width: 0.18em;
+  height: 0.32em;
+  border-radius: var(--standard-border-radius);
+  position: absolute;
+  top: 0.05em;
+  left: 0.17em;
+  background-color: transparent;
+  border-right: solid var(--primary) 0.08em;
+  border-bottom: solid var(--primary) 0.08em;
+  font-size: 1.8em;
+  transform: rotate(45deg);
+}
+
+input[type="radio"]:checked::after {
+  /* creates a colored circle for the checked radio button  */
+  content: " ";
+  width: 0.25em;
+  height: 0.25em;
+  border-radius: 100%;
+  position: absolute;
+  top: 0.125em;
+  background-color: var(--primary);
+  left: 0.125em;
+  font-size: 32px;
+}
+
+/* Format forms */
+textarea,
+select,
+input,
+button,
+.button {
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: var(--standard-border-radius);
+  box-shadow: none;
+  max-width: 100%;
+  display: inline-block;
+}
+
+textarea,
+select,
+input {
+  color: var(--text-box-fg);
+  background-color: var(--text-box-bg);
+  border: var(--border-thickness) solid var(--secondary);
+  border-radius: var(--standard-border-radius);
+  box-shadow: none;
+  outline: none;
+}
+
+textarea:focus,
+select:focus,
+input:focus {
+  border-color: var(--tertiary);
+  border-radius: var(--standard-border-radius);
+  box-shadow: none;
+  outline: none;
+}
+
+.button[aria-disabled="true"],
+input:disabled,
+textarea:disabled,
+select:disabled,
+button[disabled] {
+  cursor: not-allowed;
+  background-color: var(--disabled);
+  border-color: var(--disabled);
+  color: var(--primary);
+}
+
+textarea:not([cols]) {
+  width: 100%;
+}
+
+/* Add arrow to drop-down */
+select:not([multiple]) {
+  background-image: linear-gradient(45deg, transparent 49%, var(--secondary) 51%),
+    linear-gradient(135deg, var(--secondary) 51%, transparent 49%);
+  background-position: calc(100% - 15px), calc(100% - 10px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-inline-end: 25px;
+}
+
+*[dir="rtl"] select:not([multiple]) {
+  background-position: 10px, 15px;
+}
+
+/* Progress bars, Declarations are repeated because you cannot combine vendor-specific selectors */
+progress {
+  border: var(--border-thickness) solid var(--border-colour);
+  width: 100%;
+}
+
+progress:indeterminate {
+  background-color: var(--primary);
+}
+
+progress::-webkit-progress-bar {
+  border-radius: var(--standard-border-radius);
+  background-color: var(--tertiary);
+}
+
+progress::-webkit-progress-value {
+  border-radius: var(--standard-border-radius);
+  background-color: var(--secondary);
+}
+
+progress::-moz-progress-bar {
+  border-radius: var(--standard-border-radius);
+  background-color: var(--primary);
+  transition-property: width;
+  transition-duration: 0.3s;
+}
+
+progress:indeterminate::-moz-progress-bar {
+  background-color: var(--tertiary);
+}
+
+/* Format buttons */
+button,
+.button,
+a.button, /* extra specificity to override a */
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  border: var(--border-thickness) solid var(--secondary);
+  background-color: var(--primary);
+  color: var(--secondary);
+  padding: 0.5rem 0.9rem;
+  text-decoration: none;
+  line-height: normal;
+}
+
+input[type="range"] {
+  padding: 0;
+}
+
+/* Set the cursor to '?' on an abbreviation and style the abbreviation to show that there is more information underneath */
+abbr[title] {
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+}
+
+.button:focus-visible,
+button:focus-visible:where(:enabled),
+input:enabled:focus-visible:where([type="submit"], [type="reset"], [type="button"]) {
+  outline: 2px solid var(--tertiary);
+  outline-offset: 1px;
+}
+
+button:enabled:hover,
+.button:not([aria-disabled="true"]):hover,
+input[type="submit"]:enabled:hover,
+input[type="reset"]:enabled:hover,
+input[type="button"]:enabled:hover {
+  background-color: var(--primary);
+  border-color: var(--secondary);
+  cursor: pointer;
+}
+
+article,
+fieldset,
+dialog {
+  border: var(--border-thickness) solid var(--border-colour);
+  padding: 1rem;
+  border-radius: var(--standard-border-radius);
+  margin-bottom: 1rem;
+}

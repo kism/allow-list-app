@@ -1,11 +1,21 @@
 {
+  // Specify default formatters
   "[python]": {
-    "editor.formatOnSave": true,
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "python.languageServer": "Pylance",
+  "[toml]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[markdown]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true
+  },
+  // Language config
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.testing.pytestArgs": ["tests"],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+  "python.testing.pytestEnabled": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "ruff.path": ["${workspaceFolder}/.venv/bin/ruff"],
+  "ty.path": ["${workspaceFolder}/.venv/bin/ty"]
 }

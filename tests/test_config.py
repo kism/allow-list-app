@@ -1,106 +1,79 @@
-"""Test launching the app and config."""
+"""Tests config loading and writing."""
 
-import logging
+import json
+from typing import TYPE_CHECKING
 
 import pytest
+from pydantic import ValidationError
 
-from allowlistapp import config, create_app
+from allowlistapp.config import CONFIG_FILE_NAME, Config
 
-
-def test_config_valid(tmp_path, get_test_config):
-    """Test passing config to app."""
-    # TEST: Assert that the config dictionary can set config attributes successfully.
-    assert not create_app(
-        get_test_config("valid_testing_false.toml"), instance_path=tmp_path
-    ).testing, "Flask testing config item not being set correctly."
-    assert create_app(
-        get_test_config("valid_testing_true.toml"), instance_path=tmp_path
-    ).testing, "Flask testing config item not being set correctly."
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-def test_config_static_invalid(tmp_path, get_test_config):
-    """Test that program exits when given invalid config."""
-    # TEST: Assert that the program exists when provided an invalid config dictionary.
-    with pytest.raises(config.ConfigPasswordError) as exc_info:
-        create_app(get_test_config("invalid_static_auth_no_password.toml"), instance_path=tmp_path)
+def test_load_missing_config(tmp_path: Path) -> None:
+    """TEST: A missing config file gets written out with defaults, then fails as there is no password."""
+    with pytest.raises(ValidationError, match=r"set auth\.static\.password_cleartext"):
+        Config.load(tmp_path)
 
-    assert isinstance(exc_info.type, type(config.ConfigPasswordError)), "App did not exit on config validation failure."
-
-
-def test_config_invalid_auth_url(tmp_path, get_test_config):
-    """Test that program exits when given invalid config."""
-    # TEST: Assert that the program exists when provided an invalid config dictionary.
-    with pytest.raises(config.ConfigUrlAuthError) as exc_info:
-        create_app(get_test_config("invalid_url_auth_url.toml"), instance_path=tmp_path)
-
-    assert isinstance(exc_info.type, type(config.ConfigUrlAuthError)), "App did not exit on config validation failure."
+    config = json.loads((tmp_path / CONFIG_FILE_NAME).read_text())
+    assert config["app"]["auth_type"] == "static"
+    assert not config["auth"]["static"]["password_cleartext"]
 
 
-def test_config_invalid_auth_type(tmp_path, get_test_config):
-    """Test that program exits when given invalid config."""
-    # TEST: Assert that the program exists when provided an invalid config dictionary.
-    with pytest.raises(config.ConfigUrlAuthError) as exc_info:
-        create_app(get_test_config("invalid_url_auth_type.toml"), instance_path=tmp_path)
+def test_password_hashed_and_written_back(tmp_path: Path) -> None:
+    """TEST: A cleartext password is hashed, and only the hash is written back."""
+    config_path = tmp_path / CONFIG_FILE_NAME
+    config_path.write_text('{"auth": {"static": {"password_cleartext": "hunter2"}}}')
 
-    assert isinstance(exc_info.type, type(config.ConfigUrlAuthError)), "App did not exit on config validation failure."
+    config = Config.load(tmp_path)
+    assert not config.auth.static.password_cleartext
+    assert config.auth.static.password_hashed.startswith("$argon2")
 
+    written = json.loads(config_path.read_text())
+    assert "hunter2" not in config_path.read_text()
+    assert written["auth"]["static"]["password_hashed"] == config.auth.static.password_hashed
 
-def test_config_valid_hashed_password(tmp_path, get_test_config, caplog):
-    """Test that program exits when given invalid config."""
-    # TEST: Assert that the program exists when provided an invalid config dictionary.
-    create_app(get_test_config("valid_testing_static_auth.toml"), instance_path=tmp_path)
-
-    with caplog.at_level(logging.INFO):
-        assert "Found hashed password" in caplog.text
-
-
-def test_config_file_creation(tmp_path, get_test_config, caplog: pytest.LogCaptureFixture):
-    """Tests relating to config file."""
-    # TEST: that file is created when no config is provided.
-    with caplog.at_level(logging.WARNING):
-        create_app(test_config=get_test_config("valid_testing_true.toml"), instance_path=tmp_path)
-        assert "No configuration file found, creating at default location:" in caplog.text
+    # Loading again keeps the hash
+    assert Config.load(tmp_path).auth.static.password_hashed == config.auth.static.password_hashed
 
 
-def test_config_file_loading(tmp_path, place_test_config, caplog: pytest.LogCaptureFixture):
-    """Tests relating to config file."""
-    place_test_config("valid_testing_true.toml", tmp_path)
+@pytest.mark.parametrize(
+    ("config_json", "error"),
+    [
+        ('{"app": {"auth_type": "jellyfin"}}', "set auth.remote.url"),
+        ('{"app": {"auth_type": "nope"}}', "auth_type"),
+        ('{"app": {"auth_type": "jellyfin"}, "auth": {"remote": {"url": "jf.example.com"}}}', "url"),
+        ('{"auth": {"static": {"password_hashed": "hunter2"}}}', "isn't an argon2 hash"),
+        ('{"app": {"allowed_subnets": ["nope"]}, "auth": {"static": {"password_cleartext": "x"}}}', "allowed_subnets"),
+        (
+            '{"auth": {"static": {"password_cleartext": "x"}}, "services": {"nginx": {"enabled": true}}}',
+            "allowlist_path must be set",
+        ),
+    ],
+)
+def test_invalid_config(tmp_path: Path, config_json: str, error: str) -> None:
+    """TEST: Invalid configs fail validation."""
+    (tmp_path / CONFIG_FILE_NAME).write_text(config_json)
 
-    # TEST: that file is created when no config is provided.
-    caplog.set_level(logging.INFO)
-    create_app(test_config=None, instance_path=tmp_path)
-    assert "Using this path as it's the first one that was found" in caplog.text
-
-
-def test_config_valid_allowed_subnets(tmp_path, get_test_config, caplog):
-    """Test that program exits when given invalid config."""
-    # TEST: Assert that the program exists when provided an invalid config dictionary.
-    create_app(get_test_config("valid_allowed_subnets.toml"), instance_path=tmp_path)
-
-    with caplog.at_level(logging.DEBUG):
-        assert "Trying to insert ip: 127.0.0.1 for user: default" in caplog.text
-        assert "Trying to insert ip: 192.168.1.0/24 for user: default" in caplog.text
-
-    with caplog.at_level(logging.INFO):
-        assert "DB write complete" in caplog.text
-
-    with caplog.at_level(logging.ERROR):
-        assert "Invalid IP/network address" not in caplog.text
+    with pytest.raises(ValidationError, match=error):
+        Config.load(tmp_path)
 
 
-def test_config_valid_allowed_subnets_duplicate(tmp_path, get_test_config, caplog):
-    """Test that program exits when given invalid config."""
-    # TEST: Assert that the program exists when provided an invalid config dictionary.
-    create_app(get_test_config("valid_allowed_subnets_duplicate.toml"), instance_path=tmp_path)
+def test_config_file_private(tmp_path: Path) -> None:
+    """TEST: The config file holds the password hash, so only the owner can read it, even if it existed already."""
+    config_path = tmp_path / CONFIG_FILE_NAME
+    config_path.write_text('{"auth": {"static": {"password_cleartext": "hunter2"}}}')
+    config_path.chmod(0o644)
 
-    with caplog.at_level(logging.INFO):
-        assert "Duplicate ip/network, not adding." in caplog.text
+    Config.load(tmp_path)
+    assert config_path.stat().st_mode & 0o777 == 0o600  # ruff: ignore[magic-value-comparison] # Owner read/write
 
 
-def test_config_invalid_allowed_subnets(tmp_path, get_test_config, caplog):
-    """Test that program exits when given invalid config."""
-    # TEST: Assert that the program exists when provided an invalid config dictionary.
-    create_app(get_test_config("invalid_allowed_subnets.toml"), instance_path=tmp_path)
-
-    with caplog.at_level(logging.ERROR):
-        assert "Invalid IP/network address: TEST_INVALID_IP" in caplog.text
+def test_allowed_subnets_normalised(tmp_path: Path) -> None:
+    """TEST: Subnets with host bits load, instead of crashing startup."""
+    (tmp_path / CONFIG_FILE_NAME).write_text(
+        '{"app": {"allowed_subnets": ["192.168.1.5/24"]}, "auth": {"static": {"password_cleartext": "x"}}}'
+    )
+    assert Config.load(tmp_path).app.allowed_subnets == ["192.168.1.0/24"]

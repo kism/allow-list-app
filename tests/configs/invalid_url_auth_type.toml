@@ -1,8 +1,0 @@
-[app]
-auth_type = "INVALID"
-db_path = ""
-
-[logging]
-
-[flask]
-TESTING = true
